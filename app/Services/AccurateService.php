@@ -1,0 +1,168 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\CustomItem;
+use App\Models\Quotation;
+use Illuminate\Support\Facades\Http;
+use Exception;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
+
+class AccurateService
+{
+
+     public function getDatabaseList(): array
+    {
+        if (!session()->has('accurate_access_token')) {
+            throw new Exception('Tidak bisa mengambil daftar database tanpa Access Token.');
+        }
+
+        $response = Http::withToken(session('accurate_access_token'))
+                        ->get(env('ACCURATE_API_URL') . '/api/db-list.do');
+        
+        if ($response->failed()) {
+            Log::error('ACCURATE_ERROR - Gagal mengambil daftar database', $response->json() ?? ['body' => $response->body()]);
+            throw new Exception("Gagal mendapatkan daftar database dari Accurate.");
+        }
+        return $response->json()['d'] ?? [];
+    }
+
+    public function getDatabaseHost()
+    {
+        $response = $this->client()->post('/api/api-token.do');
+        if ($response->failed() || !isset($response->json()['d']['database']['host'])) {
+            Log::error('ACCURATE_ERROR - Gagal mendapatkan host database', $response->json() ?? ['body' => $response->body()]);
+            throw new Exception("Gagal mendapatkan host database dari Accurate.");
+        }
+        $host = $response->json()['d']['database']['host'];
+        session(['accurate_host' => $host]);
+        return $host;
+    }
+
+
+    protected function dataClient()
+{
+    if (!session()->has('accurate_access_token')) {
+        throw new Exception('Token Akses Accurate tidak ditemukan di session.');
+    }
+    if (!session()->has('accurate_database')) {
+        throw new Exception('Database Accurate belum dipilih.');
+    }
+    
+    $dbInfo = session('accurate_database');
+    $host = $dbInfo['host'];
+    $sessionId = $dbInfo['session']; // <-- Pastikan baris ini ada
+    $accessToken = session('accurate_access_token');
+
+    return Http::withToken($accessToken)
+               ->withHeaders([
+                   'X-Session-ID' => $sessionId, // <-- Pastikan header ini ada
+               ])
+               ->acceptJson()
+               ->baseUrl($host . '/accurate');
+}
+
+  public function openDatabaseById(int $dbId): ?array
+{
+    if (!session()->has('accurate_access_token')) {
+        throw new Exception('Tidak bisa membuka database tanpa Access Token.');
+    }
+
+    try {
+        // --- PERUBAHAN DIMULAI DI SINI ---
+        // Tambahkan opsi untuk melacak pengalihan (redirect)
+        $response = Http::withOptions([
+            'track_redirects' => true
+        ])->withToken(session('accurate_access_token'))
+          ->post(env('ACCURATE_API_URL') . '/api/open-db.do', ['id' => $dbId]);
+
+        if ($response->failed()) {
+            return null;
+        }
+
+        $responseData = $response->json();
+
+        // Cek apakah ada riwayat pengalihan
+        $redirectHistory = $response->handlerStats()['redirect_history'] ?? [];
+        if (!empty($redirectHistory)) {
+            // Ambil URL terakhir (yang paling baru) dari riwayat
+            $lastUrl = end($redirectHistory);
+            
+            // Ekstrak host baru dari URL tersebut
+            $parsedUrl = parse_url($lastUrl);
+            $newHost = ($parsedUrl['scheme'] ?? 'https') . '://' . $parsedUrl['host'];
+
+            // Ganti host di data respons dengan host yang baru
+            $responseData['host'] = $newHost;
+            Log::info('Accurate host redirected and updated.', ['old_host' => session('accurate_database.host'), 'new_host' => $newHost]);
+        }
+        // --- AKHIR PERUBAHAN ---
+
+        return $responseData;
+
+    } catch (Exception $e) {
+        Log::error('ACCURATE_ERROR - Gagal membuka database ID: ' . $dbId, ['error' => $e->getMessage()]);
+        return null;
+    }
+}
+
+public function getPurchaseOrders(Request $request)
+{
+    try {
+        $params = [
+            'fields' => 'id,number,transDate,vendor', // Data yang kita perlukan
+            'sort'   => 'transDate desc'              // Urutkan dari yang terbaru
+        ];
+
+        // Terapkan filter tanggal jika diisi
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $params['filter.transDate.op']    = 'RANGE';
+            $params['filter.transDate.val[0]'] = $request->start_date;
+            $params['filter.transDate.val[1]'] = $request->end_date;
+        }
+
+        // Terapkan filter pencarian jika diisi
+        if ($request->filled('search')) {
+            $params['filter.keywords.op']  = 'CONTAIN';
+            $params['filter.keywords.val'] = $request->search;
+        }
+
+        $response = $this->dataClient()->get('/api/purchase-order/list.do', $params);
+
+        if ($response->failed()) {
+            Log::error('Gagal mengambil daftar PO dari Accurate', $response->json());
+            return collect([]);
+        }
+
+        return collect($response->json()['d'] ?? []);
+
+    } catch (\Exception $e) {
+        Log::error('Exception saat mengambil daftar PO', ['message' => $e->getMessage()]);
+        return collect([]);
+    }
+}
+
+public function getPurchaseOrderDetail(int $poId)
+{
+    try {
+        // Endpoint untuk detail PO
+        $response = $this->dataClient()->get('/api/purchase-order/detail.do', ['id' => $poId]);
+
+        if ($response->failed()) {
+            Log::error('Gagal mengambil detail PO dari Accurate', ['po_id' => $poId, 'response' => $response->json()]);
+            return null;
+        }
+
+        return $response->json()['d'] ?? null;
+
+    } catch (\Exception $e) {
+        Log::error('Exception saat mengambil detail PO', ['po_id' => $poId, 'message' => $e->getMessage()]);
+        return null;
+    }
+}
+
+}
