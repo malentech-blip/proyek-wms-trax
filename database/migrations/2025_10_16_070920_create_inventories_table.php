@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('item_id')->constrained('items');
             $table->foreignId('location_id')->constrained('locations');
             $table->bigInteger('quantity');
-            $table->
             $table->timestamps();
         });
     }
