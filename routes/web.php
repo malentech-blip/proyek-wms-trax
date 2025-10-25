@@ -32,6 +32,13 @@ use App\Http\Controllers\Admin\Inbound\QualityCheckController;
 use App\Http\Controllers\Admin\Inbound\PutawayController;
 use App\Http\Controllers\Admin\Inbound\LabelPrintController;
 
+// Controller Admin Inventory
+use App\Http\Controllers\Admin\Inventory\DashboardController as InventoryDashboardController;
+use App\Http\Controllers\Admin\Inventory\RawMaterialStorageController;
+use App\Http\Controllers\Admin\Inventory\RejectWarehouseController;
+use App\Http\Controllers\Admin\Inventory\StockReportController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -56,7 +63,9 @@ Route::middleware('auth')->group(function () {
 
         if ($user->hasRole('Admin Inbound')) {
             return redirect()->route('admin.inbound.dashboard');
-        } 
+        } elseif ($user->hasRole('Admin Inventory')) {
+            return redirect()->route('admin.inventory.dashboard');
+        }
         // Tambahkan elseif untuk role lain di sini
         elseif ($user->hasRole('Super Admin')) {
             return redirect()->route('super-admin.dashboard');
@@ -87,7 +96,7 @@ Route::middleware('auth')->group(function () {
 
         // --- KELOMPOK RUTE SUPER ADMIN ---
         Route::prefix('super-admin')->name('super-admin.')->middleware('can:manage_master_data')->group(function () {
-            
+
             Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
             // Master Data
@@ -104,7 +113,7 @@ Route::middleware('auth')->group(function () {
                 Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
                 Route::get('/permissions', [RolePermissionController::class, 'permissionsMatrix'])->name('permissions.index');
             });
-            
+
             // Rute Super Admin lainnya
             Route::get('/label-templates', [LabelTemplateController::class, 'index'])->name('label-templates.index');
             Route::get('/reports-center', [ReportCenterController::class, 'index'])->name('reports-center.index');
@@ -125,8 +134,15 @@ Route::middleware('auth')->group(function () {
                 Route::get('/goods-receipt/{goodsReceipt}/putaway', [PutawayController::class, 'show'])->name('putaway.show');
                 Route::get('/goods-receipt/{goodsReceipt}/print-labels', [LabelPrintController::class, 'print'])->name('putaway.print-labels');
             });
-            
+
             // Rute untuk admin lain (Inventory, Production, Outbound) akan ditambahkan di sini
+            Route::prefix('inventory')->name('inventory.')->middleware('can:manage_inventory')->group(function () {
+                Route::get('/dashboard', [InventoryDashboardController::class, 'index'])->name('dashboard');
+                Route::get('/raw-materials', [RawMaterialStorageController::class, 'index'])->name('raw-materials');
+                Route::get('/reject-warehouses', [RejectWarehouseController::class, 'index'])->name('reject-warehouses');
+                Route::get('/stock-reports', [StockReportController::class, 'index'])->name('stock-reports');
+                Route::get('/stock-reports/export', [StockReportController::class, 'export'])->name('stock-reports.export');
+            });
         });
     });
 });
