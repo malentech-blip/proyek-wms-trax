@@ -1,9 +1,12 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Admin\Inventory;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\SuperAdmin\MasterData\Item;
+use App\Models\SuperAdmin\MasterData\Location;
 
 class Inventory extends Model
 {
