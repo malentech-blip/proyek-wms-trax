@@ -27,14 +27,14 @@
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
-                <thead class="bg-blue-50">
+<thead class="bg-blue-600">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600">Kode Produk</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Nama Produk</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Batch</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Qty</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Lokasi</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Status</th>
+<th class="p-4 text-left font-semibold text-white">Kode Produk</th>
+<th class="p-4 text-left font-semibold text-white">Nama Produk</th>
+<th class="p-4 text-left font-semibold text-white">Batch</th>
+<th class="p-4 text-left font-semibold text-white">Qty</th>
+<th class="p-4 text-left font-semibold text-white">Lokasi</th>
+<th class="p-4 text-left font-semibold text-white">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
