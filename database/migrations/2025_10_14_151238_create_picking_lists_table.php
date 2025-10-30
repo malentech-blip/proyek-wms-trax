@@ -13,6 +13,7 @@ return new class extends Migration
   {
     Schema::create('picking_lists', function (Blueprint $table) {
       $table->id();
+      $table->string("pl_no")->unique();
       $table->foreignId('mr_id')->constrained('material_requests')->cascadeOnDelete();
       $table->foreignId('item_id')->constrained('items')->cascadeOnDelete();
       $table->integer('quantity');

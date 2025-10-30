@@ -23,7 +23,9 @@
 
 @elseif (Auth::user()->hasRole('Admin Inventory'))
 @include('admin.inventory.layouts.navigation-inventory')
-            @else
+@elseif (Auth::user()->hasRole("Admin Production"))
+              @include('admin.layouts.production-navigation')            
+@else
                 {{-- Untuk semua role admin lainnya, muat menu navigasi dari folder admin --}}
                 @include('admin.layouts.navigation')
             @endif

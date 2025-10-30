@@ -13,10 +13,11 @@ return new class extends Migration
   {
     Schema::create('wip_records', function (Blueprint $table) {
       $table->id();
+      $table->string("wip_no")->unique();
       $table->foreignId('mr_id')->constrained('material_requests')->cascadeOnDelete();
       $table->dateTime('started_at')->nullable();
       $table->dateTime('finished_at')->nullable();
-      $table->string('result_status');
+      $table->string('status')->default("Pending");
       $table->unsignedInteger('produced_qty')->default(0);
       $table->unsignedInteger('rejected_qty')->default(0);
       $table->timestamps();

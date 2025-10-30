@@ -1,0 +1,154 @@
+<?php
+
+namespace App\Http\Controllers\Admin\Production;
+
+use App\Http\Controllers\Controller;
+use App\Models\Admin\Inbound\ItemLabel;
+use App\Models\Admin\Production\MaterialRequest;
+use App\Models\Admin\Production\PickingList;
+use App\Models\Admin\Production\WipRecord;
+use Illuminate\Http\Request;
+
+class PickingListsController extends Controller
+{
+  public function listPL(Request $request)
+  {
+    $query = PickingList::query()
+      ->join('items', 'items.id', '=', 'picking_lists.item_id')
+      ->join("material_requests", "material_requests.id", "=", "picking_lists.mr_id")
+      ->leftJoin('item_labels', 'item_labels.item_code', '=', 'items.item_code')
+      ->leftJoin('inventories', 'inventories.item_id', '=', 'items.id')
+      ->leftJoin('locations', 'locations.id', '=', 'inventories.location_id')
+      ->leftJoin('racks', 'racks.id', '=', 'item_labels.rack_id')
+      ->select(
+        'picking_lists.*',
+        'items.item_name as item_name',
+        'racks.code as rack_code',
+        'inventories.quantity as item_quantity',
+        'locations.name as location_name',
+        'material_requests.status as status_mr'
+      )
+      ->whereNot("material_requests.status", "Completed");
+
+    if ($request->filled('date_picked')) {
+      $query->whereDate('picking_lists.date_picked', $request->date_picked);
+    }
+
+    if ($request->filled('search')) {
+      $searchTerm = '%' . $request->search . '%';
+
+      $query->where(function ($q) use ($searchTerm) {
+        $q->where('items.item_name', 'like', $searchTerm)
+          ->orWhere('locations.name', 'like', $searchTerm);
+      });
+    }
+
+    $pickingList = $query
+      ->orderBy('picking_lists.created_at')
+      ->paginate(10)
+      ->withQueryString();
+
+    return view("admin.production.picking-list.index", compact("pickingList"));
+  }
+
+  public function detail(int $mr_id)
+  {
+    $mr = MaterialRequest::where("id", $mr_id)->first();
+    if(!$mr) {
+      return redirect()->route("admin.production.material-request.index");
+    }
+    $query = PickingList::query()
+      ->join('items', 'items.id', '=', 'picking_lists.item_id')
+      ->join("material_requests", "material_requests.id", "=", "picking_lists.mr_id")
+      ->leftJoin('item_labels', 'item_labels.item_code', '=', 'items.item_code')
+      ->leftJoin('inventories', 'inventories.item_id', '=', 'items.id')
+      ->leftJoin('locations', 'locations.id', '=', 'inventories.location_id')
+      ->leftJoin('racks', 'racks.id', '=', 'item_labels.rack_id')
+      ->select(
+        'picking_lists.*',
+        'items.item_name as item_name',
+        'items.item_name as item_code',
+        'racks.code as rack_code',
+        'inventories.quantity as item_quantity',
+        'locations.name as location_name',
+        'material_requests.status as status_mr'
+      );
+
+    $pickingList = $query
+      ->where('mr_id', $mr_id)
+      ->get();
+    $mrId = $mr_id;
+    $wip = WipRecord::where("mr_id", $mr_id)->first() ?? null;
+    return view("admin.production.picking-list.detail", compact('pickingList', 'mr', 'mrId', 'wip'));
+  }
+
+  public function scanItem(Request $request)
+  {
+    try {
+      $itemLabel = ItemLabel::where("qr_code", $request["qr_code"])->first();
+      $itemPickingList = PickingList::query()
+        ->join('items', 'items.id', '=', 'picking_lists.item_id')
+        ->leftJoin('item_labels', 'item_labels.item_code', '=', 'items.item_code')
+        ->select(
+          'picking_lists.*',
+          'items.item_name as item_name',
+          'items.item_code as item_code',
+          'item_labels.qr_code as qr_code',
+        )
+        ->where("date_picked", null)
+        ->first();
+
+      // Jika tidak ditemukan
+      if ($itemLabel->qr_code !== $itemPickingList->qr_code) {
+        return response()->json([
+          'success' => false,
+          'message' => '❌ QR Code tidak ditemukan dalam daftar picking list.',
+          'data' => $itemLabel
+        ], 404);
+      }
+      return response()->json([
+        'success' => true,
+        'message' => '✅ Item berhasil diverifikasi.',
+        'data' => $itemPickingList
+      ]);
+    } catch (\Illuminate\Database\QueryException $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Kesalahan query database: ' . $e->getMessage(),
+      ], 500);
+    } catch (\Throwable $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Terjadi kesalahan tidak terduga: ' . $e->getMessage(),
+      ], 500);
+    }
+  }
+
+  public function confirmPick(Request $request)
+  {
+    try {
+      $picking = PickingList::find($request->picking_id);
+
+      if (!$picking) {
+        return response()->json([
+          'success' => false,
+          'message' => 'Data Picking List tidak ditemukan.',
+        ], 404);
+      }
+
+      $picking->update([
+        'date_picked' => now(),
+      ]);
+
+      return response()->json([
+        'success' => true,
+        'message' => 'Item berhasil dikonfirmasi sebagai picked.',
+      ]);
+    } catch (\Throwable $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+      ], 500);
+    }
+  }
+}
