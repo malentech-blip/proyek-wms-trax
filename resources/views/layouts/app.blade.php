@@ -21,7 +21,8 @@
             @if (Auth::user()->hasRole('Super Admin'))
                 {{-- Muat menu navigasi dari folder super-admin --}}
                 @include('super-admin.layouts.navigation-superadmin')
-
+            @elseif (Auth::user()->hasRole("Admin Production"))
+              @include('admin.layouts.production-navigation')
             @else
                 {{-- Untuk semua role admin lainnya, muat menu navigasi dari folder admin --}}
                 @include('admin.layouts.navigation')
