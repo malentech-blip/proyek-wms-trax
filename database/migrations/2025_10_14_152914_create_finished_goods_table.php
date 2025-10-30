@@ -15,10 +15,9 @@ return new class extends Migration
       $table->id();
       $table->foreignId('wip_id')->constrained('wip_records');
       $table->foreignId('item_id')->constrained('items');
-      $table->foreignId('label_id')->constrained('item_labels');
       $table->unsignedInteger('quantity');
       $table->string('qc_status');
-      $table->dateTime('stored_at');
+      $table->dateTime('stored_at')->nullable();
       $table->timestamps();
     });
   }

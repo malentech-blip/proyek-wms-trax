@@ -13,10 +13,11 @@ return new class extends Migration
   {
     Schema::create('material_requests', function (Blueprint $table) {
       $table->id();
+      $table->string("mr_no")->unique();
       $table->unsignedBigInteger('so_id'); 
       $table->string('requested_by');
       $table->date('request_date');
-      $table->string('status');
+      $table->string('status'); //Requested - Picked - Done
       $table->timestamps();
     });
   }
