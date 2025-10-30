@@ -69,30 +69,21 @@ Route::middleware('auth')->group(function () {
   Route::get('/redirect-after-login', function () {
     $user = Auth::user();
 
-        if ($user->hasRole('Admin Inbound')) {
-            return redirect()->route('admin.inbound.dashboard');
-        } elseif ($user->hasRole('Admin Inventory')) {
-            return redirect()->route('admin.inventory.dashboard');
-        }
-        // Tambahkan elseif untuk role lain di sini
-        elseif ($user->hasRole('Super Admin')) {
-            return redirect()->route('super-admin.dashboard');
-        }
-        // Fallback jika tidak ada role
-        return redirect('/login');
-    })->name('login.redirect');
     if ($user->hasRole('Admin Inbound')) {
       return redirect()->route('admin.inbound.dashboard');
+    } elseif ($user->hasRole('Admin Inventory')) {
+      return redirect()->route('admin.inventory.dashboard');
+    } elseif ($user->hasRole("Admin Production")) {
+      return redirect()->route("admin.production.dashboard");
     }
     // Tambahkan elseif untuk role lain di sini
     elseif ($user->hasRole('Super Admin')) {
       return redirect()->route('super-admin.dashboard');
-    } elseif ($user->hasRole("Admin Production")) {
-      return redirect()->route("admin.production.dashboard");
     }
     // Fallback jika tidak ada role
     return redirect('/login');
   })->name('login.redirect');
+
 
   // Rute untuk koneksi Accurate
   Route::get('/select-database', [DatabaseSelectionController::class, 'showSelection'])->name('database.selection');
@@ -114,123 +105,97 @@ Route::middleware('auth')->group(function () {
   // =======================================================
   Route::middleware('database.selected')->group(function () {
 
-        // --- KELOMPOK RUTE SUPER ADMIN ---
-        Route::prefix('super-admin')->name('super-admin.')->middleware('can:manage_master_data')->group(function () {
-
-            Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
     // --- KELOMPOK RUTE SUPER ADMIN ---
     Route::prefix('super-admin')->name('super-admin.')->middleware('can:manage_master_data')->group(function () {
 
       Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
+      // --- KELOMPOK RUTE SUPER ADMIN ---
+      Route::prefix('super-admin')->name('super-admin.')->middleware('can:manage_master_data')->group(function () {
 
-      // Master Data
-      Route::prefix('master-data')->name('master-data.')->group(function () {
-        Route::get('/items', [ItemMasterController::class, 'index'])->name('items.index');
-        Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
-        Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
-        Route::get('/locations', [LocationController::class, 'index'])->name('locations.index');
-      });
+        Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
-            // User Management
-            Route::prefix('user-management')->name('user-management.')->group(function () {
-                Route::get('/users', [UserController::class, 'index'])->name('users.index');
-                Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
-                Route::get('/permissions', [RolePermissionController::class, 'permissionsMatrix'])->name('permissions.index');
-            });
-
-            // Rute Super Admin lainnya
-            Route::get('/label-templates', [LabelTemplateController::class, 'index'])->name('label-templates.index');
-            Route::get('/reports-center', [ReportCenterController::class, 'index'])->name('reports-center.index');
-            Route::get('/system-logs', [SystemLogController::class, 'index'])->name('system-logs.index');
+        // Master Data
+        Route::prefix('master-data')->name('master-data.')->group(function () {
+          Route::get('/items', [ItemMasterController::class, 'index'])->name('items.index');
+          Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+          Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+          Route::get('/locations', [LocationController::class, 'index'])->name('locations.index');
         });
-      // User Management
-      Route::prefix('user-management')->name('user-management.')->group(function () {
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
-        Route::get('/permissions', [RolePermissionController::class, 'permissionsMatrix'])->name('permissions.index');
+
+        // User Management
+        Route::prefix('user-management')->name('user-management.')->group(function () {
+          Route::get('/users', [UserController::class, 'index'])->name('users.index');
+          Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
+          Route::get('/permissions', [RolePermissionController::class, 'permissionsMatrix'])->name('permissions.index');
+        });
+
+        // Rute Super Admin lainnya
+        Route::get('/label-templates', [LabelTemplateController::class, 'index'])->name('label-templates.index');
+        Route::get('/reports-center', [ReportCenterController::class, 'index'])->name('reports-center.index');
+        Route::get('/system-logs', [SystemLogController::class, 'index'])->name('system-logs.index');
       });
-
-      // Rute Super Admin lainnya
-      Route::get('/label-templates', [LabelTemplateController::class, 'index'])->name('label-templates.index');
-      Route::get('/reports-center', [ReportCenterController::class, 'index'])->name('reports-center.index');
-      Route::get('/system-logs', [SystemLogController::class, 'index'])->name('system-logs.index');
     });
-
 
     // --- KELOMPOK RUTE ADMIN OPERASIONAL ---
     Route::prefix('admin')->name('admin.')->group(function () {
 
-            // Rute Inbound
-            Route::prefix('inbound')->name('inbound.')->middleware('can:manage_inbound')->group(function () {
-                Route::get('/dashboard', [InboundDashboardController::class, 'index'])->name('dashboard');
-                Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
-                Route::get('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->name('purchase-orders.receive');
-                Route::post('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'storeReceiveForm'])->name('purchase-orders.receive.store');
-                Route::get('/goods-receipt/{goodsReceipt}/qc', [QualityCheckController::class, 'show'])->name('quality-check.show');
-                Route::get('/goods-receipt/{goodsReceipt}/putaway', [PutawayController::class, 'show'])->name('putaway.show');
-                Route::get('/goods-receipt/{goodsReceipt}/print-labels', [LabelPrintController::class, 'print'])->name('putaway.print-labels');
-            });
-
-            // Rute untuk admin lain (Inventory, Production, Outbound) akan ditambahkan di sini
-            Route::prefix('inventory')->name('inventory.')->middleware('can:manage_inventory')->group(function () {
-                Route::get('/dashboard', [InventoryDashboardController::class, 'index'])->name('dashboard');
-                Route::get('/raw-materials', [RawMaterialStorageController::class, 'index'])->name('raw-materials');
-                Route::get('/reject-warehouses', [RejectWarehouseController::class, 'index'])->name('reject-warehouses');
-                Route::get('/stock-reports', [StockReportController::class, 'index'])->name('stock-reports');
-                Route::get('/stock-reports/export', [StockReportController::class, 'export'])->name('stock-reports.export');
-            });
+        // Rute Inbound
+        Route::prefix('inbound')->name('inbound.')->middleware('can:manage_inbound')->group(function () {
+          Route::get('/dashboard', [InboundDashboardController::class, 'index'])->name('dashboard');
+          Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+          Route::get('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->name('purchase-orders.receive');
+          Route::post('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'storeReceiveForm'])->name('purchase-orders.receive.store');
+          Route::get('/goods-receipt/{goodsReceipt}/qc', [QualityCheckController::class, 'show'])->name('quality-check.show');
+          Route::get('/goods-receipt/{goodsReceipt}/putaway', [PutawayController::class, 'show'])->name('putaway.show');
+          Route::get('/goods-receipt/{goodsReceipt}/print-labels', [LabelPrintController::class, 'print'])->name('putaway.print-labels');
         });
-    });
-      // Rute Inbound
-      Route::prefix('inbound')->name('inbound.')->middleware('can:manage_inbound')->group(function () {
-        Route::get('/dashboard', [InboundDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
-        Route::get('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->name('purchase-orders.receive');
-        Route::post('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'storeReceiveForm'])->name('purchase-orders.receive.store');
-        Route::get('/goods-receipt/{goodsReceipt}/qc', [QualityCheckController::class, 'show'])->name('quality-check.show');
-        Route::get('/goods-receipt/{goodsReceipt}/putaway', [PutawayController::class, 'show'])->name('putaway.show');
-        Route::get('/goods-receipt/{goodsReceipt}/print-labels', [LabelPrintController::class, 'print'])->name('putaway.print-labels');
-      });
 
-      // Rute untuk admin lain (Inventory, Production, Outbound) akan ditambahkan di sini
+        // Rute untuk admin lain (Inventory, Production, Outbound) akan ditambahkan di sini
+        Route::prefix('inventory')->name('inventory.')->middleware('can:manage_inventory')->group(function () {
+          Route::get('/dashboard', [InventoryDashboardController::class, 'index'])->name('dashboard');
+          Route::get('/raw-materials', [RawMaterialStorageController::class, 'index'])->name('raw-materials');
+          Route::get('/reject-warehouses', [RejectWarehouseController::class, 'index'])->name('reject-warehouses');
+          Route::get('/stock-reports', [StockReportController::class, 'index'])->name('stock-reports');
+          Route::get('/stock-reports/export', [StockReportController::class, 'export'])->name('stock-reports.export');
+        });
 
-      // Rute Production
-      Route::prefix("production")->name("production.")->group(function () {
-        // dashboard
-        Route::get("/dashboard", [ProductionDashboardController::class, "index"])->name("dashboard");
+        // Rute Production
+        Route::prefix("production")->name("production.")->group(function () {
+          // dashboard
+          Route::get("/dashboard", [ProductionDashboardController::class, "index"])->name("dashboard");
 
-        // material request
-        Route::get("/material-request", [MaterialRequestController::class, "index"])->name("material-request.index");
-        Route::get("/material-request/detail/{mr_id}", [MaterialRequestController::class, "detail"])->name("material-request.detail");
-        Route::post("/material-request/add-temp-item", [MaterialRequestController::class, "addTempItem"])->name("material-request.add-tempt-item");
-        Route::post("/material-request", [MaterialRequestController::class, "storeMR"])->name("material-request.mr.store");
-        Route::get("/material-request/list-material-request", [MaterialRequestController::class, "listMR"])->name("material-request.mr");
-        Route::put("/material-request/change-status", [MaterialRequestController::class, "changeStatus"])->name("material-request.change-status");
-        Route::post("/material-request/{mr_id}/complete", [MaterialRequestController::class, "complete"])->name("material-request.complete");
-        // --PICKING LIST---
-        Route::get("/picking-list", [PickingListsController::class, "listPL"])->name("picking-list.index");
-        Route::get("/picking-list/detail/{mr_id}", [PickingListsController::class, "detail"])->name("picking-list.detail");
-        Route::post("/picking-list/scan", [PickingListsController::class, "scanItem"])->name("picking-list.scan-item");
-        Route::post("/picking-list/confirm-pick", [PickingListsController::class, "confirmPick"])->name("picking-list.confirm-pick");
-        // ---WORK IN PROGRESS---
-        Route::get("/work-in-progress", [WIPController::class, "index"])->name("wip.index");
-        Route::get("/work-in-progress/detail/{mr_id}", [WIPController::class, "detail"])->name("wip.detail");
-        Route::post("/work-in-progress/create-wip", [WIPController::class, "storeWIP"])->name("wip.store");
-        Route::post('/work-in-progress/{id}/start', [WipController::class, 'start'])->name('wip.start');
-        Route::post('/work-in-progress/{id}/pause', [WipController::class, 'pause'])->name('wip.pause');
-        Route::post('/work-in-progress/{id}/resume', [WipController::class, 'resume'])->name('wip.resume');
-        Route::post('/work-in-progress/{id}/finish', [WipController::class, 'finish'])->name('wip.finish');
-        Route::post('/work-in-progress/{id}/change-quantity', [WipController::class, 'changeQuantity'])->name('wip.change-quantity');
-        // finished goods
-        Route::get("/finished-goods", [FinishedGoodsController::class, "index"])->name("finished-goods.index");
-        Route::get("/finished-goods/detail/{mr_id}", [FinishedGoodsController::class, "detail"])->name("finished-goods.detail");
-        Route::post("/finished-goods", [FinishedGoodsController::class, "storeFG"])->name("finished-goods.store");
-        Route::post("/finished-goods/{id}/store-to-inventory", [FinishedGoodsController::class, "storingInv"])->name("finished-goods.storing");
-        // rejects production
-        Route::get("/rejects-production", [RejectsProductionController::class, "index"])->name('rejects-production.index');
-        Route::get("/rejects-production/detail/{mr_id}", [RejectsProductionController::class, "detail"])->name('rejects-production.detail');
-        Route::post("/rejects-production", [RejectsProductionController::class, "store"])->name('rejects-production.store');
-      });
+          // material request
+          Route::get("/material-request", [MaterialRequestController::class, "index"])->name("material-request.index");
+          Route::get("/material-request/detail/{mr_id}", [MaterialRequestController::class, "detail"])->name("material-request.detail");
+          Route::post("/material-request/add-temp-item", [MaterialRequestController::class, "addTempItem"])->name("material-request.add-tempt-item");
+          Route::post("/material-request", [MaterialRequestController::class, "storeMR"])->name("material-request.mr.store");
+          Route::get("/material-request/list-material-request", [MaterialRequestController::class, "listMR"])->name("material-request.mr");
+          Route::put("/material-request/change-status", [MaterialRequestController::class, "changeStatus"])->name("material-request.change-status");
+          Route::post("/material-request/{mr_id}/complete", [MaterialRequestController::class, "complete"])->name("material-request.complete");
+          // --PICKING LIST---
+          Route::get("/picking-list", [PickingListsController::class, "listPL"])->name("picking-list.index");
+          Route::get("/picking-list/detail/{mr_id}", [PickingListsController::class, "detail"])->name("picking-list.detail");
+          Route::post("/picking-list/scan", [PickingListsController::class, "scanItem"])->name("picking-list.scan-item");
+          Route::post("/picking-list/confirm-pick", [PickingListsController::class, "confirmPick"])->name("picking-list.confirm-pick");
+          // ---WORK IN PROGRESS---
+          Route::get("/work-in-progress", [WIPController::class, "index"])->name("wip.index");
+          Route::get("/work-in-progress/detail/{mr_id}", [WIPController::class, "detail"])->name("wip.detail");
+          Route::post("/work-in-progress/create-wip", [WIPController::class, "storeWIP"])->name("wip.store");
+          Route::post('/work-in-progress/{id}/start', [WipController::class, 'start'])->name('wip.start');
+          Route::post('/work-in-progress/{id}/pause', [WipController::class, 'pause'])->name('wip.pause');
+          Route::post('/work-in-progress/{id}/resume', [WipController::class, 'resume'])->name('wip.resume');
+          Route::post('/work-in-progress/{id}/finish', [WipController::class, 'finish'])->name('wip.finish');
+          Route::post('/work-in-progress/{id}/change-quantity', [WipController::class, 'changeQuantity'])->name('wip.change-quantity');
+          // finished goods
+          Route::get("/finished-goods", [FinishedGoodsController::class, "index"])->name("finished-goods.index");
+          Route::get("/finished-goods/detail/{mr_id}", [FinishedGoodsController::class, "detail"])->name("finished-goods.detail");
+          Route::post("/finished-goods", [FinishedGoodsController::class, "storeFG"])->name("finished-goods.store");
+          Route::post("/finished-goods/{id}/store-to-inventory", [FinishedGoodsController::class, "storingInv"])->name("finished-goods.storing");
+          // rejects production
+          Route::get("/rejects-production", [RejectsProductionController::class, "index"])->name('rejects-production.index');
+          Route::get("/rejects-production/detail/{mr_id}", [RejectsProductionController::class, "detail"])->name('rejects-production.detail');
+          Route::post("/rejects-production", [RejectsProductionController::class, "store"])->name('rejects-production.store');
+        });
     });
   });
 });

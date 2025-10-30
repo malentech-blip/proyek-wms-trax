@@ -12,4 +12,8 @@ class RejectProduction extends Model
     protected $table = 'rejects_production';
 
     protected $guarded = [];
+
+    public function wip_record() {
+      return $this->belongsTo(WipRecord::class, "wip_id");
+    }
 }

@@ -1,0 +1,115 @@
+<?php
+
+namespace App\Http\Controllers\Admin\Production;
+
+use App\Http\Controllers\Controller;
+use App\Models\Admin\Production\FinishedGood;
+use App\Models\Admin\Production\MaterialRequest;
+use App\Models\Admin\Production\ProductionItemLabel;
+use App\Models\Admin\Production\WipRecord;
+use App\Models\SuperAdmin\MasterData\Item;
+use App\Models\SuperAdmin\MasterData\Location;
+use App\Models\SuperAdmin\MasterData\Pallet;
+use App\Models\SuperAdmin\MasterData\Rack;
+use App\Services\AccurateService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+class FinishedGoodsController extends Controller
+{
+  public function index(Request $request)
+  {
+    $finishedGoods = FinishedGood::with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->orderBy("created_at", "desc")->get();
+
+    return view("admin.production.finished-goods.index", compact("finishedGoods"));
+  }
+
+  public function detail(int $mr_id)
+  {
+    $wipRecord = WipRecord::where('id', $mr_id)->first();
+    if ($wipRecord) {
+      $finishedGood = FinishedGood::with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->where('wip_id', $wipRecord->id)->first();
+    } else {
+      return redirect()->route("admin.production.material-request.index");
+    }
+    $mrId = $mr_id;
+    if ($wipRecord->status !== "Completed") {
+      return redirect()->route("admin.production.wip.detail", $wipRecord->id);
+    }
+    $locations = Location::all();
+    $racks = Rack::all();
+    $pallets = Pallet::all();
+    $items = Item::where("item_type", "Finished Good")->get();
+    return view('admin.production.finished-goods.detail', compact('wipRecord','finishedGood', 'mrId', 'locations', 'racks', 'pallets', 'items'));
+  }
+
+  public function storeFG(Request $request)
+  {
+    $validated_data = $request->validate([
+      "wip_id"      => ["required", "string", "exists:wip_records,id"],
+      "item_id"     => ["required", "string", "exists:items,id"],
+      "quantity"    => ["required", "integer", "min:1"],
+      "location_id" => ["required", "string", "exists:locations,id"],
+      "rack_id"     => ["required", "string", "exists:racks,id"],
+      "pallet_id"   => ["required", "string", "exists:pallets,id"],
+      "batch_no"    => ["required", "string", "max:50"]
+    ]);
+
+    try {
+      DB::beginTransaction();
+      $label = ProductionItemLabel::create([
+        "item_id"     => $validated_data['item_id'],
+        "qr_code"     => Str::uuid(),
+        "quantity"    => $validated_data["quantity"],
+        "batch_no"    => $validated_data["batch_no"],
+        "location_id" => $validated_data['location_id'],
+        "rack_id"     => $validated_data['rack_id'],
+        "pallet_id"   => $validated_data['pallet_id'],
+        "status"      => "Approved"
+      ]);
+
+      $finishedGood = FinishedGood::create([
+        "wip_id"   => $validated_data["wip_id"],
+        "item_id"  => $validated_data["item_id"],
+        "quantity" => $validated_data["quantity"],
+        "label_id" => $label->id,
+        "qc_status" => "OK"
+      ]);
+
+      DB::commit();
+      return response()->json([
+        'status'  => 'success',
+        'message' => 'Finished goods berhasil dibuat.',
+        'data'    => $finishedGood 
+      ], 201); 
+    } catch (\Throwable $th) {
+      DB::rollBack();
+      return response()->json([
+        'status'  => 'error',
+        'message' => 'Terjadi kesalahan server saat menyimpan data.',
+      ], 500);
+    }
+  }
+
+  public function storingInv(int $fg_id) {
+    $finished_good = FinishedGood::where("id", $fg_id)->first();
+
+    if(!$finished_good) {
+      return response()->json([
+        'status'  => 'error',
+        'message' => 'Finished Good tidak ditemukan.',
+      ], 400);
+    }
+
+    $finished_good->update([
+      "stored_at" => now()
+    ]);
+
+    return response()->json([
+      'status' => 'success',
+      'message' => 'Finished Good updated to stored.',
+    ], 200);
+  }
+}
