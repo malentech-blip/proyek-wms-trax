@@ -13,8 +13,19 @@ class ItemsSeeder extends Seeder
    */
   public function run(): void
   {
-    DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-    DB::table('items')->truncate();
+    // Handle truncation based on database driver
+    $driver = DB::getDriverName();
+
+    if ($driver === 'mysql') {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('items')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+    } elseif ($driver === 'pgsql') {
+        // PostgreSQL: Use TRUNCATE CASCADE to handle foreign key constraints
+        DB::statement('TRUNCATE TABLE items RESTART IDENTITY CASCADE;');
+    } else {
+        DB::table('items')->truncate();
+    }
     DB::table('items')->insert([
       [
         'item_code' => 'RM-001',
