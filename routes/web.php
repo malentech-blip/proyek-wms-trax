@@ -235,6 +235,10 @@ Route::middleware('auth')->group(function () {
                             InventoryDashboardController::class,
                             'index',
                         ])->name('dashboard');
+                        Route::post('/dashboard/scan-qr', [
+                            InventoryDashboardController::class,
+                            'scanQR',
+                        ])->name('dashboard.scan-qr');
                         Route::get('/raw-materials', [
                             RawMaterialStorageController::class,
                             'index',
@@ -243,6 +247,14 @@ Route::middleware('auth')->group(function () {
                             RejectWarehouseController::class,
                             'index',
                         ])->name('reject-warehouses');
+                        Route::post('/reject-warehouses/{rejectProduction}/rework', [
+                            RejectWarehouseController::class,
+                            'rework',
+                        ])->name('reject-warehouses.rework');
+                        Route::post('/reject-warehouses/{rejectProduction}/scrap', [
+                            RejectWarehouseController::class,
+                            'scrap',
+                        ])->name('reject-warehouses.scrap');
                         Route::get('/stock-reports', [
                             StockReportController::class,
                             'index',
