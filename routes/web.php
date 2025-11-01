@@ -11,6 +11,8 @@ use App\Http\Controllers\Admin\Inbound\PutawayController;
 use App\Http\Controllers\Admin\Inbound\QualityCheckController;
 use App\Http\Controllers\Admin\Inventory\DashboardController as InventoryDashboardController;
 use App\Http\Controllers\Admin\Inventory\RawMaterialStorageController;
+use App\Http\Controllers\Admin\Inventory\MoveStockController;
+use App\Http\Controllers\Admin\Inventory\StockAdjusmentController;
 // Controller Super Admin
 use App\Http\Controllers\Admin\Inventory\RejectWarehouseController;
 use App\Http\Controllers\Admin\Inventory\StockReportController;
@@ -249,6 +251,14 @@ Route::middleware('auth')->group(function () {
                             StockReportController::class,
                             'export',
                         ])->name('stock-reports.export');
+                        Route::get('/stock-adjustmen', [
+                            StockAdjusmentController::class,
+                            'index',
+                        ])->name('stock-adjustmen');
+                        Route::get('/move-stock', [
+                            MoveStockController::class,
+                            'index',
+                        ])->name('move-stock');
                     });
 
                 // Rute Production
