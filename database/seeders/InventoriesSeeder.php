@@ -14,37 +14,16 @@ class InventoriesSeeder extends Seeder
    */
   public function run(): void
   {
-    DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-    DB::table('inventories')->truncate();
-    DB::table('inventories')->insert([
-      [
-        'item_id' => 1, // RM-001 - Besi Batangan
-        'location_id' => 1,
-        'quantity' => 100,
-        'created_at' => now(),
-        'updated_at' => now(),
-      ],
-      [
-        'item_id' => 2, // RM-002 - Plastik Granul
-        'location_id' => 1,
-        'quantity' => 200,
-        'created_at' => now(),
-        'updated_at' => now(),
-      ],
-      [
-        'item_id' => 3, // FG-001 - Botol Air Mineral 600ml
-        'location_id' => 2,
-        'quantity' => 500,
-        'created_at' => now(),
-        'updated_at' => now(),
-      ],
-      [
-        'item_id' => 4, // FG-002 - Tutup Botol Biru
-        'location_id' => 2,
-        'quantity' => 300,
-        'created_at' => now(),
-        'updated_at' => now(),
-      ],
-    ]);
+    // Generate 100 inventory records using factories
+    $items = \App\Models\SuperAdmin\MasterData\Item::all();
+    $locations = \App\Models\SuperAdmin\MasterData\Location::all();
+
+    // Create inventory records
+    for ($i = 0; $i < 100; $i++) {
+      \App\Models\Admin\Inventory\Inventory::factory()->create([
+        'item_id' => $items->random()->id ?? \App\Models\SuperAdmin\MasterData\Item::factory()->create()->id,
+        'location_id' => $locations->random()->id ?? \App\Models\SuperAdmin\MasterData\Location::factory()->create()->id,
+      ]);
+    }
   }
 }
