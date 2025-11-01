@@ -40,8 +40,8 @@
         </a>
 
         {{-- TODO: PLEASE UPDATE THE LINK! --}}
-        <a href="#"
-            class="{{ $linkClasses }} {{ request()->routeIs('admin.inventory.raw-materials') ? $activeClasses : $inactiveClasses }}"
+        <a href="{{ route('admin.inventory.move-stock') }}"
+            class="{{ $linkClasses }} {{ request()->routeIs('admin.inventory.move-stock') ? $activeClasses : $inactiveClasses }}"
             :class="!sidebarOpen && 'justify-center'">
             <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -51,15 +51,15 @@
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Move Stock</span>
         </a>
 
-        <a href="#"
-            class="{{ $linkClasses }} {{ request()->routeIs('admin.inventory.raw-materials') ? $activeClasses : $inactiveClasses }}"
+        <a href="{{ route('admin.inventory.stock-adjustment') }}"
+            class="{{ $linkClasses }} {{ request()->routeIs('admin.inventory.stock-adjustment') ? $activeClasses : $inactiveClasses }}"
             :class="!sidebarOpen && 'justify-center'">
             <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
                 </path>
             </svg>
-            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Stock Adjusment</span>
+            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Stock Adjustment</span>
         </a>
 
         {{-- TODO END! --}}
