@@ -12,13 +12,19 @@
         </div>
         <div class="flex justify-between items-center">
             <div>
-                <!-- Livewire component will handle search and location filter -->
             </div>
+            <div class="flex items-center space-x-4">
+            <a href="#"
+                class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center">
+                Sinkronkan ke Accurate
+            </a>
             <a href="{{ route('admin.inventory.stock-reports.export') }}"
                 class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center">
                 Print Stock Report (Excel)
             </a>
+            </div>
         </div>
+        {{-- Using livewire for handling datatable and filtering --}}
         @livewire('admin.inventory.stock-report-table')
     </div>
 </x-app-layout>
