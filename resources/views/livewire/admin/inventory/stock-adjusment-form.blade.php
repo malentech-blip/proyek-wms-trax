@@ -1,4 +1,4 @@
-<div class="bg-white rounded-lg shadow-sm p-6">
+<div class="bg-white rounded-lg shadow-sm p-6" x-data="{ locationEnabled: @entangle('itemId').live }">
     <h3 class="text-lg font-semibold text-gray-900 mb-6">Form Penyesuaian Stok</h3>
 
     @if (session()->has('success'))
@@ -29,6 +29,9 @@
             @error('itemId')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
+            @if($itemId)
+                <p class="mt-1 text-xs text-green-600">✓ Item dipilih. Sekarang pilih lokasi.</p>
+            @endif
         </div>
 
         {{-- Location Selection --}}
@@ -36,16 +39,26 @@
             <label for="location_id" class="block text-sm font-medium text-gray-700 mb-2">
                 Lokasi <span class="text-red-500">*</span>
             </label>
-            <select id="location_id" wire:model.live="locationId"
+            <select id="location_id"
+                wire:model.live="locationId"
+                x-bind:disabled="!locationEnabled"
+                x-bind:class="locationEnabled ? 'w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500' : 'w-full border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed'"
                 class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 <option value="">Pilih Lokasi</option>
-                @foreach ($locations as $location)
-                    <option value="{{ $location->id }}">{{ $location->name }}</option>
-                @endforeach
+                @if($itemId)
+                    @foreach ($this->availableLocations as $location)
+                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                    @endforeach
+                @endif
             </select>
             @error('locationId')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
+            @if(!$itemId)
+                <p class="mt-1 text-xs text-gray-500">⚠ Silahkan pilih item terlebih dahulu sebelum memilih lokasi</p>
+            @elseif($itemId && !$locationId)
+                <p class="mt-1 text-xs text-blue-600">Pilih lokasi untuk melihat stok sistem</p>
+            @endif
         </div>
 
         {{-- System Quantity (Read-only) --}}
