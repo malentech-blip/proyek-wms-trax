@@ -18,6 +18,11 @@ class WipRecord extends Model
         return $this->belongsTo(MaterialRequest::class, 'mr_id');
     }
 
+    public function finishedGoods()
+    {
+        return $this->hasMany(FinishedGood::class, 'wip_id');
+    }
+
     protected static function boot()
   {
     parent::boot();
