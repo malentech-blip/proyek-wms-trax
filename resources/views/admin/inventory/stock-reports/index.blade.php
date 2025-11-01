@@ -11,15 +11,19 @@
             </div>
         </div>
         <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <select <option value="all">Filter: Location</option>
-                    @foreach ($stockReports as $stockReport)
-                    <option value="{{ $stockReport->id }}">{{ $stockReport->location->name }}</option>
+            <form method="GET" action="{{ route('admin.inventory.stock-reports') }}" class="flex items-center space-x-4">
+                <select name="location_id" onchange="this.form.submit()" class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="all" {{ request('location_id') == 'all' || !request('location_id') ? 'selected' : '' }}>All Locations</option>
+                    @foreach ($locations as $location)
+                        <option value="{{ $location->id }}" {{ request('location_id') == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
                     @endforeach
                 </select>
-                <input type="text" name="search" placeholder="Cari Nama atau Item..."
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama atau Item..."
                     class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 w-64">
-            </div>
+                <button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                    Search
+                </button>
+            </form>
             <a href="{{ route('admin.inventory.stock-reports.export') }}"
                 class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center">
                 Print Stock Report (Excel)
