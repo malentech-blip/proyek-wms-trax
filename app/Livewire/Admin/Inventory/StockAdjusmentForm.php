@@ -29,7 +29,11 @@ class StockAdjusmentForm extends Component
 
     public function updatedItemId(): void
     {
-        $this->loadSystemQuantity();
+        // Reset location when item changes
+        $this->locationId = '';
+        $this->systemQuantity = 0;
+        $this->physicalQuantity = 0;
+        $this->difference = 0;
     }
 
     public function updatedLocationId(): void
@@ -45,6 +49,22 @@ class StockAdjusmentForm extends Component
     public function calculateDifference(): void
     {
         $this->difference = $this->physicalQuantity - $this->systemQuantity;
+    }
+
+    public function getAvailableLocationsProperty()
+    {
+        if (!$this->itemId) {
+            return collect([]);
+        }
+
+        $inventoryLocations = Inventory::where('item_id', $this->itemId)
+            ->with('location')
+            ->get()
+            ->pluck('location')
+            ->filter()
+            ->unique('id');
+
+        return $inventoryLocations->sortBy('name')->values();
     }
 
     public function loadSystemQuantity(): void
@@ -155,6 +175,9 @@ class StockAdjusmentForm extends Component
             'difference',
             'reason',
         ]);
+
+        // Emit event to reset Select2
+        $this->dispatch('form-reset');
     }
 
     public function render()
