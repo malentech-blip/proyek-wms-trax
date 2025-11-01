@@ -9,6 +9,6 @@ class StockAdjusmentController extends Controller
 {
     public function index(): View
     {
-        return view('admin.inventory.stock-adjustmen.index');
+        return view('admin.inventory.stock-adjustment.index');
     }
 }

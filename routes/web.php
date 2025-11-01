@@ -263,10 +263,10 @@ Route::middleware('auth')->group(function () {
                             StockReportController::class,
                             'export',
                         ])->name('stock-reports.export');
-                        Route::get('/stock-adjustmen', [
+                        Route::get('/stock-adjustment', [
                             StockAdjusmentController::class,
                             'index',
-                        ])->name('stock-adjustmen');
+                        ])->name('stock-adjustment');
                         Route::get('/move-stock', [
                             MoveStockController::class,
                             'index',
