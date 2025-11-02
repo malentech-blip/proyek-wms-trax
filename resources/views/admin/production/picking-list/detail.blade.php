@@ -113,7 +113,7 @@
                             Picked
                         </button>
                     @endif
-                    @if ($mr->status == 'Picked' || $mr->status == 'Delivered to WIP')
+                    @if ($mr->status == 'Picked')
                         <button type="button" {{ $mr->status == 'Requested' ? 'disabled' : '' }}
                             onclick="showConfirmDeliverWIPModal()" id="btnConfirmDeliverWIP"
                             class="w-max border-none rounded py-2 px-4 

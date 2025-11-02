@@ -12,6 +12,7 @@ use App\Models\SuperAdmin\MasterData\Location;
 use App\Models\SuperAdmin\MasterData\Pallet;
 use App\Models\SuperAdmin\MasterData\Rack;
 use App\Services\AccurateService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +43,7 @@ class FinishedGoodsController extends Controller
     $racks = Rack::all();
     $pallets = Pallet::all();
     $items = Item::where("item_type", "Finished Good")->get();
-    return view('admin.production.finished-goods.detail', compact('wipRecord','finishedGood', 'mrId', 'locations', 'racks', 'pallets', 'items'));
+    return view('admin.production.finished-goods.detail', compact('wipRecord', 'finishedGood', 'mrId', 'locations', 'racks', 'pallets', 'items'));
   }
 
   public function storeFG(Request $request)
@@ -82,8 +83,8 @@ class FinishedGoodsController extends Controller
       return response()->json([
         'status'  => 'success',
         'message' => 'Finished goods berhasil dibuat.',
-        'data'    => $finishedGood 
-      ], 201); 
+        'data'    => $finishedGood
+      ], 201);
     } catch (\Throwable $th) {
       DB::rollBack();
       return response()->json([
@@ -93,10 +94,11 @@ class FinishedGoodsController extends Controller
     }
   }
 
-  public function storingInv(int $fg_id) {
+  public function storingInv(int $fg_id)
+  {
     $finished_good = FinishedGood::where("id", $fg_id)->first();
 
-    if(!$finished_good) {
+    if (!$finished_good) {
       return response()->json([
         'status'  => 'error',
         'message' => 'Finished Good tidak ditemukan.',
@@ -104,12 +106,42 @@ class FinishedGoodsController extends Controller
     }
 
     $finished_good->update([
-      "stored_at" => now()
+      "stored_at" => now(),
+      "status"    => "Stored"
     ]);
 
     return response()->json([
       'status' => 'success',
       'message' => 'Finished Good updated to stored.',
     ], 200);
+  }
+
+  public function getRacksByLocation($locationId)
+  {
+    $racks = Rack::where('location_id', $locationId)->get(['id', 'code']);
+    return response()->json($racks);
+  }
+
+  public function getPalletsByRack($rackId)
+  {
+    $pallets = Pallet::where('rack_id', $rackId)->get(['id', 'code']);
+    return response()->json($pallets);
+  }
+
+  public function printLabel(int $labelId)
+  {
+    $itemLabels = ProductionItemLabel::where('id', $labelId)->get();
+
+    $widthInPoints = 52 * 2.83465;
+    $heightInPoints = 32 * 2.83465;
+
+    $pdf = Pdf::setOptions([
+      'isHtml5ParserEnabled' => true, // wajib agar SVG kebaca
+      'isPhpEnabled' => true,
+      'isRemoteEnabled' => true,
+    ])
+      ->loadView('admin.production.finished-goods.label-pdf', compact('itemLabels'))
+      ->setPaper([0, 0, $widthInPoints, $heightInPoints]);
+    return $pdf->stream('labels-' . $labelId . '.pdf');
   }
 }
