@@ -7,12 +7,15 @@ use App\Models\Admin\Inventory\StockAdjustment;
 use App\Models\SuperAdmin\MasterData\Item;
 use App\Models\SuperAdmin\MasterData\Location;
 use App\Notifications\StockAdjustmentNotification;
+use App\Traits\LogsActivity;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Component;
 
 class StockAdjusmentForm extends Component
 {
+    use LogsActivity;
+
     public string $itemId = '';
 
     public string $locationId = '';
@@ -53,7 +56,7 @@ class StockAdjusmentForm extends Component
 
     public function getAvailableLocationsProperty()
     {
-        if (!$this->itemId) {
+        if (! $this->itemId) {
             return collect([]);
         }
 
@@ -102,9 +105,10 @@ class StockAdjusmentForm extends Component
                 ->where('location_id', $this->locationId)
                 ->first();
 
-            if (!$inventory) {
+            if (! $inventory) {
                 session()->flash('error', 'Stok tidak ditemukan untuk item dan lokasi yang dipilih.');
                 DB::rollBack();
+
                 return;
             }
 
@@ -125,7 +129,7 @@ class StockAdjusmentForm extends Component
             ]);
 
             // If approval is not required, update inventory immediately
-            if (!$this->requiresApproval) {
+            if (! $this->requiresApproval) {
                 $inventory->update(['quantity' => $this->physicalQuantity]);
                 $stockAdjustment->update([
                     'approved_by' => auth()->id(),
@@ -154,6 +158,10 @@ class StockAdjusmentForm extends Component
 
             DB::commit();
 
+            // Log activity
+            $action = $this->requiresApproval ? 'Create Stock Adjustment (Pending Approval)' : 'Create Stock Adjustment (Approved)';
+            $this->logActivity($action, 'Inventory');
+
             session()->flash('success', $this->requiresApproval
                 ? 'Penyesuaian stok berhasil diajukan. Menunggu persetujuan Super Admin.'
                 : 'Penyesuaian stok berhasil diselesaikan.');
@@ -161,7 +169,7 @@ class StockAdjusmentForm extends Component
             $this->resetForm();
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Gagal menyimpan penyesuaian stok: ' . $e->getMessage());
+            session()->flash('error', 'Gagal menyimpan penyesuaian stok: '.$e->getMessage());
         }
     }
 
