@@ -38,6 +38,11 @@ use App\Http\Controllers\SuperAdmin\SupplierController;
 // Controller Admin Production
 use App\Http\Controllers\SuperAdmin\SystemLogController;
 use App\Http\Controllers\SuperAdmin\UserController;
+// Controller Admin Outbound
+use App\Http\Controllers\Admin\Outbound\DashboardController as OutboundDashboardController;
+use App\Http\Controllers\Admin\Outbound\DeliveryOrderController;
+
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -68,6 +73,8 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.inventory.dashboard');
         } elseif ($user->hasRole('Admin Production')) {
             return redirect()->route('admin.production.dashboard');
+        } elseif ($user->hasRole('Admin Outbound')) {
+            return redirect()->route('admin.outbound.dashboard');
         }
         // Tambahkan elseif untuk role lain di sini
         elseif ($user->hasRole('Super Admin')) {
@@ -227,6 +234,8 @@ Route::middleware('auth')->group(function () {
                     });
 
                 // Rute untuk admin lain (Inventory, Production, Outbound) akan ditambahkan di sini
+
+                // Rute Inventory
                 Route::prefix('inventory')
                     ->name('inventory.')
                     ->middleware('can:manage_inventory')
@@ -393,6 +402,25 @@ Route::middleware('auth')->group(function () {
                             'store',
                         ])->name('rejects-production.store');
                     });
+
+                Route::prefix('outbound')
+                ->name('outbound.')
+                ->group(function () {
+                    Route::get('/dashboard', [
+                        OutboundDashboardController::class,
+                        'index',
+                    ])->name('dashboard');
+
+                    Route::resource('delivery-orders', DeliveryOrderController::class)->only(['index']);
+                    Route::post('delivery-orders/{do_id}/mark-delivered', [
+                        DeliveryOrderController::class,
+                        'markDelivered',
+                    ])->name('delivery-orders.mark-delivered');
+                    Route::get('delivery-orders/{do_id}/print-pdf', [
+                        DeliveryOrderController::class,
+                        'printPDF',
+                    ])->name('delivery-orders.print-pdf');
+                });
             });
     });
 });
