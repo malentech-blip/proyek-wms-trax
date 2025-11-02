@@ -6,11 +6,13 @@ use App\Models\Admin\Inbound\ItemLabel;
 use App\Models\Admin\Inventory\Inventory;
 use App\Models\SuperAdmin\MasterData\Location;
 use App\Models\SuperAdmin\MasterData\Rack;
+use App\Traits\LogsActivity;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class RawMaterialTable extends Component
 {
+    use LogsActivity;
     use WithPagination;
 
     public string $search = '';
@@ -190,6 +192,9 @@ class RawMaterialTable extends Component
             ]);
 
             \Illuminate\Support\Facades\DB::commit();
+
+            // Log activity
+            $this->logActivity('Move Stock', 'Inventory');
 
             session()->flash('success', 'Stok berhasil dipindahkan.');
             $this->closeModal();
