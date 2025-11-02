@@ -8,15 +8,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\Inbound\ItemLabel;
 use App\Models\Admin\Inventory\Inventory;
 use App\Models\Admin\Production\ProductionItemLabel;
-use App\Models\SuperAdmin\MasterData\Item;
+use App\Traits\LogsActivity;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    use LogsActivity;
+
     public function index(): View
     {
+        $this->logActivity('View Inventory Dashboard', 'Inventory');
         // Calculate Total Stock
         $totalStock = Inventory::sum('quantity');
 
@@ -49,6 +52,7 @@ class DashboardController extends Controller
             if ($totalStockValue > 0) {
                 return round(($value / $totalStockValue) * 100, 2);
             }
+
             return 0;
         });
 
@@ -68,6 +72,8 @@ class DashboardController extends Controller
 
     public function scanQR(Request $request): JsonResponse
     {
+        $this->logActivity('Scan QR Code', 'Inventory');
+
         $qrCode = $request->input('qr_code');
 
         if (empty($qrCode)) {

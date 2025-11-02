@@ -50,8 +50,8 @@ class DatabaseSeeder extends Seeder
             PickingListSeeder::class,
 
             // Eleventh: WIP Records (requires material requests)
-            WipRecordSeeder::class,
-
+            // WipRecordSeeder::class,
+            
             // Twelfth: Finished Goods (requires WIP records and items)
             FinishedGoodSeeder::class,
 
