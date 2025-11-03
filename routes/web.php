@@ -41,6 +41,8 @@ use App\Http\Controllers\SuperAdmin\UserController;
 // Controller Admin Outbound
 use App\Http\Controllers\Admin\Outbound\DashboardController as OutboundDashboardController;
 use App\Http\Controllers\Admin\Outbound\DeliveryOrderController;
+use App\Http\Controllers\Admin\Outbound\SalesOrderController;
+use App\Http\Controllers\Admin\Outbound\PackingListController;
 
 
 use Illuminate\Http\Request;
@@ -410,6 +412,22 @@ Route::middleware('auth')->group(function () {
                         OutboundDashboardController::class,
                         'index',
                     ])->name('dashboard');
+
+                    // Sales Orders
+                    Route::get('sales-orders', [
+                        SalesOrderController::class,
+                        'index',
+                    ])->name('sales-orders.index');
+                    Route::get('sales-orders/{so_id}/create-packing-list', [
+                        SalesOrderController::class,
+                        'createPackingList',
+                    ])->name('sales-orders.create-packing-list');
+
+                    // Packing Lists (create form from SO)
+                    Route::get('packing-lists/create', [
+                        PackingListController::class,
+                        'create',
+                    ])->name('packing-lists.create');
 
                     Route::resource('delivery-orders', DeliveryOrderController::class)->only(['index']);
                     Route::post('delivery-orders/{do_id}/mark-delivered', [
