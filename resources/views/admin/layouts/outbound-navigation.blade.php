@@ -6,6 +6,10 @@
                 <span class="font-bold text-lg text-gray-800">TRAX WMS</span>
             </div>
         </a>
+        <a href="{{ route('admin.outbound.sales-orders.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.outbound.sales-orders.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Sales Orders</span>
+        </a>
     </div>
 
     <nav class="flex-1 px-3 py-4 space-y-2">
