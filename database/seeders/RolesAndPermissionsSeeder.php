@@ -80,6 +80,13 @@ class RolesAndPermissionsSeeder extends Seeder
       ['name' => 'Admin Production', 'password' => Hash::make('password'), 'role' => 'Admin Production']
     );
     $productionUser->assignRole('Admin Production');
+
+    $outboundUser = User::firstOrCreate(
+      ['email' => 'outbound@example.com'],
+      ['name' => 'Admin Outbound', 'password' => Hash::make('password'), 'role' => 'Admin Outbound']
+    );
+    $outboundUser->assignRole('Admin Outbound');
+
      
     // Hapus user 'sales' jika sudah tidak diperlukan lagi atau sesuaikan
     // User::where('email', 'sales@example.com')->delete();
