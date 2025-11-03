@@ -43,7 +43,12 @@ class StockReportTable extends Component
         }
 
         $stockReports = $query->paginate(15);
-        $locations = Location::all();
+        $locations = Location::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get()
+            ->unique('name')
+            ->values();
 
         return view('livewire.admin.inventory.stock-report-table', [
             'stockReports' => $stockReports,

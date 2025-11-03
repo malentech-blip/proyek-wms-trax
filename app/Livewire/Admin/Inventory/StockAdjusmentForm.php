@@ -190,8 +190,15 @@ class StockAdjusmentForm extends Component
 
     public function render()
     {
-        $items = Item::where('is_active', true)->orderBy('item_name')->get();
-        $locations = Location::orderBy('name')->get();
+        $items = Item::where('is_active', true)
+            ->orderBy('item_name')
+            ->get();
+        $locations = Location::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get()
+            ->unique('name')
+            ->values();
 
         return view('livewire.admin.inventory.stock-adjusment-form', [
             'items' => $items,

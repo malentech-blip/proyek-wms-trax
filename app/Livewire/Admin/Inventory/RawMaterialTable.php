@@ -292,8 +292,19 @@ class RawMaterialTable extends Component
             }
         }
 
-        $locations = Location::all();
-        $racks = Rack::all();
+        $locations = Location::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get()
+            ->unique('name')
+            ->values();
+
+        $racks = Rack::query()
+            ->select(['id', 'code', 'location_id'])
+            ->orderBy('code')
+            ->get()
+            ->unique('code')
+            ->values();
 
         // Get unique batch numbers for filter (from item_labels where item_type is Raw Material)
         $itemModel = \App\Models\SuperAdmin\MasterData\Item::class;
@@ -309,7 +320,12 @@ class RawMaterialTable extends Component
 
         // Get racks for selected location in modal
         if ($this->newLocationId && $this->newLocationId !== 'all' && $this->newLocationId !== '') {
-            $availableRacks = Rack::where('location_id', $this->newLocationId)->get();
+            $availableRacks = Rack::query()
+                ->where('location_id', $this->newLocationId)
+                ->orderBy('code')
+                ->get()
+                ->unique('code')
+                ->values();
         } else {
             $availableRacks = $racks;
         }
