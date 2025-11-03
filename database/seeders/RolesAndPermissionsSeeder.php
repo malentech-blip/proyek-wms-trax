@@ -80,8 +80,7 @@ class RolesAndPermissionsSeeder extends Seeder
       ['name' => 'Admin Production', 'password' => Hash::make('password'), 'role' => 'Admin Production']
     );
     $productionUser->assignRole('Admin Production');
-    $this->command->info('Super Admin user created/found and role assigned.');
-
+     
     // Hapus user 'sales' jika sudah tidak diperlukan lagi atau sesuaikan
     // User::where('email', 'sales@example.com')->delete();
   }
