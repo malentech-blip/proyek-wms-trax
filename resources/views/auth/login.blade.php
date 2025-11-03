@@ -31,7 +31,7 @@
                 
                 <div class="text-center mb-8">
                     <a href="/" class="inline-block">
-                        <img src="{{ asset('images/logo-baru.jpeg') }}" alt="Akaroa Logo" class="w-20 mx-auto">
+                        <h1 class="text-2xl font-bold text-gray-800">TRAX WMS</h1>
                     </a>
                 </div>
 
