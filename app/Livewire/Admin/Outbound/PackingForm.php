@@ -17,16 +17,15 @@ use Livewire\Component;
 class PackingForm extends Component
 {
     public int $soId;
-
     public array $scanned = [];
-
-    #[Validate('required|string')]
     public string $qrCode = '';
-
     public ?array $salesOrder = null;
 
-    public function mount(int $soId, AccurateService $accurate): void
-    {
+    public $showManualItemModal = false; 
+    public $manualItemCode;
+    public $manualQuantity;
+
+    public function mount(int $soId, AccurateService $accurate): void {
         $this->soId = $soId;
         try {
             $this->salesOrder = $accurate->getSalesOrderDetail($soId) ?: null;
@@ -36,33 +35,28 @@ class PackingForm extends Component
         }
     }
 
-    public function render()
-    {
+    public function render() {
         return view('livewire.admin.outbound.packing-form');
     }
 
-    public function scanFinishedGood(): void
-    {
+    public function scanFinishedGood(): void {
         $this->validateOnly('qrCode');
 
         $qr = trim($this->qrCode);
         $this->qrCode = '';
 
         $label = ProductionItemLabel::query()->where('qr_code', $qr)->first();
-        if (! $label) {
+        if (!$label) {
             $this->addError('qrCode', 'QR code tidak ditemukan.');
 
             return;
         }
-
         $finishedGood = FinishedGood::query()->with(['item', 'production_item_label'])->where('label_id', $label->id)->first();
         if (! $finishedGood) {
             $this->addError('qrCode', 'Finished Good untuk QR ini tidak valid.');
 
             return;
         }
-
-        // Prevent duplicates
         foreach ($this->scanned as $row) {
             if ((int) $row['label_id'] === (int) $label->id) {
                 $this->addError('qrCode', 'Label sudah dipindai.');
@@ -80,6 +74,10 @@ class PackingForm extends Component
         ];
     }
 
+    public function openQrScanner() {
+        $this->dispatch('open-qr-scanner');
+    }
+
     public function removeScanned(int $index): void
     {
         if (isset($this->scanned[$index])) {
@@ -87,8 +85,7 @@ class PackingForm extends Component
         }
     }
 
-    public function savePackingList(AccurateService $accurate)
-    {
+    public function savePackingList(AccurateService $accurate){
         if (empty($this->scanned)) {
             $this->addError('qrCode', 'Belum ada item yang dipindai.');
 
@@ -135,5 +132,15 @@ class PackingForm extends Component
 
             return redirect()->route('admin.outbound.delivery-orders.index');
         });
+    }
+
+    public function openManualItemModal() {
+        $this->showManualItemModal = true;
+        $this->manualItemCode = '';
+        $this->manualQuantity = 1;
+    }
+
+    public function closeManualItemModal() {
+        $this->showManualItemModal = false;
     }
 }
