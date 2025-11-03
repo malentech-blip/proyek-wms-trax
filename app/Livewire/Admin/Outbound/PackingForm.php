@@ -116,10 +116,8 @@ class PackingForm extends Component
                 'status' => 'WIP',
             ]);
 
-            // Update SO to Packed
             $localSO->update(['status' => 'Packed']);
 
-            // Trigger Delivery Order creation (initial status In Delivery, date today)
             DeliveryOrder::create([
                 'packing_list_id' => $packingList->id,
                 'delivered_no' => 'DO-'.now()->format('Ymd-His'),

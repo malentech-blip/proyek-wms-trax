@@ -15,11 +15,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // First: Roles and Permissions (required for users)
             RolesAndPermissionsSeeder::class,
-
+            
             // Second: Master Data (locations, items, suppliers, customers)
             LocationSeeder::class,
+            RackSeeder::class,
+            PalletSeeder::class,
             ItemsSeeder::class, // Initial hardcoded items
-            ItemSeeder::class, // Additional factory-generated items
+            // ItemSeeder::class, 
             SupplierSeeder::class,
             CustomerSeeder::class,
 
@@ -44,28 +46,29 @@ class DatabaseSeeder extends Seeder
             InventoriesSeeder::class,
 
             // Ninth: Material Requests
-            MaterialRequestSeeder::class,
+            // MaterialRequestSeeder::class,
 
             // Tenth: Picking Lists (requires material requests and items)
-            PickingListSeeder::class,
+            // PickingListSeeder::class,
 
             // Eleventh: WIP Records (requires material requests)
             // WipRecordSeeder::class,
             
             // Twelfth: Finished Goods (requires WIP records and items)
-            FinishedGoodSeeder::class,
+            // FinishedGoodSeeder::class,
 
             // Thirteenth: Production Item Labels
-            ProductionItemLabelSeeder::class,
+            // ProductionItemLabelSeeder::class,
 
             // Fourteenth: Reject Production (requires WIP records)
-            RejectProductionSeeder::class,
+            // RejectProductionSeeder::class,
 
             // Fifteenth: Stock Movements (requires items)
             StockMovementSeeder::class,
 
             // Last: Audit Logs (requires users)
             AuditLogSeeder::class,
+
         ]);
     }
 }

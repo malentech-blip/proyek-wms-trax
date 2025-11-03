@@ -3,6 +3,7 @@
     <x-slot name="header">
         Timeline Production (Finished Goods)
     </x-slot>
+
     
     <x-production.tabs-production :mrId="$mrId" :wip="$wipRecord" />
     <div class="bg-white rounded-xl shadow-sm mt-8">
@@ -19,10 +20,12 @@
                     Store to Inventory
                 </button>
             @endif
-            <button type="button" onclick="window.open('{{ route('admin.production.finished-goods.print-label', $finishedGood->production_item_label->id) }}', '_blank')"
-                class="w-max border-none rounded py-2 px-4 bg-blue-500 text-white hover:bg-blue-600">
-                Cetak Production Label
-            </button>
+            @if ($finishedGood)
+              <button type="button" onclick="window.open('{{ route('admin.production.finished-goods.print-label', $finishedGood->production_item_label->id) }}', '_blank')"
+                  class="w-max border-none rounded py-2 px-4 bg-blue-500 text-white hover:bg-blue-600">
+                  Cetak Production Label
+              </button>
+            @endif
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
