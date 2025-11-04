@@ -67,7 +67,7 @@ class PickingListsController extends Controller
       ->select(
         'picking_lists.*',
         'items.item_name as item_name',
-        'items.item_name as item_code',
+        'items.item_code as item_code',
         'racks.code as rack_code',
         'inventories.quantity as item_quantity',
         'locations.name as location_name',

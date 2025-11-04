@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="space-y-6">
-        <h2 class="text-2xl font-semibold">Ringkasan Tugas Inbound</h2>
+        <h2 class="text-2xl font-semibold">Ringkasan Tugas Production</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm">
@@ -22,7 +22,7 @@
         </div>
 
         <div class="bg-white p-6 rounded-xl shadow-sm">
-            <h3 class="font-semibold">Chart: Inbound per Supplier</h3>
+            <h3 class="font-semibold">Chart: Production per Supplier</h3>
             <div class="mt-4 h-64 bg-gray-100 flex items-center justify-center">
                 <p class="text-gray-400">[Placeholder untuk Chart]</p>
             </div>

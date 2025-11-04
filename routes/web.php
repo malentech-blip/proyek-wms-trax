@@ -390,6 +390,9 @@ Route::middleware('auth')->group(function () {
                             FinishedGoodsController::class,
                             'storingInv',
                         ])->name('finished-goods.storing');
+                        Route::get('/finished-goods/racks/by-location/{locationId}', [FinishedGoodsController::class, 'getRacksByLocation'])->name("finished-goods.racks.by-location");
+                        Route::get('/finished-goods/pallets/by-rack/{rackId}', [FinishedGoodsController::class, 'getPalletsByRack'])->name("finished-goods.pallets.by-rack");
+                        Route::get('/finished-goods/print-label/{labelId}', [FinishedGoodsController::class, 'printLabel'])->name("finished-goods.print-label");
                         // rejects production
                         Route::get('/rejects-production', [
                             RejectsProductionController::class,

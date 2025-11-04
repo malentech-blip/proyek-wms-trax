@@ -54,7 +54,7 @@ class WIPController extends Controller
       ]);
 
       MaterialRequest::where('id', $request->mr_id)->update([
-        'status' => 'Delievered to WIP',
+        'status' => 'Delivered to WIP',
       ]);
 
       return response()->json([

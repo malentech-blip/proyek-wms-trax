@@ -4,9 +4,10 @@
         Timeline Production (Finished Goods)
     </x-slot>
 
+    
     <x-production.tabs-production :mrId="$mrId" :wip="$wipRecord" />
     <div class="bg-white rounded-xl shadow-sm mt-8">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b flex items-center gap-3">
             @if ($wipRecord && !$finishedGood)
                 <button onclick="showAddFinishedModal()"
                     class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
@@ -18,6 +19,12 @@
                     class="w-max border-none rounded py-2 px-4 bg-orange-500 text-white hover:bg-orange-600">
                     Store to Inventory
                 </button>
+            @endif
+            @if ($finishedGood)
+              <button type="button" onclick="window.open('{{ route('admin.production.finished-goods.print-label', $finishedGood->production_item_label->id) }}', '_blank')"
+                  class="w-max border-none rounded py-2 px-4 bg-blue-500 text-white hover:bg-blue-600">
+                  Cetak Production Label
+              </button>
             @endif
         </div>
         <div class="overflow-x-auto">
@@ -32,6 +39,8 @@
                         <th class="p-4 text-left font-semibold text-gray-600">Location</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Rack</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Pallet</th>
+                        <th class="p-4 text-left font-semibold text-gray-600">Status</th>
+                        <th class="p-4 text-left font-semibold text-gray-600">QR Code</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -46,6 +55,10 @@
                             </td>
                             <td class="p-4 text-gray-500">{{ $finishedGood->production_item_label->rack->code }}</td>
                             <td class="p-4 text-gray-500">{{ $finishedGood->production_item_label->pallet->code }}</td>
+                            <td class="p-4 text-gray-500">{{ $finishedGood->status }}</td>
+                            <td class="p-4 text-gray-500">
+                                {!! QrCode::size(70)->generate($finishedGood->production_item_label->qr_code) !!}
+                            </td>
                         </tr>
                     @else
                         <tr>
@@ -129,23 +142,18 @@
                                     <div>
                                         <label for="rack_id"
                                             class="block text-sm font-medium text-gray-700">Rack</label>
-                                        <select required name="rack_id" id="rack_id"
+                                        <select required name="rack_id" id="rack_id" disabled
                                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
                                             <option value="">Choose Rack</option>
-                                            @foreach ($racks as $rack)
-                                                <option value="{{ $rack->id }}">{{ $rack->code }}</option>
-                                            @endforeach
                                         </select>
+
                                     </div>
                                     <div>
                                         <label for="pallet_id"
                                             class="block text-sm font-medium text-gray-700">Pallet</label>
-                                        <select required name="pallet_id" id="pallet_id"
+                                        <select required name="pallet_id" id="pallet_id" disabled
                                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
                                             <option value="">Choose Pallet</option>
-                                            @foreach ($pallets as $pallet)
-                                                <option value="{{ $pallet->id }}">{{ $pallet->code }}</option>
-                                            @endforeach
                                         </select>
                                     </div>
                                     <div>
@@ -394,4 +402,70 @@
             );
         }
     }
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const locationSelect = document.getElementById('location_id');
+        const rackSelect = document.getElementById('rack_id');
+        const palletSelect = document.getElementById('pallet_id');
+
+        // Event listener untuk Location
+        locationSelect.addEventListener('change', function() {
+            const locationId = this.value;
+
+            // Reset rack dan pallet
+            rackSelect.innerHTML = '<option value="">Choose Rack</option>';
+            palletSelect.innerHTML = '<option value="">Choose Pallet</option>';
+            rackSelect.disabled = true;
+            palletSelect.disabled = true;
+
+            if (locationId) {
+                // Fetch racks berdasarkan location_id
+                fetch(`/admin/production/finished-goods/racks/by-location/${locationId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(rack => {
+                            const option = document.createElement('option');
+                            option.value = rack.id;
+                            option.textContent = rack.code;
+                            rackSelect.appendChild(option);
+                        });
+                        rackSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching racks:', error);
+                        alert('Gagal memuat data rack');
+                    });
+            }
+        });
+
+        // Event listener untuk Rack
+        rackSelect.addEventListener('change', function() {
+            const rackId = this.value;
+
+            // Reset pallet
+            palletSelect.innerHTML = '<option value="">Choose Pallet</option>';
+            palletSelect.disabled = true;
+
+            if (rackId) {
+                // Fetch pallets berdasarkan rack_id
+                fetch(`/admin/production/finished-goods/pallets/by-rack/${rackId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(pallet => {
+                            const option = document.createElement('option');
+                            option.value = pallet.id;
+                            option.textContent = pallet.code;
+                            palletSelect.appendChild(option);
+                        });
+                        palletSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching pallets:', error);
+                        alert('Gagal memuat data pallet');
+                    });
+            }
+        });
+    });
 </script>
