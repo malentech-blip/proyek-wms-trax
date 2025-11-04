@@ -431,6 +431,14 @@ Route::middleware('auth')->group(function () {
                         PackingListController::class,
                         'create',
                     ])->name('packing-lists.create');
+                    Route::post('packing-lists/add-temp-item', [
+                        PackingListController::class,
+                        'addTempItem',
+                    ])->name('packing-lists.add-temp-item');
+                    Route::post('packing-lists/validate-qr', [
+                        PackingListController::class,
+                        'validateQr',
+                    ])->name('packing-lists.validate-qr');
 
                     Route::resource('delivery-orders', DeliveryOrderController::class)->only(['index']);
                     Route::post('delivery-orders/{do_id}/mark-delivered', [

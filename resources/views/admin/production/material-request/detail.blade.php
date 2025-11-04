@@ -144,7 +144,6 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         const completeProductionForm = document.getElementById('completeProductionForm');
-
         if (completeProductionForm) {
             completeProductionForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
