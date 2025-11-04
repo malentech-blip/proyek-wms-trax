@@ -29,7 +29,7 @@ class FinishedGoodsController extends Controller
 
   public function detail(int $mr_id)
   {
-    $wipRecord = WipRecord::where('id', $mr_id)->first();
+    $wipRecord = WipRecord::where('mr_id', $mr_id)->first();
     if ($wipRecord) {
       $finishedGood = FinishedGood::with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->where('wip_id', $wipRecord->id)->first();
     } else {
