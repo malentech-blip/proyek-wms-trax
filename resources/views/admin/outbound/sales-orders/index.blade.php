@@ -30,7 +30,9 @@
                 @forelse ($salesOrders as $so)
                     <tr class="border-t">
                         <td class="px-4 py-3 font-medium">{{ $so['number'] ?? '-' }}</td>
-                        {{-- <td class="px-4 py-3">{{ \Illuminate\Support\Carbon::parse($so['transDate'] ?? null)->format('Y-m-d') }}</td> --}}
+                        <td class="px-4 py-3">
+                          {{ $so['transDate'] ?? "-" }}
+                        </td>
                         <td class="px-4 py-3">{{ $so['customer']['name'] ?? '-' }}</td>
                         <td class="px-4 py-3">{{ number_format($so['totalAmount'] ?? 0, 0, ',', '.') }}</td>
                         <td class="px-4 py-3">

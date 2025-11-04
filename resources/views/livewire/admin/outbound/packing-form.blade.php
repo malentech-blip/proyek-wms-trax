@@ -6,7 +6,7 @@
                 <div><span class="text-gray-500">SO Number:</span> <span
                         class="font-medium">{{ $salesOrder['number'] ?? '-' }}</span></div>
                 <div><span class="text-gray-500">Date:</span> <span
-                        class="font-medium">{{ \Illuminate\Support\Carbon::parse($salesOrder['transDate'] ?? null)->format('Y-m-d') }}</span>
+                        class="font-medium">{{ $salesOrder['transDate'] }}</span>
                 </div>
                 <div><span class="text-gray-500">Customer:</span> <span
                         class="font-medium">{{ $salesOrder['customer']['name'] ?? '-' }}</span></div>
