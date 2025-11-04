@@ -103,7 +103,7 @@ class PickingListsController extends Controller
         return response()->json([
           'success' => false,
           'message' => '❌ QR Code tidak ditemukan dalam daftar picking list.',
-          'data' => $itemLabel
+          'data' => $itemPickingList
         ], 404);
       }
       return response()->json([

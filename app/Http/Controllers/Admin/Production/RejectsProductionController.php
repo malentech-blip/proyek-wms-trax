@@ -26,7 +26,7 @@ class RejectsProductionController extends Controller
 
   public function detail(int $mr_id)
   {
-    $wipRecord = WipRecord::where('id', $mr_id)->first();
+    $wipRecord = WipRecord::where('mr_id', $mr_id)->first();
     if($wipRecord) {
       $rejectProduction = RejectProduction::where('wip_id', $wipRecord->id)->first();
     } else {

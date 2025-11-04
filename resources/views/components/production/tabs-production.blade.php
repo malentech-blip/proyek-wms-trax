@@ -12,7 +12,7 @@
         $isHaveRejectsProduction = $wip && $wip->status === 'Completed' && $wip->rejected_qty > 0;
 
         if (!$isMRActive && !$isPLActive && !$isWIPActive && !$isFinishedGoods && !$isRejectsProduction) {
-            $isMRActive = true; // Set MR sebagai default aktif jika tidak ada yang cocok
+            $isMRActive = true; 
         }
     @endphp
 
