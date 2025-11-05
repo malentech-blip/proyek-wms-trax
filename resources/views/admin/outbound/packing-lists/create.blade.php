@@ -1,4 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <x-app-layout>
     <x-slot name="header">
         Create Packing List
@@ -23,7 +24,11 @@
                     $items = $salesOrder['detailItem'] ?? [];
                 @endphp
                 @foreach ($items as $item)
-                    <div class="grid grid-cols-4 gap-5 mt-10">
+                    <div class="grid grid-cols-5 gap-5 mt-10">
+                        <div class="flex flex-col gap-2">
+                            <p class="text-gray-500 text-sm">Item No</p>
+                            <p class="font-medium">{{ $item['item']['no'] }}</p>
+                        </div>
                         <div class="flex flex-col gap-2">
                             <p class="text-gray-500 text-sm">Item Name</p>
                             <p class="font-medium">{{ $item['detailName'] }}</p>
