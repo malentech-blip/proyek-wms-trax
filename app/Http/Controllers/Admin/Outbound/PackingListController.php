@@ -61,14 +61,11 @@ class PackingListController extends Controller
     }
 
     // 2. Cari Finished Good terkait dengan Label
-    $fg = FinishedGood::with('item')
-      ->where('id', $label->finished_good_id)
-      ->first();
+    $fg = FinishedGood::with('production_item_label')->find($label->id);
 
     if (!$fg) {
       return response()->json(['success' => false, 'message' => 'Item terkait tidak ditemukan.'], 404);
     }
-
     // 3. Cek Status Finished Good
     if ($fg->status !== 'Stored') {
       return response()->json(['success' => false, 'message' => "Item ini berstatus {$fg->status} dan tidak bisa di-scan."], 400);
@@ -79,7 +76,6 @@ class PackingListController extends Controller
       'item_name' => $fg->item->item_name,
       'quantity' => $label->quantity,
       'qr_code' => $qrCode,
-      'is_manual' => false,
     ];
 
     return response()->json([
