@@ -326,7 +326,7 @@
                         icon: "success"
                     }).then(() => {
                         hideAddFinishedModal();
-                        window.location.reload();
+                        // window.location.reload();
                     })
                 } catch (error) {
                     Swal.fire(

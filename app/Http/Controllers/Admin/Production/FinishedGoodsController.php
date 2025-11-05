@@ -46,7 +46,7 @@ class FinishedGoodsController extends Controller
     return view('admin.production.finished-goods.detail', compact('wipRecord', 'finishedGood', 'mrId', 'locations', 'racks', 'pallets', 'items'));
   }
 
-  public function storeFG(Request $request)
+  public function storeFG(Request $request, AccurateService $accurate)
   {
     $validated_data = $request->validate([
       "wip_id"      => ["required", "string", "exists:wip_records,id"],
@@ -59,6 +59,25 @@ class FinishedGoodsController extends Controller
     ]);
 
     try {
+      $item = Item::where("id", $validated_data["item_id"])->first();
+      $itemCode = $item->item_code;
+
+      $fgSlip = $accurate->findFinishedGoodSlipByItemNo(100004);
+
+      if ($fgSlip) {
+        return response()->json([
+          'status'  => 'success',
+          'message' => 'Finished goods berhasil dibuat.',
+          'data'    => $fgSlip
+        ], 200);
+      } else {
+        return response()->json([
+          'status'  => 'success',
+          'message' => 'Finished goods berhasil dibuat.',
+          'data'    => $fgSlip
+        ], 200);
+      }
+
       DB::beginTransaction();
       $label = ProductionItemLabel::create([
         "item_id"     => $validated_data['item_id'],
