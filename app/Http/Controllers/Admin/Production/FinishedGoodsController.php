@@ -58,27 +58,32 @@ class FinishedGoodsController extends Controller
       "batch_no"    => ["required", "string", "max:50"]
     ]);
 
+    DB::beginTransaction();
     try {
-      $item = Item::where("id", $validated_data["item_id"])->first();
+      $item = Item::findOrFail($validated_data['item_id']);
+      $location = Location::findOrFail($validated_data['location_id']);
       $itemCode = $item->item_code;
+      $warehouseNo = $location->code;
 
-      $fgSlip = $accurate->findFinishedGoodSlipByItemNo(100004);
+      $fgData = [
+        "transDate" => now()->format('d/m/Y'),
+        "warehouseNo" => "GUDANG UTAMA",
+        "memo" => "Hasil produksi dari WIP #{$validated_data['wip_id']}",
+        "detailItem" => [
+          [
+            "itemNo" => $itemCode,
+            "quantity" => $validated_data["quantity"],
+            "unit" => $item->uom ?? "PCS",
+            "warehouseNo" => $warehouseNo,
+            "memo" => "Batch {$validated_data['batch_no']}"
+          ]
+        ]
+      ];
 
-      if ($fgSlip) {
-        return response()->json([
-          'status'  => 'success',
-          'message' => 'Finished goods berhasil dibuat.',
-          'data'    => $fgSlip
-        ], 200);
-      } else {
-        return response()->json([
-          'status'  => 'success',
-          'message' => 'Finished goods berhasil dibuat.',
-          'data'    => $fgSlip
-        ], 200);
-      }
 
-      DB::beginTransaction();
+      $fgSlip = $accurate->saveFinishedGoodSlip($fgData);
+
+
       $label = ProductionItemLabel::create([
         "item_id"     => $validated_data['item_id'],
         "qr_code"     => Str::uuid(),
@@ -102,7 +107,7 @@ class FinishedGoodsController extends Controller
       return response()->json([
         'status'  => 'success',
         'message' => 'Finished goods berhasil dibuat.',
-        'data'    => $finishedGood
+        'data'    => $fgSlip
       ], 201);
     } catch (\Throwable $th) {
       DB::rollBack();

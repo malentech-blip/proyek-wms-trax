@@ -12,8 +12,8 @@
                     <select name="so_id" id="so_id" class="border border-gray-200 rounded text-sm min-w-[300px]">
                         <option value="">Pilih Sales Order</option>
                         @foreach ($salesOrders as $so)
-                            <option value="{{ $so['id'] }}" {{ request('so_id') == $so['id'] ? 'selected' : '' }}>
-                                {{ $so['number'] }}</option>
+                            <option value="{{ $so->id }}" {{ request('so_id') == $so->id ? 'selected' : '' }}>
+                                {{ $so->so_number }}</option>
                         @endforeach
                     </select>
                 </div>

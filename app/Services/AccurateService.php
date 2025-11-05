@@ -226,6 +226,93 @@ class AccurateService
     }
   }
 
+  // Tambahkan di class AccurateService
+
+  /**
+   * Membuat Work Order baru di Accurate
+   */
+  public function saveWorkOrder(array $data)
+  {
+    try {
+      $response = $this->dataClient()->asForm()->post('/api/job-order/save.do', $data);
+
+      if ($response->failed()) {
+        Log::error('Gagal menyimpan Work Order', [
+          'data' => $data,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menyimpan Work Order: ' . ($response->json()['r']['message'] ?? 'Unknown error'));
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat menyimpan Work Order', [
+        'message' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
+
+  /**
+   * Cek apakah Work Order sudah ada berdasarkan nomor
+   */
+  public function findWorkOrderByNumber(string $number)
+  {
+    try {
+      $params = [
+        'fields' => 'id,number,transDate,item,quantity,status',
+        'filter.number.op' => 'EQUAL',
+        'filter.number.val' => $number,
+        'sp.pageSize' => 1
+      ];
+
+      $response = $this->dataClient()->get('/api/job-order/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mencari Work Order', [
+          'number' => $number,
+          'response' => $response->json()
+        ]);
+        return null;
+      }
+
+      $data = $response->json()['d'] ?? [];
+      return !empty($data) ? $data[0] : null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mencari Work Order', [
+        'number' => $number,
+        'message' => $e->getMessage()
+      ]);
+      return null;
+    }
+  }
+
+  /**
+   * Get atau Create Work Order
+   * Jika WO sudah ada, return yang ada. Jika belum, buat baru.
+   */
+  public function getOrCreateWorkOrder(array $data)
+  {
+    try {
+      // Cek apakah WO sudah ada
+      $existingWO = $this->findWorkOrderByNumber($data['number']);
+
+      if ($existingWO) {
+        Log::info('Work Order sudah ada, menggunakan yang existing', ['number' => $data['number']]);
+        return $existingWO;
+      }
+
+      // Jika belum ada, buat baru
+      Log::info('Work Order belum ada, membuat baru', ['number' => $data['number']]);
+      return $this->saveWorkOrder($data);
+    } catch (\Exception $e) {
+      Log::error('Exception saat getOrCreateWorkOrder', [
+        'message' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
+
 
   public function getFinishedGoodSlips(Request $request)
   {
