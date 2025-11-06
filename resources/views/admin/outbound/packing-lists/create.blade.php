@@ -717,7 +717,7 @@
     async function submitPackingList() {
         const items = getStoredItems();
         const urlParams = new URLSearchParams(window.location.search);
-        const so_id = urlParams.get('so_id') || 'UNKNOWN';
+        const so_number = '{{ $salesOrder['number'] }}';
 
         closeSubmitModal();
 
@@ -730,9 +730,8 @@
         });
 
         const payload = {
-            so_id: so_id,
+            so_number: so_number,
             items: items,
-            // Tambahkan data lain yang mungkin dibutuhkan (e.g., operator_id, notes, dll.)
         };
 
         try {
