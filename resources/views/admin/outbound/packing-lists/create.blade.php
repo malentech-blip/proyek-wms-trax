@@ -57,8 +57,8 @@
             <div class="flex gap-3 items-start">
                 <form id="qrScanForm" class="flex-1 w-full">
                     <input type="text" id="qrCodeInput" name="qr_code"
-                        placeholder="Tulis QR Code/Scan QR code di sini" 
-                        class="border rounded-lg px-3 py-2 w-full flex-1" required/>
+                        placeholder="Tulis QR Code/Scan QR code di sini"
+                        class="border rounded-lg px-3 py-2 w-full flex-1" required />
                 </form>
                 <button type="button"
                     class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1">
@@ -129,6 +129,7 @@
                                 <span class="font-medium text-gray-500">QR Code:</span>
                                 <span id="confirm_qr_code" class="font-semibold text-gray-800 break-all"></span>
                             </div>
+                            <span id="confirm_fg_id" class="hidden font-semibold text-gray-800 break-all"></span>
                             <div class="flex justify-between text-sm mt-1">
                                 <span class="font-medium text-gray-500">Item Name:</span>
                                 <span id="confirm_item_name" class="font-semibold text-blue-600"></span>
@@ -142,7 +143,10 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" id="confirmAddItemBtn"
-                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-b
+                        const transformedData = {
+                        ...itemData,
+                        fg_id: String(itemData.fg_id),}ase font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">
                         Ya, Tambahkan
                     </button>
                     <button type="button" id="cancelScanConfirmBtn"
@@ -258,8 +262,8 @@
 
 <script>
     // --- KONFIGURASI ENDPOINTS & STORAGE ---
-    const API_VALIDATE_QR = '/admin/outbound/packing-lists/validate-qr'; 
-    const API_ADD_ITEM = '/admin/outbound/packing-lists/add-temp-item'; 
+    const API_VALIDATE_QR = '/admin/outbound/packing-lists/validate-qr';
+    const API_ADD_ITEM = '/admin/outbound/packing-lists/add-temp-item';
     const STORAGE_KEY = 'temp_scanned_items';
     const CSRF_TOKEN = '{{ csrf_token() }}';
 
@@ -404,8 +408,13 @@
         const confirmBtn = document.getElementById('confirmAddItemBtn');
         confirmBtn.itemData = itemData;
 
+        const transformedData = {
+          ...itemData,
+          fg_id: String(itemData.fg_id),
+        }
         // Isi detail di modal
         document.getElementById('confirm_qr_code').textContent = itemData.qr_code;
+        document.getElementById('confirm_fg_id').textContent = itemData.fg_id;
         document.getElementById('confirm_item_name').textContent = itemData.item_name;
         document.getElementById('confirm_quantity').textContent = itemData.quantity;
 
@@ -420,7 +429,7 @@
 
         const payload = {
             so_id: so_id,
-            ...itemData, 
+            ...itemData,
         };
 
 
@@ -497,12 +506,12 @@
             });
             return;
         }
-        closeManualModal(); 
+        closeManualModal();
         const itemData = {
-            fg_id: fgId, 
+            fg_id: fgId,
             quantity: quantity,
         }
-        await addItemToPackingList(itemData); 
+        await addItemToPackingList(itemData);
     }
 
 
@@ -514,7 +523,7 @@
         qrScanForm.addEventListener('submit', function(e) {
             e.preventDefault();
             validateQrCode(qrCodeInput.value);
-            qrCodeInput.value = ''; 
+            qrCodeInput.value = '';
         })
 
 
@@ -528,7 +537,11 @@
         document.getElementById('confirmAddItemBtn').addEventListener('click', function(e) {
             const itemData = e.currentTarget.itemData;
             if (itemData) {
-                addItemToPackingList(itemData);
+              const transformedData = {
+                ...itemData,
+                fg_id: String(itemData.fg_id),
+              }
+                addItemToPackingList(transformedData);
             }
         });
 

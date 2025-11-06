@@ -80,25 +80,31 @@ class PackingListController extends Controller
       ], 404);
     }
 
-    $matchedItem = collect($soDetail['detailItem'])->first(function ($detail) use ($itemCode) {
-      return isset($detail['item']['no']) && $detail['item']['no'] === $itemCode;
-    });
+    // $matchedItem = collect($soDetail['detailItem'])->first(function ($detail) use ($itemCode) {
+    //   return isset($detail['item']['no']) && $detail['item']['no'] === $itemCode;
+    // });
 
-    if (!$matchedItem) {
-      return response()->json([
-        'success' => false,
-        'message' => "Item dengan kode {$itemCode} tidak termasuk dalam Sales Order ini."
-      ], 400);
-    }
+    // if (!$matchedItem) {
+    //   return response()->json([
+    //     'success' => false,
+    //     'message' => "Item dengan kode {$itemCode} tidak termasuk dalam Sales Order ini."
+    //   ], 400);
+    // }
 
-    if ($fgInventory->quantity < $matchedItem['quantity']) {
-      return response()->json(['success' => false, 'message' => 'Qty di inventory kurang']);
-    }
+    // if ($fgInventory->quantity < $matchedItem['quantity']) {
+    //   return response()->json(['success' => false, 'message' => 'Qty di inventory kurang']);
+    // }
 
+    // $itemData = [
+    //   'item_id' => $fg->id, // ID Finished Good
+    //   'item_name' => $fg->item->item_name,
+    //   'quantity' => $matchedItem['quantity'],
+    //   'qr_code' => $qrCode,
+    // ];
     $itemData = [
-      'item_id' => $fg->id, // ID Finished Good
+      'fg_id' => $fg->id, // ID Finished Good
       'item_name' => $fg->item->item_name,
-      'quantity' => $matchedItem['quantity'],
+      'quantity' => $fgInventory->quantity,
       'qr_code' => $qrCode,
     ];
 
