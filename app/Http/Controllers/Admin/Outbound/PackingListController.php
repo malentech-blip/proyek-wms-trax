@@ -34,13 +34,16 @@ class PackingListController extends Controller
     ]);
 
     $fg = FinishedGood::where("id", $validated['fg_id'])->first();
+    $label = ProductionItemLabel::with(['location'])->where("id", $fg->label_id)->first();
 
     $mockItemData = [
       'so_id' => $validated['so_id'],
       'fg_id' => $validated['fg_id'],
+      'fg_code' => $fg->item->item_code,
       'fg_name' => $fg->item->item_name,
       'quantity' => $validated['quantity'],
-      'qr_code' => "tes"
+      'quantity_ready' => $fg->quantity,
+      'location' => $label->location->name
     ];
     return response()->json([
       'success' => true,
@@ -57,7 +60,7 @@ class PackingListController extends Controller
 
     $qrCode = $validated['qr_code'];
 
-    $label = ProductionItemLabel::where('qr_code', $qrCode)->first();
+    $label = ProductionItemLabel::with(['location'])->where('qr_code', $qrCode)->first();
     if (!$label) {
       return response()->json(['success' => false, 'message' => 'QR Code tidak ditemukan.'], 404);
     }
@@ -68,7 +71,7 @@ class PackingListController extends Controller
       return response()->json(['success' => false, 'message' => 'Item terkait tidak ditemukan.'], 404);
     }
 
-    $fgInventory = Inventory::where('item_id', $fg->id)->first();
+    $fgInventory = Inventory::where('item_id', $fg->item_id)->first();
     $item = Item::where('id', $fg->item_id)->first();
     $itemCode = $item->item_code;
 
@@ -103,9 +106,12 @@ class PackingListController extends Controller
     // ];
     $itemData = [
       'fg_id' => $fg->id, // ID Finished Good
+      'item_code' => $fg->item->item_code,
       'item_name' => $fg->item->item_name,
-      'quantity' => $fgInventory->quantity,
+      'quantity' => $fg->quantity,
+      'quantity_inventory' => $fg->quantity,
       'qr_code' => $qrCode,
+      'location' => $label->location->name
     ];
 
     return response()->json([

@@ -5,8 +5,6 @@
         Create Packing List
     </x-slot>
 
-    {{-- <livewire:admin.outbound.packing-form :so-id="$salesOrder['id'] ?? (int) request()->get('so_id')" /> --}}
-
     <div class="space-y-6">
         <div class="bg-white p-6 rounded-xl shadow-sm">
             <h2 class="text-lg font-semibold mb-4">Sales Order</h2>
@@ -76,39 +74,37 @@
                     Tambah Item Manual
                 </button>
             </div>
-
-
             <div class="overflow-x-auto">
                 <table class="min-w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="text-left px-4 py-2">QR</th>
-                            <th class="text-left px-4 py-2">Item</th>
-                            <th class="text-left px-4 py-2">Qty</th>
-                            <th class="text-left px-4 py-2">Aksi</th>
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Code</th>
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Item</th>
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Qty Out</th>
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Qty Ready</th>
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Lokasi</th>
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- @forelse ($scanned as $idx => $row)
-                            <tr class="border-t">
-                                <td class="px-4 py-2 text-xs text-gray-600">{{ $row['qr_code'] }}</td>
-                                <td class="px-4 py-2">{{ $row['item_name'] }}</td>
-                                <td class="px-4 py-2">{{ $row['quantity'] }}</td>
-                                <td class="px-4 py-2">
-                                    <button class="px-2 py-1 text-sm rounded border"
-                                        wire:click="removeScanned({{ $idx }})">Hapus</button>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-4 py-6 text-center text-gray-500">Belum ada item.</td>
-                            </tr>
-                        @endforelse --}}
+
                     </tbody>
                 </table>
             </div>
+            <button type="button" id="openSubmitModalBtn"
+                class="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150">
+                Buat Packing List
+            </button>
         </div>
     </div>
+
+    {{-- MODAL SCAN CONFIRMATION --}}
     <div id="scanConfirmModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
         role="dialog" aria-modal="true">
         <div id="scanModalOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
@@ -121,8 +117,7 @@
                         Konfirmasi Item Scan
                     </h3>
                     <div class="mt-4 space-y-3">
-                        <p class="text-sm text-gray-700">Item berikut terdeteksi. Apakah Anda ingin menambahkannya ke
-                            Packing List?</p>
+                        <p class="text-sm text-gray-700">Item berikut terdeteksi. Silakan verifikasi kuantitas.</p>
 
                         <div class="bg-gray-100 p-3 rounded-lg border">
                             <div class="flex justify-between text-sm">
@@ -130,23 +125,32 @@
                                 <span id="confirm_qr_code" class="font-semibold text-gray-800 break-all"></span>
                             </div>
                             <span id="confirm_fg_id" class="hidden font-semibold text-gray-800 break-all"></span>
+                            <input type="hidden" id="original_quantity" value="">
                             <div class="flex justify-between text-sm mt-1">
                                 <span class="font-medium text-gray-500">Item Name:</span>
                                 <span id="confirm_item_name" class="font-semibold text-blue-600"></span>
                             </div>
                             <div class="flex justify-between text-sm mt-1">
-                                <span class="font-medium text-gray-500">Kuantitas:</span>
-                                <span id="confirm_quantity" class="font-semibold text-green-600"></span>
+                                <span class="font-medium text-gray-500">Kuantitas Asli QR:</span>
+                                <span id="display_original_quantity" class="font-semibold text-gray-600"></span>
                             </div>
                         </div>
+                        <div class="pt-3">
+                            <label for="scan_input_quantity" class="block text-sm font-medium text-gray-700">
+                                Kuantitas Item
+                            </label>
+                            <input type="number" id="scan_input_quantity" min="1"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="Masukkan kuantitas aktual">
+                            <p class="text-xs text-red-500 mt-1 hidden" id="qty_error_message">Kuantitas tidak boleh
+                                melebihi kuantitas asli.</p>
+                        </div>
+
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" id="confirmAddItemBtn"
-                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-b
-                        const transformedData = {
-                        ...itemData,
-                        fg_id: String(itemData.fg_id),}ase font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">
                         Ya, Tambahkan
                     </button>
                     <button type="button" id="cancelScanConfirmBtn"
@@ -158,6 +162,7 @@
         </div>
     </div>
 
+    {{-- MODAL TAMBAH ITEM MANUAL --}}
     <div id="addManualItemModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
         role="dialog" aria-modal="true">
 
@@ -220,6 +225,40 @@
             </div>
         </div>
     </div>
+
+    {{-- MODAL SUBMIT --}}
+    <div id="submitPackingListModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
+        <div id="submitModalOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Konfirmasi Pembuatan Packing List
+                    </h3>
+                    <div class="mt-4 space-y-3">
+                        <p class="text-sm text-gray-700">Anda akan membuat Packing List berdasarkan **<span
+                                id="totalItemsCount">0</span>** item yang sudah di-scan.</p>
+                        <p class="text-sm font-semibold text-red-600" id="emptyListWarning" style="display:none;">
+                            Daftar item masih kosong! Anda harus menambahkan minimal 1 item.</p>
+                        <p class="text-sm text-gray-700">Pastikan semua data sudah benar sebelum melanjutkan.</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirmSubmitBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        Ya, Buat Packing List
+                    </button>
+                    <button type="button" id="cancelSubmitBtn"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>
 
 
@@ -264,10 +303,10 @@
     // --- KONFIGURASI ENDPOINTS & STORAGE ---
     const API_VALIDATE_QR = '/admin/outbound/packing-lists/validate-qr';
     const API_ADD_ITEM = '/admin/outbound/packing-lists/add-temp-item';
+    const API_SUBMIT_PACKING_LIST = '/admin/outbound/packing-lists/store'; // <--- ENDPOINT BARU
     const STORAGE_KEY = 'temp_scanned_items';
     const CSRF_TOKEN = '{{ csrf_token() }}';
 
-    // --- UTILITIES & MODAL MANUAL ---
     function getStoredItems() {
         const stored = localStorage.getItem(STORAGE_KEY);
         return stored ? JSON.parse(stored) : [];
@@ -301,7 +340,6 @@
         document.body.style.overflow = '';
     }
 
-    // --- LOGIKA TABEL & REMOVE ---
     window.removeTempItem = function(index) {
         if (!confirm('Anda yakin ingin menghapus item ini?')) return;
         let items = getStoredItems();
@@ -319,6 +357,63 @@
         });
     }
 
+    window.updateItemQuantity = function(index, inputElement) {
+        let items = getStoredItems();
+        let item = items[index];
+        const newQuantity = parseInt(inputElement.value);
+        const qtyReady = parseInt(item.quantity_ready);
+
+        // 1. Validasi Angka Positif
+        if (isNaN(newQuantity) || newQuantity <= 0) {
+            // Kembalikan ke nilai sebelumnya jika input tidak valid
+            inputElement.value = item.quantity;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kuantitas Gagal Update',
+                text: 'Kuantitas harus berupa angka positif.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return;
+        }
+
+        // 2. Validasi Batas Qty Ready
+        if (newQuantity > qtyReady) {
+            // Kembalikan ke nilai batas maksimal Qty Ready
+            inputElement.value = qtyReady;
+            item.quantity = qtyReady; // Update di data
+            setStoredItems(items); // Simpan perubahan
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Kuantitas Melebihi Batas!',
+                text: `Kuantitas (${newQuantity}) tidak boleh melebihi stok siap (${qtyReady}). Kuantitas disetel ke ${qtyReady}.`,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000
+            });
+            return;
+        }
+
+        // 3. Update dan Simpan Jika Valid
+        item.quantity = newQuantity;
+        setStoredItems(items);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil Update!',
+            text: `Kuantitas untuk ${item.fg_name} diubah menjadi ${newQuantity}.`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+    };
+
+    // --- FUNGSI REVISI: RENDER TABEL ---
     function renderScannedTable() {
         const items = getStoredItems();
         const tbody = document.querySelector('.overflow-x-auto table tbody');
@@ -326,30 +421,48 @@
 
         tbody.innerHTML = '';
         if (items.length === 0) {
+            // Colspan diubah menjadi 7 (QR, Code, Item, Qty Out, Qty Ready, Lokasi, Aksi)
             tbody.innerHTML =
-                `<tr><td colspan="4" class="px-4 py-6 text-center text-gray-500">Belum ada item.</td></tr>`;
+                `<tr><td colspan="7" class="px-4 py-6 text-center text-gray-500">Belum ada item.</td></tr>`;
             return;
         }
 
         items.forEach((item, index) => {
+            const fgCodeDisplay = item?.fg_code ?? '-';
+            const qtyReadyDisplay = item?.quantity_ready ?? item
+                ?.quantity;
+            const locationDisplay = item?.location ?? 'Unknown';
+
             const row = tbody.insertRow();
             row.classList.add('border-t');
+
             row.innerHTML = `
-                <td class="px-4 py-2 text-xs text-gray-600">tess</td>
-                <td class="px-4 py-2">${item?.fg_name}</td>
-                <td class="px-4 py-2">${item?.quantity}</td>
-                <td class="px-4 py-2">
-                    <button type="button" 
-                            onclick="removeTempItem(${index})" 
-                            class="px-2 py-1 text-sm rounded border text-red-600 border-red-300 hover:bg-red-50">
-                        Hapus
-                    </button>
-                </td>
-            `;
+            <td class="px-4 py-2 text-xs">${fgCodeDisplay}</td>
+            <td class="px-4 py-2">${item?.fg_name}</td>
+            
+            <td class="px-2 py-2 w-32">
+                <input type="number" 
+                       value="${item?.quantity}" 
+                       min="1" 
+                       max="${qtyReadyDisplay}"
+                       onchange="updateItemQuantity(${index}, this)"
+                       class="font-semibold text-blue-600 border border-gray-300 rounded-md shadow-sm w-full py-1 px-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+            </td>
+
+            <td class="px-4 py-2 text-green-600">${qtyReadyDisplay}</td>
+            <td class="px-4 py-2 text-sm">${locationDisplay}</td>
+            <td class="px-4 py-2">
+                <button type="button" 
+                        onclick="removeTempItem(${index})" 
+                        class="px-2 py-1 text-sm rounded border text-red-600 border-red-300 hover:bg-red-50">
+                    Hapus
+                </button>
+            </td>
+        `;
         });
     }
 
-    // --- FUNGSI UTAMA (SCAN QR) ---
     async function validateQrCode(qrCode) {
         const urlParams = new URLSearchParams(window.location.search);
         const so_id = urlParams.get('so_id') || 'UNKNOWN';
@@ -379,8 +492,7 @@
             });
 
             const result = await response.json();
-            Swal.close(); // Tutup loading
-
+            Swal.close();
             if (!response.ok) {
                 Swal.fire({
                     icon: 'error',
@@ -390,7 +502,6 @@
                 return;
             }
 
-            // Jika valid, tampilkan modal konfirmasi
             showConfirmModal(result.data);
 
         } catch (error) {
@@ -403,35 +514,14 @@
         }
     }
 
-    function showConfirmModal(itemData) {
-        // Simpan data item ke tombol konfirmasi agar bisa diakses saat diklik
-        const confirmBtn = document.getElementById('confirmAddItemBtn');
-        confirmBtn.itemData = itemData;
-
-        const transformedData = {
-          ...itemData,
-          fg_id: String(itemData.fg_id),
-        }
-        // Isi detail di modal
-        document.getElementById('confirm_qr_code').textContent = itemData.qr_code;
-        document.getElementById('confirm_fg_id').textContent = itemData.fg_id;
-        document.getElementById('confirm_item_name').textContent = itemData.item_name;
-        document.getElementById('confirm_quantity').textContent = itemData.quantity;
-
-        openScanConfirmModal();
-    }
-
-
     async function addItemToPackingList(itemData) {
         const urlParams = new URLSearchParams(window.location.search);
         const so_id = urlParams.get('so_id') || 'UNKNOWN';
-
 
         const payload = {
             so_id: so_id,
             ...itemData,
         };
-
 
         Swal.fire({
             title: 'Menambahkan Item...',
@@ -440,7 +530,6 @@
             allowEscapeKey: false
         });
         closeScanConfirmModal();
-
         try {
             const response = await fetch(API_ADD_ITEM, {
                 method: 'POST',
@@ -451,7 +540,6 @@
                 },
                 body: JSON.stringify(payload)
             });
-
             const result = await response.json();
             if (!response.ok) {
                 Swal.fire({
@@ -489,7 +577,6 @@
         }
     }
 
-
     async function addTempItem() {
         const itemSelect = document.getElementById('fg_id');
         const quantityInput = document.getElementById('quantity');
@@ -514,6 +601,33 @@
         await addItemToPackingList(itemData);
     }
 
+    function showConfirmModal(itemData) {
+        // Ambil elemen yang diperlukan
+        const confirmBtn = document.getElementById('confirmAddItemBtn');
+        const originalQtyInput = document.getElementById('original_quantity');
+        const displayOriginalQty = document.getElementById('display_original_quantity');
+        const inputQty = document.getElementById('scan_input_quantity');
+        const qtyError = document.getElementById('qty_error_message');
+
+        // Simpan data item ke tombol konfirmasi (untuk diakses nanti)
+        confirmBtn.itemData = itemData;
+
+        // Isi detail di modal
+        document.getElementById('confirm_qr_code').textContent = itemData.qr_code;
+        document.getElementById('confirm_fg_id').textContent = itemData.fg_id;
+        document.getElementById('confirm_item_name').textContent = itemData.item_name;
+
+        // Isi dan tampilkan kuantitas asli
+        originalQtyInput.value = itemData.quantity; // Hidden field
+        displayOriginalQty.textContent = itemData.quantity; // Display
+
+        // Atur input field kuantitas ke nilai default QR dan batasan MAX
+        inputQty.value = itemData.quantity;
+        inputQty.max = itemData.quantity; // Batasi max input agar tidak melebihi kuantitas asli
+        qtyError.classList.add('hidden'); // Sembunyikan pesan error awal
+
+        openScanConfirmModal();
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         renderScannedTable();
@@ -523,8 +637,8 @@
         qrScanForm.addEventListener('submit', function(e) {
             e.preventDefault();
             validateQrCode(qrCodeInput.value);
-            qrCodeInput.value = '';
-        })
+            qrCodeInput.value = ''
+        });
 
 
         document.getElementById('openAddItemManualModalBtn').addEventListener('click', openManualModal);
@@ -535,23 +649,150 @@
         document.getElementById('scanModalOverlay').addEventListener('click', closeScanConfirmModal);
 
         document.getElementById('confirmAddItemBtn').addEventListener('click', function(e) {
-            const itemData = e.currentTarget.itemData;
+            let itemData = e.currentTarget.itemData;
+            const inputQtyElement = document.getElementById('scan_input_quantity');
+            const originalQty = parseInt(document.getElementById('original_quantity').value);
+            const inputQty = parseInt(inputQtyElement.value);
+            const qtyError = document.getElementById('qty_error_message');
+
+            if (isNaN(inputQty) || inputQty <= 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Kuantitas',
+                    text: 'Kuantitas harus berupa angka positif.'
+                });
+                return;
+            }
+
+            if (inputQty > originalQty) {
+                qtyError.textContent =
+                    `Kuantitas tidak boleh melebihi kuantitas asli (${originalQty}).`;
+                qtyError.classList.remove('hidden');
+                return;
+            } else {
+                qtyError.classList.add('hidden');
+            }
+
             if (itemData) {
-              const transformedData = {
-                ...itemData,
-                fg_id: String(itemData.fg_id),
-              }
+                itemData.quantity = inputQty;
+                const transformedData = {
+                    ...itemData,
+                    fg_id: String(itemData.fg_id),
+                }
                 addItemToPackingList(transformedData);
             }
         });
+    });
 
-        document.getElementById('openCameraBtn').addEventListener('click', function() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Fitur Kamera',
-                text: 'Implementasi kamera (misalnya menggunakan Instascan atau browser API) akan dilakukan di sini. Setelah scan berhasil, panggil validateQrCode(hasil_qr).',
-            });
+
+
+
+    // SUBMIT PACKINGLIST
+    function openSubmitModal() {
+        const items = getStoredItems();
+        const countDisplay = document.getElementById('totalItemsCount');
+        const warning = document.getElementById('emptyListWarning');
+        const confirmBtn = document.getElementById('confirmSubmitBtn');
+
+        countDisplay.textContent = items.length;
+
+        if (items.length === 0) {
+            warning.style.display = 'block';
+            confirmBtn.disabled = true;
+        } else {
+            warning.style.display = 'none';
+            confirmBtn.disabled = false;
+        }
+
+        submitPackingListModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSubmitModal() {
+        submitPackingListModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+
+    async function submitPackingList() {
+        const items = getStoredItems();
+        const urlParams = new URLSearchParams(window.location.search);
+        const so_id = urlParams.get('so_id') || 'UNKNOWN';
+
+        closeSubmitModal();
+
+        Swal.fire({
+            title: 'Memproses Packing List...',
+            text: 'Sedang mengirim data item ke server.',
+            didOpen: () => Swal.showLoading(),
+            allowOutsideClick: false,
+            allowEscapeKey: false
         });
 
+        const payload = {
+            so_id: so_id,
+            items: items,
+            // Tambahkan data lain yang mungkin dibutuhkan (e.g., operator_id, notes, dll.)
+        };
+
+        try {
+            const response = await fetch(API_SUBMIT_PACKING_LIST, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Membuat PL!',
+                    text: result.message || 'Terjadi kesalahan saat menyimpan data Packing List.'
+                });
+                return;
+            }
+
+            // Sukses: Bersihkan local storage dan tampilkan pesan sukses
+            localStorage.removeItem(STORAGE_KEY);
+            renderScannedTable(); // Perbarui tampilan tabel kosong
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Packing List Berhasil Dibuat!',
+                text: `Nomor PL: ${result.packing_list_number || 'Tersimpan'}`,
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Opsional: Redirect ke halaman detail/daftar Packing List
+                // window.location.href = result.redirect_url || '/admin/outbound/packing-lists'; 
+            });
+
+
+        } catch (error) {
+            console.error('Error saat submit Packing List:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error Koneksi',
+                text: 'Gagal terhubung ke server untuk menyelesaikan proses.'
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('openSubmitModalBtn').addEventListener('click', openSubmitModal);
+        document.getElementById('cancelSubmitBtn').addEventListener('click', closeSubmitModal);
+        document.getElementById('submitModalOverlay').addEventListener('click', closeSubmitModal);
+        document.getElementById('confirmSubmitBtn').addEventListener('click', submitPackingList);
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeManualModal();
+                closeScanConfirmModal();
+                closeSubmitModal();
+            }
+        });
     });
 </script>
