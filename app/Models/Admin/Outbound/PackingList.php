@@ -16,7 +16,7 @@ class PackingList extends Model
         'status',
     ];
 
-    public function salesOrder()
+    public function sales_order()
     {
         return $this->belongsTo(SalesOrder::class);
     }
