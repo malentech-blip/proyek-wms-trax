@@ -313,7 +313,7 @@
                         class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors">
                         Batal
                     </button>
-                    <button onclick="processTransit({{ $pl->id }})"
+                    <button onclick="processTransit()"
                         class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm">
                         Ya, Lanjutkan
                     </button>
@@ -326,18 +326,14 @@
 
 <script>
     function openDetailModal(packingListId) {
-        console.log('Opening modal for ID:', packingListId);
-
         const modal = document.getElementById('detail-modal');
         const loadingState = document.getElementById('loading-modal');
         const contentState = document.getElementById('content-modal');
 
-        // Show modal with loading state
         modal.classList.remove('hidden');
         loadingState.classList.remove('hidden');
         contentState.classList.add('hidden');
 
-        // Prevent body scroll
         document.body.style.overflow = 'hidden';
 
         const url = `/admin/outbound/packing-lists/${packingListId}/items`;
@@ -350,9 +346,6 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Data received:', data);
-
-                // Update header info
                 document.getElementById('packing-list-number-title').textContent = data.pl_number || 'N/A';
                 document.getElementById('so-number-info').textContent = data.so_number || 'N/A';
                 document.getElementById('customer-name-info').textContent = data.customer_name || 'N/A';
@@ -403,14 +396,10 @@
                     </tr>
                 `;
                 }
-
-                // Show content
                 loadingState.classList.add('hidden');
                 contentState.classList.remove('hidden');
             })
             .catch(error => {
-                console.error('Error:', error);
-
                 document.getElementById('packing-list-number-title').textContent = 'Error';
                 const tableBody = document.getElementById('items-table-body');
                 tableBody.innerHTML = `
@@ -425,26 +414,22 @@
                         </div>
                     </td>
                 </tr>
-            `;
-
+            `
                 loadingState.classList.add('hidden');
                 contentState.classList.remove('hidden');
             });
     }
-
     function closeDetailModal() {
         const modal = document.getElementById('detail-modal');
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
     }
-
     // Close on overlay click
     document.getElementById('detail-modal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeDetailModal();
         }
     });
-
     // Close on ESC key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -455,8 +440,6 @@
         }
     });
 </script>
-
-
 
 <script>
     let currentTransitId = null;
@@ -475,8 +458,7 @@
         currentTransitId = null;
     }
 
-    function processTransit(packingListId) {
-        // Show loading
+    function processTransit() {
         Swal.fire({
             title: 'Memproses...',
             html: 'Sedang memproses packing list ke tahap transit',
@@ -488,7 +470,7 @@
         });
 
         // Kirim request ke backend
-        fetch(`/admin/outbound/packing-lists/${packingListId}/transit`, {
+        fetch(`/admin/outbound/packing-lists/${currentTransitId}/transit`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -504,9 +486,6 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Transit success:', data);
-
-                // Show success message
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
@@ -518,7 +497,6 @@
                         confirmButton: 'px-5 py-2.5 rounded-lg font-medium shadow-sm'
                     }
                 }).then(() => {
-                    // Reload halaman untuk update data
                     window.location.reload();
                 });
             })
@@ -540,7 +518,6 @@
             });
     }
 
-    // Close modal on ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const transitModal = document.getElementById('transit-modal');
@@ -550,10 +527,10 @@
         }
     });
 
-    // Close on overlay click
     document.getElementById('transit-modal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeTransitModal();
         }
     });
 </script>
+
