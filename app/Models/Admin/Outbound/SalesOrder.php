@@ -9,14 +9,10 @@ class SalesOrder extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'so_number',
-        'status',
-        'sync_status',
-    ];
+    protected $guarded = [];
 
     public function packingLists()
     {
-        return $this->hasMany(PackingList::class);
+        return $this->hasMany(PackingList::class, 'so_id');
     }
 }
