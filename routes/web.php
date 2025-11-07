@@ -292,6 +292,8 @@ Route::middleware('auth')->group(function () {
               ProductionDashboardController::class,
               'index',
             ])->name('dashboard');
+            Route::get('dashboard/chart-data', [ProductionDashboardController::class, 'getChartData'])
+              ->name('dashboard.chart-data');
 
             // material request
             Route::get('/material-request', [
@@ -331,10 +333,12 @@ Route::middleware('auth')->group(function () {
               PickingListsController::class,
               'detail',
             ])->name('picking-list.detail');
+            
             Route::post('/picking-list/scan', [
               PickingListsController::class,
               'scanItem',
             ])->name('picking-list.scan-item');
+
             Route::post('/picking-list/confirm-pick', [
               PickingListsController::class,
               'confirmPick',
@@ -454,7 +458,7 @@ Route::middleware('auth')->group(function () {
               PackingListController::class,
               'transit'
             ])->name('packing-lists.transit');
-            
+
             Route::get('transit-inventory', [
               TransitInventoryController::class,
               'index'
