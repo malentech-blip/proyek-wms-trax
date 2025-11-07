@@ -20,16 +20,16 @@
           <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Dashboard</span>
         </a>
         <a href="{{ route('admin.outbound.sales-orders.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.outbound.sales-orders.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
-           <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+           <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Sales Orders</span>
        </a>
 
         <a href="{{ route('admin.outbound.packing-lists.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.outbound.packing-lists.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
-            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Packing List</span>
         </a>
         <a href="{{ route('admin.outbound.transit-inventory.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.outbound.transit-inventory.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
-            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Transit Inventory</span>
         </a>
         <a href="{{ route('admin.outbound.delivery-orders.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.outbound.delivery-orders.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">

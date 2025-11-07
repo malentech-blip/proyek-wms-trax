@@ -58,7 +58,7 @@
                         placeholder="Tulis QR Code/Scan QR code di sini"
                         class="border rounded-lg px-3 py-2 w-full flex-1" required />
                 </form>
-                <button type="button"
+                <button type="button" id="openCameraScanBtn"
                     class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1">
                     <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -254,6 +254,49 @@
                     <button type="button" id="cancelSubmitBtn"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
                         Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+
+        {{-- [DIUBAH] ID Overlay diubah agar tidak duplikat --}}
+        <div id="scanModalBg" class="absolute inset-0"></div>
+
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+            <h2 class="text-lg font-semibold mb-4">Scan Item</h2>
+
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 id="scanModeTitle" class="font-medium text-gray-700">Mode Input Manual</h3>
+                {{-- <button id="toggleCameraBtn" type="button"
+                    class="px-3 py-1 text-sm text-white rounded-md transition duration-150 bg-blue-500 hover:bg-blue-600">
+                    <span>Gunakan Kamera</span>
+                </button> --}}
+            </div>
+
+            {{-- Form Input di dalam Modal --}}
+            <form id="scanForm" class="">
+                <input type="text" id="qrInput" placeholder="Scan QR Code di sini..."
+                    class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 p-2">
+                <div class="mt-4 flex justify-end gap-2">
+                    {{-- Tombol batal ini sekarang menggunakan data-action --}}
+                    <button type="button" data-action="close-scan-modal"
+                        class="px-4 py-2 bg-gray-200 rounded-md text-gray-700">Batal</button>
+                    <button type="submit" id="submitScanBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md">
+                        Verifikasi
+                    </button>
+                </div>
+            </form>
+
+            {{-- Kontainer Kamera --}}
+            <div id="cameraContainer" class="hidden">
+                <div id="reader" class="w-full" style="min-height: 250px;"></div>
+                <p class="text-xs text-center text-gray-500 mt-2">Arahkan kamera ke QR/Barcode</p>
+                <div class="mt-4 flex justify-end">
+                    <button type="button" id="cancelCameraBtn" class="px-4 py-2 bg-red-600 text-white rounded-md">
+                        Batalkan Scan
                     </button>
                 </div>
             </div>
@@ -684,9 +727,6 @@
         });
     });
 
-
-
-
     // SUBMIT PACKINGLIST
     function openSubmitModal() {
         const items = getStoredItems();
@@ -712,7 +752,6 @@
         submitPackingListModal.classList.add('hidden');
         document.body.style.overflow = '';
     }
-
 
     async function submitPackingList() {
         const items = getStoredItems();
@@ -793,5 +832,192 @@
                 closeSubmitModal();
             }
         });
+    });
+
+</script>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    // Pastikan ini dieksekusi setelah semua elemen DOM dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- Variabel State ---
+        let cameraMode = false;
+        let html5QrCode = null;
+
+        // --- Seleksi Elemen DOM (Modal Scan) ---
+        const scanModal = document.getElementById('scanModal');
+        const scanModalBg = document.getElementById('scanModalBg'); // <-- ID yang sudah diubah
+        const qrInput = document.getElementById('qrInput'); // Input *inside* modal
+        const scanForm = document.getElementById('scanForm');
+        const cameraContainer = document.getElementById('cameraContainer');
+        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+        const cancelCameraBtn = document.getElementById('cancelCameraBtn');
+        const submitScanBtn = document.getElementById('submitScanBtn'); // Tombol verifikasi di modal
+        const scanModeTitle = document.getElementById('scanModeTitle');
+
+        // --- Seleksi Elemen DOM (Tombol di Halaman Utama) ---
+        const globalScanBtn = document.getElementById('openGlobalScanBtn'); // Tombol "Scan Item" (hijau)
+        const openCameraBtn = document.getElementById('openCameraScanBtn'); // Tombol "Camera" (biru)
+
+        // --- Helper Functions ---
+
+        /** Mengatur tampilan modal berdasarkan state */
+        function updateModalView() {
+            scanForm.classList.add('hidden');
+            cameraContainer.classList.add('hidden');
+
+            if (cameraMode) {
+                cameraContainer.classList.remove('hidden');
+                scanModeTitle.textContent = 'Mode Kamera';
+                // toggleCameraBtn.textContent = 'Gunakan Input';
+                // toggleCameraBtn.classList.replace('bg-blue-500', 'bg-red-500');
+                // toggleCameraBtn.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
+            } else {
+                scanForm.classList.remove('hidden');
+                scanModeTitle.textContent = 'Mode Input Manual';
+                // toggleCameraBtn.textContent = 'Gunakan Kamera';
+                // toggleCameraBtn.classList.replace('bg-red-500', 'bg-blue-500');
+                // toggleCameraBtn.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
+            }
+        }
+
+        /** [DIUBAH] Membuka Modal - Mode Input */
+        function openInputModal() {
+            cameraMode = false;
+            qrInput.value = '';
+            updateModalView(); // Atur ke mode input
+            scanModal.classList.remove('hidden');
+            qrInput.focus();
+        }
+
+        /** [BARU] Membuka Modal - Mode Kamera */
+        function openCameraModal() {
+            cameraMode = true;
+            qrInput.value = '';
+            updateModalView(); // Atur ke mode camera
+            scanModal.classList.remove('hidden');
+            startScan(); // Langsung nyalakan kamera
+        }
+
+        /** Menutup Modal */
+        function closeModal() {
+            scanModal.classList.add('hidden');
+            stopScan(); // Selalu matikan kamera saat modal ditutup
+        }
+
+        /** Memulai Scan Kamera */
+        function startScan() {
+            if (html5QrCode) {
+                // Jika sudah ada, coba stop dulu
+                stopScan();
+            }
+
+            html5QrCode = new Html5Qrcode('reader');
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            };
+
+            html5QrCode.start(
+                { facingMode: 'environment' }, config,
+                (decodedText, decodedResult) => {
+                    // --- Sukses Scan Kamera ---
+                    stopScan();
+                    closeModal(); // 1. Tutup modal scan
+
+                    // 2. Panggil fungsi validasi global (dari skrip Anda yang lain)
+                    if (window.validateQrCode) {
+                        window.validateQrCode(decodedText);
+                        document.querySelector('#qrCodeInput').value = decodedText
+                    } else {
+                        console.error('Fungsi validateQrCode() tidak ditemukan.');
+                        alert('Error: Fungsi validasi tidak siap.');
+                    }
+                },
+                (errorMessage) => { /* Abaikan error 'not found' */ }
+            ).catch((err) => {
+                console.error('Gagal memulai kamera:', err);
+                alert('Gagal memulai kamera. Pastikan Anda memberi izin akses.');
+                stopScan(); // Gagal, kembali ke mode input
+            });
+        }
+
+        /** Menghentikan Scan Kamera */
+        function stopScan() {
+            if (html5QrCode) {
+                try {
+                    html5QrCode.stop().then(() => {
+                        html5QrCode = null;
+                    }).catch(err => {
+                        html5QrCode = null;
+                    });
+                } catch (e) {
+                    html5QrCode = null;
+                }
+            }
+            cameraMode = false; 
+        }
+
+        /** Mengganti Mode Kamera/Input */
+        function toggleCamera() {
+            cameraMode = !cameraMode;
+            if (cameraMode) {
+                startScan();
+            } else {
+                stopScan();
+            }
+            updateModalView();
+        }
+
+        /** Mengirim data scan (HANYA DARI INPUT FORM MODAL) */
+        function handleScanSubmit(event) {
+            if (event) event.preventDefault();
+
+            const qrCode = qrInput.value;
+            if (!qrCode) return;
+
+            closeModal(); // 1. Tutup modal scan
+
+            // 2. Panggil fungsi validasi global
+            if (window.validateQrCode) {
+                window.validateQrCode(qrCode);
+            } else {
+                console.error('Fungsi validateQrCode() tidak ditemukan.');
+                alert('Error: Fungsi validasi tidak siap.');
+            }
+        }
+
+        // --- Pendaftaran Event Listener ---
+
+        // 1. Tombol "Scan Item" (hijau) -> Buka Mode Input
+        if (globalScanBtn) {
+            globalScanBtn.addEventListener('click', openInputModal);
+        }
+
+        // 2. Tombol "Camera" (biru) -> Buka Mode Kamera
+        if (openCameraBtn) {
+            openCameraBtn.addEventListener('click', openCameraModal);
+        }
+
+        // 3. Tombol Batal di dalam modal
+        document.querySelectorAll('[data-action="close-scan-modal"]').forEach(button => {
+            button.addEventListener('click', closeModal);
+        });
+        
+        // 4. Klik overlay modal scan
+        if (scanModalBg) {
+            scanModalBg.addEventListener('click', closeModal);
+        }
+        
+        // 6. Tombol Batal saat kamera nyala
+        cancelCameraBtn.addEventListener('click', () => {
+             scanModal.classList.add('hidden');
+            stopScan(); // Selalu matikan kamera saat modal ditutup
+        }); 
+        
+        // 7. Submit form input di dalam modal
+        scanForm.addEventListener('submit', handleScanSubmit);
     });
 </script>
