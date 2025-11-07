@@ -34,20 +34,6 @@ class ItemLabelsSeeder extends Seeder
         DB::table('item_labels')->insert([
             // --- RAW MATERIAL (RM) - LOCATION 1 (Gudang Utama) ---
             [
-                'item_code' => 'RM-001',
-                'item_name' => 'Besi Batangan',
-                'goods_receipt_item_id' => 1,
-                'qr_code' => 'QR-RM001-B001',
-                'batch_no' => 'B001-20231001',
-                'location_id' => 1, 
-                'rack_id' => 1,
-                'pallet_id' => 1,
-                'quantity' => 500, // KG
-                'status' => 'Available',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
                 'item_code' => 'RM-002',
                 'item_name' => 'Plastik Granul',
                 'goods_receipt_item_id' => 2,
@@ -245,20 +231,6 @@ class ItemLabelsSeeder extends Seeder
                 'pallet_id' => 16,
                 'quantity' => 100, // SET
                 'status' => 'Available',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'item_code' => 'FG-001',
-                'item_name' => 'Botol Air Mineral 600ml',
-                'goods_receipt_item_id' => 16,
-                'qr_code' => 'QR-FG001-B018',
-                'batch_no' => 'B018-PROD20231104',
-                'location_id' => 1,
-                'rack_id' => 6,
-                'pallet_id' => 18,
-                'quantity' => 900, // PCS
-                'status' => 'Holding',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

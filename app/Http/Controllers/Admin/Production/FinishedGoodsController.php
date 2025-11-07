@@ -46,7 +46,7 @@ class FinishedGoodsController extends Controller
     return view('admin.production.finished-goods.detail', compact('wipRecord', 'finishedGood', 'mrId', 'locations', 'racks', 'pallets', 'items'));
   }
 
-  public function storeFG(Request $request)
+  public function storeFG(Request $request, AccurateService $accurate)
   {
     $validated_data = $request->validate([
       "wip_id"      => ["required", "string", "exists:wip_records,id"],
@@ -58,8 +58,32 @@ class FinishedGoodsController extends Controller
       "batch_no"    => ["required", "string", "max:50"]
     ]);
 
+    DB::beginTransaction();
     try {
-      DB::beginTransaction();
+      $item = Item::findOrFail($validated_data['item_id']);
+      $location = Location::findOrFail($validated_data['location_id']);
+      $itemCode = $item->item_code;
+      $warehouseNo = $location->code;
+
+      $fgData = [
+        "transDate" => now()->format('d/m/Y'),
+        "warehouseNo" => "GUDANG UTAMA",
+        "memo" => "Hasil produksi dari WIP #{$validated_data['wip_id']}",
+        "detailItem" => [
+          [
+            "itemNo" => $itemCode,
+            "quantity" => $validated_data["quantity"],
+            "unit" => $item->uom ?? "PCS",
+            "warehouseNo" => $warehouseNo,
+            "memo" => "Batch {$validated_data['batch_no']}"
+          ]
+        ]
+      ];
+
+
+      $fgSlip = $accurate->saveFinishedGoodSlip($fgData);
+
+
       $label = ProductionItemLabel::create([
         "item_id"     => $validated_data['item_id'],
         "qr_code"     => Str::uuid(),
@@ -83,7 +107,7 @@ class FinishedGoodsController extends Controller
       return response()->json([
         'status'  => 'success',
         'message' => 'Finished goods berhasil dibuat.',
-        'data'    => $finishedGood
+        'data'    => $fgSlip
       ], 201);
     } catch (\Throwable $th) {
       DB::rollBack();

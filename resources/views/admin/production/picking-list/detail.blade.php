@@ -9,7 +9,7 @@
         $confirmPickedDisabled = $hasUnpickedItem;
     @endphp
 
-    <x-production.tabs-production :mrId="$mrId" :wip="$wip"/>
+    <x-production.tabs-production :mrId="$mrId" :wip="$wip" />
     <div x-data="{
         open: false,
         qr_code: '',
@@ -98,6 +98,10 @@
                     <p class="font-medium">{{ $mr->status }}</p>
                 </div>
                 <div class="flex items-center gap-3 mt-3">
+                    <button type="button" id="openGlobalScanBtn"
+                        class="w-max border-none rounded py-2 px-4 bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400">
+                        Scan Item
+                    </button>
                     @if ($mr->status == 'Requested')
                         <button type="button" onclick="showConfirmPickedModal()" id="btnConfirmPicked"
                             {{ $confirmPickedDisabled ? 'disabled' : '' }}
@@ -145,7 +149,6 @@
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[140px]">Qty Ready</th>
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[160px]">Picked By</th>
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[160px]">Date Picked</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[100px]">Scan</th>
                     </tr>
                 </thead>
 
@@ -165,18 +168,6 @@
                                     {{ \Carbon\Carbon::parse($pl->date_picked)->format('d/m/Y') }}
                                 @else
                                     -Not yet picked-
-                                @endif
-                            </td>
-                            <td class="p-4 text-gray-500">
-                                @if (!$pl->date_picked)
-                                    <svg class="w-6 h-6 cursor-pointer text-blue-600 hover:text-blue-800"
-                                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"
-                                        @click="openModal({{ $pl->id }})">
-                                        <path
-                                            d="M257.1 96C238.4 96 220.9 105.4 210.5 120.9L184.5 160L128 160C92.7 160 64 188.7 64 224L64 480C64 515.3 92.7 544 128 544L512 544C547.3 544 576 515.3 576 480L576 224C576 188.7 547.3 160 512 160L455.5 160L429.5 120.9C419.1 105.4 401.6 96 382.9 96L257.1 96zM250.4 147.6C251.9 145.4 254.4 144 257.1 144L382.8 144C385.5 144 388 145.3 389.5 147.6L422.7 197.4C427.2 204.1 434.6 208.1 442.7 208.1L512 208.1C520.8 208.1 528 215.3 528 224.1L528 480.1C528 488.9 520.8 496.1 512 496.1L128 496C119.2 496 112 488.8 112 480L112 224C112 215.2 119.2 208 128 208L197.3 208C205.3 208 212.8 204 217.3 197.3L250.5 147.5zM320 448C381.9 448 432 397.9 432 336C432 274.1 381.9 224 320 224C258.1 224 208 274.1 208 336C208 397.9 258.1 448 320 448zM256 336C256 300.7 284.7 272 320 272C355.3 272 384 300.7 384 336C384 371.3 355.3 400 320 400C284.7 400 256 371.3 256 336z" />
-                                    </svg>
-                                @else
-                                    -Scanned-
                                 @endif
                             </td>
                         </tr>
@@ -303,9 +294,69 @@
                 </div>
             </div>
         </div>
+
+
+        <div id="scanModal"
+            class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div id="scanModalOverlay" class="absolute inset-0"></div>
+
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+                <h2 class="text-lg font-semibold mb-4">Scan Item</h2>
+
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h3 id="scanModeTitle" class="font-medium text-gray-700">Mode Input Manual</h3>
+                    <button id="toggleCameraBtn" type="button"
+                        class="px-3 py-1 text-sm text-white rounded-md transition duration-150 bg-blue-500 hover:bg-blue-600">
+                        <span>Gunakan Kamera</span>
+                    </button>
+                </div>
+
+                <form id="scanForm" class="">
+                    <input type="text" id="qrInput" placeholder="Scan QR Code di sini..."
+                        class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 p-2">
+                    <div class="mt-4 flex justify-end gap-2">
+                        <button type="button" data-action="close-modal"
+                            class="px-4 py-2 bg-gray-200 rounded-md text-gray-700">Batal</button>
+                        <button type="submit" id="submitScanBtn"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md">
+                            Verifikasi
+                        </button>
+                    </div>
+                </form>
+
+                <div id="cameraContainer" class="hidden">
+                    <div id="reader" class="w-full" style="min-height: 250px;"></div>
+                    <p class="text-xs text-center text-gray-500 mt-2">Arahkan kamera ke QR/Barcode</p>
+                    <div class="mt-4 flex justify-end">
+                        <button type"button" id="cancelCameraBtn" class="px-4 py-2 bg-red-600 text-white rounded-md">
+                            Batalkan Scan
+                        </button>
+                    </div>
+                </div>
+
+                <div id="scanResultContainer" class="hidden space-y-3">
+                    <div class="border-t pt-4 mt-4">
+                        <p><strong>Item:</strong> <span id="resultItemName">-</span></p>
+                        <p><strong>QR Code:</strong> <span id="resultQrCode">-</span></p>
+                        <p><strong>Qty Request:</strong> <span id="resultQty">-</span></p>
+                        <p><strong>Picked By:</strong> <span id="resultPickedBy">-</span></p>
+                    </div>
+
+                    <div class="mt-4 flex justify-end gap-2">
+                        <button type="button" data-action="close-modal"
+                            class="px-4 py-2 bg-gray-200 rounded-md text-gray-700">Tutup</button>
+                        <button type="button" id="confirmPickBtn"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md">
+                            Confirm Pick
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </x-app-layout>
 
+<script src="https://unpkg.com/html5-qrcode"></script>
 <script>
     window.showConfirmPickedModal = function() {
         // Dipanggil oleh Alpine (pastikan isFormValid = true)
@@ -334,8 +385,6 @@
             modal.style.display = 'none';
         }
     }
-
-
 
     window.confirmPicked = async function() {
         hideConfirmPickedModal(); // Sembunyikan modal konfirmasi
@@ -438,4 +487,218 @@
             Swal.fire('Error!', 'Terjadi kesalahan jaringan atau sistem.', 'error');
         }
     }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- Variabel State ---
+        let cameraMode = false;
+        let scanResult = null;
+        let html5QrCode = null;
+        let isScanningAPI = false;
+        let isConfirmingPick = false;
+
+        // --- Seleksi Elemen DOM ---
+        const scanModal = document.getElementById('scanModal');
+        const scanModalOverlay = document.getElementById('scanModalOverlay');
+        const qrInput = document.getElementById('qrInput');
+        const scanForm = document.getElementById('scanForm');
+        const cameraContainer = document.getElementById('cameraContainer');
+        const scanResultContainer = document.getElementById('scanResultContainer');
+        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+        const cancelCameraBtn = document.getElementById('cancelCameraBtn');
+        const submitScanBtn = document.getElementById('submitScanBtn');
+        const confirmPickBtn = document.getElementById('confirmPickBtn');
+        const scanModeTitle = document.getElementById('scanModeTitle');
+        const resultItemName = document.getElementById('resultItemName');
+        const resultQrCode = document.getElementById('resultQrCode');
+        const resultQty = document.getElementById('resultQty');
+        const resultPickedBy = document.getElementById('resultPickedBy');
+
+        // [DIUBAH] Menyeleksi tombol scan global
+        const globalScanBtn = document.getElementById('openGlobalScanBtn');
+
+        // --- Helper Functions ---
+        // ... (Fungsi updateModalView() tidak berubah)
+        function updateModalView() {
+            scanForm.classList.add('hidden');
+            cameraContainer.classList.add('hidden');
+            scanResultContainer.classList.add('hidden');
+
+            if (scanResult) {
+                scanResultContainer.classList.remove('hidden');
+                resultItemName.textContent = scanResult.item_name || '-';
+                resultQrCode.textContent = scanResult.qr_code || '-';
+                resultQty.textContent = scanResult.quantity || '-';
+                resultPickedBy.textContent = scanResult.picked_by || '-';
+            } else if (cameraMode) {
+                cameraContainer.classList.remove('hidden');
+                scanModeTitle.textContent = 'Mode Kamera';
+                toggleCameraBtn.textContent = 'Gunakan Input';
+                toggleCameraBtn.classList.replace('bg-blue-500', 'bg-red-500');
+                toggleCameraBtn.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
+            } else {
+                scanForm.classList.remove('hidden');
+                scanModeTitle.textContent = 'Mode Input Manual';
+                toggleCameraBtn.textContent = 'Gunakan Kamera';
+                toggleCameraBtn.classList.replace('bg-red-500', 'bg-blue-500');
+                toggleCameraBtn.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
+            }
+        }
+
+        // ... (Fungsi openModal() tidak berubah)
+        function openModal() {
+            scanResult = null;
+            cameraMode = false;
+            qrInput.value = '';
+            updateModalView();
+            scanModal.classList.remove('hidden');
+            qrInput.focus();
+        }
+
+        // ... (Fungsi closeModal() tidak berubah)
+        function closeModal() {
+            scanModal.classList.add('hidden');
+            stopScan();
+        }
+
+        // ... (Fungsi startScan() tidak berubah)
+        function startScan() {
+            if (html5QrCode) return;
+            html5QrCode = new Html5Qrcode('reader');
+            const config = {
+                fps: 10,
+                qrbox: {
+                    width: 250,
+                    height: 250
+                }
+            };
+            html5QrCode.start({
+                    facingMode: 'environment'
+                }, config,
+                (decodedText, decodedResult) => {
+                    qrInput.value = decodedText;
+                    stopScan();
+                    handleScanSubmit();
+                },
+                (errorMessage) => {}
+            ).catch((err) => {
+                console.error('Gagal memulai kamera:', err);
+                alert('Gagal memulai kamera. Pastikan Anda memberi izin.');
+                stopScan();
+            });
+        }
+
+        // ... (Fungsi stopScan() tidak berubah)
+        function stopScan() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode = null;
+                }).catch(err => {
+                    console.error('Gagal menghentikan scanner:', err);
+                });
+            }
+            cameraMode = false;
+            updateModalView();
+        }
+
+        // ... (Fungsi toggleCamera() tidak berubah)
+        function toggleCamera() {
+            cameraMode = !cameraMode;
+            if (cameraMode) {
+                startScan();
+            } else {
+                stopScan();
+            }
+            updateModalView();
+        }
+
+        // ... (Fungsi handleScanSubmit() tidak berubah)
+        async function handleScanSubmit(event) {
+            if (event) event.preventDefault();
+            if (isScanningAPI) return;
+
+            isScanningAPI = true;
+            submitScanBtn.disabled = true;
+            submitScanBtn.textContent = 'Memproses...';
+
+            try {
+                const res = await fetch('{{ route('admin.production.picking-list.scan-item') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        qr_code: qrInput.value
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    scanResult = data.data;
+                    updateModalView();
+                } else {
+                    alert('❌ ' + data.message);
+                    scanResult = null;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi error: ' + err.message);
+            } finally {
+                isScanningAPI = false;
+                submitScanBtn.disabled = false;
+                submitScanBtn.textContent = 'Verifikasi';
+            }
+        }
+
+        async function handleConfirmPick() {
+            if (!scanResult || isConfirmingPick) return;
+
+            isConfirmingPick = true;
+            confirmPickBtn.disabled = true;
+            confirmPickBtn.textContent = 'Menyimpan...';
+
+            try {
+                const res = await fetch('{{ route('admin.production.picking-list.confirm-pick') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        picking_id: scanResult.id
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    closeModal();
+                    window.location.reload();
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (err) {
+                alert('Terjadi error: ' + err.message);
+            } finally {
+                isConfirmingPick = false;
+                confirmPickBtn.disabled = false;
+                confirmPickBtn.textContent = 'Confirm Pick';
+            }
+        }
+
+        if (globalScanBtn) {
+            globalScanBtn.addEventListener('click', openModal);
+        }
+
+        document.querySelectorAll('[data-action="close-modal"]').forEach(button => {
+            button.addEventListener('click', closeModal);
+        });
+        scanModalOverlay.addEventListener('click', closeModal);
+        toggleCameraBtn.addEventListener('click', toggleCamera);
+        cancelCameraBtn.addEventListener('click', stopScan);
+        scanForm.addEventListener('submit', handleScanSubmit);
+        confirmPickBtn.addEventListener('click', handleConfirmPick);
+    });
 </script>

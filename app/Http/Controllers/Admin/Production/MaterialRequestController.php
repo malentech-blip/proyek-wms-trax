@@ -7,6 +7,7 @@ use App\Models\Admin\Production\MaterialRequest;
 use App\Models\Admin\Production\PickingList;
 use App\Models\Admin\Production\WipRecord;
 use App\Models\Admin\Inventory\Inventory;
+use App\Models\Admin\Outbound\SalesOrder;
 use App\Models\SuperAdmin\MasterData\Item;
 use App\Models\SuperAdmin\MasterData\Location;
 use App\Services\AccurateService;
@@ -18,19 +19,17 @@ class MaterialRequestController extends Controller
 {
   public function index(Request $request, AccurateService $accurate)
   {
-    $salesOrders = $accurate->getSalesOrders($request);
-    $so_id = $request->query('so_id');
+    $salesOrders = SalesOrder::where("status", 'Pending')->get();
+    $soNumber = $request->query('so_id');
     $selectedSalesOrderDetail = null;
-    if ($so_id) {
-      $selectedSalesOrderDetail = $accurate->getSalesOrderDetail($so_id);
-    }
+
     $rawItems = Item::where("item_type", "Raw Material")->get();
     return view("admin.production.material-request.index", compact("salesOrders", "selectedSalesOrderDetail", "rawItems"));
   }
 
   public function detail(int $mr_id, AccurateService $accurate)
   {
-    $mr = MaterialRequest::where("id", $mr_id)->first();
+    $mr = MaterialRequest::with(['salesOrder'])->where("id", $mr_id)->first();
     if (!$mr) {
       return redirect()->route("admin.production.material-request.index");
     }
