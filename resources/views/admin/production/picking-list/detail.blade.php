@@ -631,7 +631,8 @@
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        qr_code: qrInput.value
+                        qr_code: qrInput.value,
+                        mr_id: '{{ $mrId }}'
                     }),
                 });
                 const data = await res.json();

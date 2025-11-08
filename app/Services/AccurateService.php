@@ -162,6 +162,8 @@ class AccurateService
     }
   }
 
+
+  // SALES ORDER ACCURATE API
   public function getSalesOrders(Request $request)
   {
     try {
@@ -226,94 +228,8 @@ class AccurateService
     }
   }
 
-  // Tambahkan di class AccurateService
 
-  /**
-   * Membuat Work Order baru di Accurate
-   */
-  public function saveWorkOrder(array $data)
-  {
-    try {
-      $response = $this->dataClient()->asForm()->post('/api/job-order/save.do', $data);
-
-      if ($response->failed()) {
-        Log::error('Gagal menyimpan Work Order', [
-          'data' => $data,
-          'response' => $response->json()
-        ]);
-        throw new Exception('Gagal menyimpan Work Order: ' . ($response->json()['r']['message'] ?? 'Unknown error'));
-      }
-
-      return $response->json()['d'] ?? null;
-    } catch (\Exception $e) {
-      Log::error('Exception saat menyimpan Work Order', [
-        'message' => $e->getMessage()
-      ]);
-      throw $e;
-    }
-  }
-
-  /**
-   * Cek apakah Work Order sudah ada berdasarkan nomor
-   */
-  public function findWorkOrderByNumber(string $number)
-  {
-    try {
-      $params = [
-        'fields' => 'id,number,transDate,item,quantity,status',
-        'filter.number.op' => 'EQUAL',
-        'filter.number.val' => $number,
-        'sp.pageSize' => 1
-      ];
-
-      $response = $this->dataClient()->get('/api/job-order/list.do', $params);
-
-      if ($response->failed()) {
-        Log::error('Gagal mencari Work Order', [
-          'number' => $number,
-          'response' => $response->json()
-        ]);
-        return null;
-      }
-
-      $data = $response->json()['d'] ?? [];
-      return !empty($data) ? $data[0] : null;
-    } catch (\Exception $e) {
-      Log::error('Exception saat mencari Work Order', [
-        'number' => $number,
-        'message' => $e->getMessage()
-      ]);
-      return null;
-    }
-  }
-
-  /**
-   * Get atau Create Work Order
-   * Jika WO sudah ada, return yang ada. Jika belum, buat baru.
-   */
-  public function getOrCreateWorkOrder(array $data)
-  {
-    try {
-      // Cek apakah WO sudah ada
-      $existingWO = $this->findWorkOrderByNumber($data['number']);
-
-      if ($existingWO) {
-        Log::info('Work Order sudah ada, menggunakan yang existing', ['number' => $data['number']]);
-        return $existingWO;
-      }
-
-      // Jika belum ada, buat baru
-      Log::info('Work Order belum ada, membuat baru', ['number' => $data['number']]);
-      return $this->saveWorkOrder($data);
-    } catch (\Exception $e) {
-      Log::error('Exception saat getOrCreateWorkOrder', [
-        'message' => $e->getMessage()
-      ]);
-      throw $e;
-    }
-  }
-
-
+  // FINISHED GOOD ACCURATE API
   public function getFinishedGoodSlips(Request $request)
   {
     try {
@@ -388,7 +304,6 @@ class AccurateService
     }
   }
 
-
   public function deleteFinishedGoodSlip(int $id)
   {
     try {
@@ -412,10 +327,6 @@ class AccurateService
     }
   }
 
-
-  /**
-   * Cari Finished Good Slip berdasarkan itemNo
-   */
   public function findFinishedGoodSlipByItemNo(string $itemNo)
   {
     try {
@@ -450,6 +361,135 @@ class AccurateService
         'message' => $e->getMessage()
       ]);
       return null;
+    }
+  }
+
+
+
+  
+  // WORK ORDER ACCURATE API
+  public function getWorkOrders(Request $request)
+  {
+    try {
+      $params = [
+        'fields' => 'id,number,transDate,item,quantity,warehouse,status,bom',
+        'sort' => 'transDate desc',
+        'sp.page' => $request->get('page', 1),
+        'sp.pageSize' => 20,
+      ];
+
+      // Filter tanggal (opsional)
+      if ($request->filled(['start_date', 'end_date'])) {
+        $params['filter.transDate.op'] = 'BETWEEN';
+        $params['filter.transDate.val[0]'] = $request->start_date;
+        $params['filter.transDate.val[1]'] = $request->end_date;
+      }
+
+      // Filter pencarian (opsional)
+      if ($request->filled('search')) {
+        $params['filter.keywords.op'] = 'CONTAIN';
+        $params['filter.keywords.val'] = $request->search;
+      }
+
+      // Request ke Accurate
+      $response = $this->dataClient()->get('/api/work-order/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil daftar Work Order dari Accurate', [
+          'response' => $response->json()
+        ]);
+        return collect([]);
+      }
+
+      return collect($response->json()['d'] ?? []);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil daftar Work Order', [
+        'message' => $e->getMessage()
+      ]);
+      return collect([]);
+    }
+  }
+
+  public function getWorkOrderDetail(int $id)
+  {
+    try {
+      $response = $this->dataClient()->get('/api/work-order/detail.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Work Order dari Accurate', [
+          'id' => $id,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Work Order', [
+        'id' => $id,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
+  /**
+   * Menyimpan (membuat baru atau update) Work Order (Perintah Kerja).
+   * Data $data harus dalam format form-data yang sesuai dengan Accurate API.
+   *
+   * Contoh $data:
+   * [
+   * 'transDate' => '31/10/2024',
+   * 'itemNo' => 'SKU-BARANG-JADI',
+   * 'quantity' => 10,
+   * 'warehouseId' => 1, // ID Gudang
+   * 'bomId' => 5 // ID Bill of Material
+   * ]
+   */
+  public function saveWorkOrder(array $data)
+  {
+    try {
+      // Endpoint save menggunakan method POST dan asForm
+      $response = $this->dataClient()->asForm()->post('/api/work-order/save.do', $data);
+
+      if ($response->failed()) {
+        Log::error('Gagal menyimpan Work Order ke Accurate', [
+          'data' => $data,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menyimpan Work Order: ' . ($response->json()['s']['m'] ?? 'Error tidak diketahui'));
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat menyimpan Work Order', [
+        'message' => $e->getMessage(),
+        'data' => $data
+      ]);
+      throw $e;
+    }
+  }
+
+  public function deleteWorkOrder(int $id)
+  {
+    try {
+      $response = $this->dataClient()->post('/api/work-order/delete.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal menghapus Work Order dari Accurate', [
+          'id' => $id,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menghapus Work Order.');
+      }
+
+      return $response->json()['s'] ?? true; // 's' biasanya true jika sukses
+    } catch (\Exception $e) {
+      Log::error('Exception saat menghapus Work Order', [
+        'id' => $id,
+        'message' => $e->getMessage()
+      ]);
+      throw $e;
     }
   }
 }

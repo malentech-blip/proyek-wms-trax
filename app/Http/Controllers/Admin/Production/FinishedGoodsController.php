@@ -17,12 +17,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Milon\Barcode\DNS1D;
 
 class FinishedGoodsController extends Controller
 {
   public function index(Request $request)
   {
-    $finishedGoods = FinishedGood::with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->orderBy("created_at", "desc")->get();
+    $fgQuery = FinishedGood::query();
+    if ($request->has('create_date') && $request->get('create_date') !== null) {
+      $fgQuery = $fgQuery->whereDate('created_at', $request->get('create_date'));
+    }
+    if ($request->has('search') && $request->get('search') !== null) {
+      $fgQuery = $fgQuery
+        ->whereHas('item', function ($query) use ($request) {
+          $query->where('item_name', 'like', '%' . $request->get('search') . '%')
+            ->orWhere('item_code', 'like', '%' . $request->get('search') . '%');
+        })
+        ->orWhereHas('production_item_label', function ($query) use ($request) {
+          $query->where('batch_no', 'like', '%' . $request->get('search') . '%');
+        });
+    }
+    $finishedGoods = $fgQuery->with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->orderBy("created_at", "desc")->get();
 
     return view("admin.production.finished-goods.index", compact("finishedGoods"));
   }
@@ -80,13 +95,10 @@ class FinishedGoodsController extends Controller
         ]
       ];
 
-
       $fgSlip = $accurate->saveFinishedGoodSlip($fgData);
-
 
       $label = ProductionItemLabel::create([
         "item_id"     => $validated_data['item_id'],
-        "qr_code"     => Str::uuid(),
         "quantity"    => $validated_data["quantity"],
         "batch_no"    => $validated_data["batch_no"],
         "location_id" => $validated_data['location_id'],
@@ -159,13 +171,8 @@ class FinishedGoodsController extends Controller
     $widthInPoints = 52 * 2.83465;
     $heightInPoints = 32 * 2.83465;
 
-    $pdf = Pdf::setOptions([
-      'isHtml5ParserEnabled' => true, // wajib agar SVG kebaca
-      'isPhpEnabled' => true,
-      'isRemoteEnabled' => true,
-    ])
-      ->loadView('admin.production.finished-goods.label-pdf', compact('itemLabels'))
-      ->setPaper([0, 0, $widthInPoints, $heightInPoints]);
+    $pdf = Pdf::loadView('admin.production.finished-goods.label-pdf', compact('itemLabels'))
+      ->setPaper("a7", "portrait");
     return $pdf->stream('labels-' . $labelId . '.pdf');
   }
 }

@@ -11,16 +11,26 @@ use Illuminate\Support\Facades\DB;
 
 class WIPController extends Controller
 {
-  public function index()
+  public function index(Request $request)
   {
     $materialRequests = MaterialRequest::where("status", "Picked")->get();
-    $wipRecords = WipRecord::query()
-      ->with("material_request")
+    $wipQuery = WipRecord::query();
+    
+    if($request->has('start_date') && $request->get('start_date') !== null) {
+      $wipQuery = $wipQuery->where('started_at', '>=', $request->start_date);
+    }
+    if($request->has('status') && $request->get('status') !== null) {
+      $wipQuery = $wipQuery->where('status', $request->status);
+    }
+    if($request->has('search') && $request->get('search') !== null) {
+      $wipQuery = $wipQuery->where('wip_no', 'like', '%'.$request->search.'%');
+    }
+    $wipRecords = $wipQuery->with("material_request")
       ->whereHas('material_request', function ($query) {
         $query->where('status', '!=', 'Completed');
       })
       ->orderBy("created_at", "desc")
-      ->paginate(10);
+      ->get();
     return view('admin.production.wip.index', compact(
       "wipRecords"
     ));

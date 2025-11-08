@@ -96,6 +96,7 @@ class PickingListsController extends Controller
           'item_labels.qr_code as qr_code',
         )
         ->where("date_picked", null)
+        ->where("mr_id", $request["mr_id"])
         ->first();
 
       // Jika tidak ditemukan
