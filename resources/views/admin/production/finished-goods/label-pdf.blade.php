@@ -21,6 +21,9 @@
             width: 100%;
             height: 100%;
             padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
             /* Beri sedikit padding di dalam stiker */
             box-sizing: border-box;
             page-break-after: always;
@@ -41,8 +44,10 @@
         }
 
         .item-details {
-            float: left;
-            width: 65%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 10px;
         }
 
         .qr-code {
@@ -60,7 +65,6 @@
 
 <body>
     <div class="label-box">
-        <h3>Finished Good Label</h3>
         @foreach ($itemLabels as $label)
             <div class="label">
                 <div class="item-details">
@@ -70,8 +74,7 @@
                     <p class="info">Lokasi: <strong>{{ $label->rack->code }}</strong></p>
                 </div>
                 <div>
-                    {{-- Generate QR Code dari UUID yang kita simpan --}}
-                    {!! QrCode::format('svg')->size(70)->generate($label->qr_code) !!}
+                    {!! DNS1D::getBarcodeHTML($label->barcode, 'C128', 2, 50) !!}
                 </div>
             </div>
         @endforeach

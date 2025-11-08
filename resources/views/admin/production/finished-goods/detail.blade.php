@@ -4,7 +4,7 @@
         Timeline Production (Finished Goods)
     </x-slot>
 
-    
+
     <x-production.tabs-production :mrId="$mrId" :wip="$wipRecord" />
     <div class="bg-white rounded-xl shadow-sm mt-8">
         <div class="p-6 border-b flex items-center gap-3">
@@ -21,10 +21,11 @@
                 </button>
             @endif
             @if ($finishedGood)
-              <button type="button" onclick="window.open('{{ route('admin.production.finished-goods.print-label', $finishedGood->production_item_label->id) }}', '_blank')"
-                  class="w-max border-none rounded py-2 px-4 bg-blue-500 text-white hover:bg-blue-600">
-                  Cetak Production Label
-              </button>
+                <button type="button"
+                    onclick="window.open('{{ route('admin.production.finished-goods.print-label', $finishedGood->production_item_label->id) }}', '_blank')"
+                    class="w-max border-none rounded py-2 px-4 bg-blue-500 text-white hover:bg-blue-600">
+                    Cetak Production Label
+                </button>
             @endif
         </div>
         <div class="overflow-x-auto">
@@ -40,7 +41,7 @@
                         <th class="p-4 text-left font-semibold text-gray-600">Rack</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Pallet</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Status</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">QR Code</th>
+                        <th class="p-4 text-left font-semibold text-gray-600">Barcode</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -57,7 +58,8 @@
                             <td class="p-4 text-gray-500">{{ $finishedGood->production_item_label->pallet->code }}</td>
                             <td class="p-4 text-gray-500">{{ $finishedGood->status }}</td>
                             <td class="p-4 text-gray-500">
-                                {!! QrCode::size(70)->generate($finishedGood->production_item_label->qr_code) !!}
+                                {!! DNS1D::getBarcodeHTML($finishedGood->production_item_label->barcode, 'C128', 1.5, 40) !!}
+
                             </td>
                         </tr>
                     @else
