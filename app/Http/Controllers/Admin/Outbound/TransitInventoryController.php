@@ -14,4 +14,11 @@ class TransitInventoryController extends Controller
     $packingLists = PackingList::with(['sales_order', 'items'])->where('status', '!=' , 'Packed')->get();
     return view('admin.outbound.transit-inventory.index', compact('packingLists'));
   }
+
+  public function detail(int $packing_id) {
+    $packingList = PackingList::where([
+      ['id', $packing_id],
+    ])->with(['sales_order', 'items'])->first();
+    return view('admin.outbound.transit-inventory.detail', compact('packingList'));
+  }
 }

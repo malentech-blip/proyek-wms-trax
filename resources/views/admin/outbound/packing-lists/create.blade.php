@@ -1,8 +1,6 @@
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <x-app-layout>
     <x-slot name="header">
-        Create Packing List
+        Create Packing List (Outbound)
     </x-slot>
 
     <div class="space-y-6">
@@ -69,10 +67,6 @@
                     </svg>
                     Camera
                 </button>
-                <button type="button" id="openAddItemManualModalBtn"
-                    class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 flex items-center gap-1">
-                    Tambah Item Manual
-                </button>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full">
@@ -104,7 +98,6 @@
         </div>
     </div>
 
-    {{-- MODAL SCAN CONFIRMATION --}}
     <div id="scanConfirmModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
         role="dialog" aria-modal="true">
         <div id="scanModalOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
@@ -162,70 +155,6 @@
         </div>
     </div>
 
-    {{-- MODAL TAMBAH ITEM MANUAL --}}
-    <div id="addManualItemModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
-        role="dialog" aria-modal="true">
-
-        {{-- Overlay (Diberi ID untuk tutup) --}}
-        <div id="modalOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-
-        {{-- Modal Panel --}}
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        Tambah Item Manual
-                    </h3>
-                    <div class="mt-4">
-                        {{-- Formulir Manual --}}
-                        <form id="addManualItemForm">
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="fg_id" class="block text-sm font-medium text-gray-700">
-                                        Kode Item
-                                    </label>
-                                    <select type="text" id="fg_id" name="fg_id"
-                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        placeholder="Contoh: FG-001" required>
-                                        <option value="">Pilih Item</option>
-                                        @foreach ($finishedGoods as $fg)
-                                            <option value="{{ $fg->id }}">{{ $fg->item->item_name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label for="quantity"
-                                        class="block text-sm font-medium text-gray-700">Kuantitas</label>
-                                    <input type="number" id="quantity" name="quantity"
-                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        placeholder="Masukkan kuantitas item" min="1" required>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                {{-- Footer Modal (Tombol Aksi) --}}
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="submitManualItemBtn"
-                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Tambahkan Item
-                    </button>
-                    {{-- Tombol Batal (Diberi ID untuk tutup) --}}
-                    <button type="button" id="closeManualModalBtn"
-                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Batal
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     {{-- MODAL SUBMIT --}}
     <div id="submitPackingListModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
         role="dialog" aria-modal="true">
@@ -244,6 +173,15 @@
                         <p class="text-sm font-semibold text-red-600" id="emptyListWarning" style="display:none;">
                             Daftar item masih kosong! Anda harus menambahkan minimal 1 item.</p>
                         <p class="text-sm text-gray-700">Pastikan semua data sudah benar sebelum melanjutkan.</p>
+                        <div class="pt-3 border-t">
+                            <label for="packed_by_input" class="block text-sm font-medium text-gray-700 mb-2">
+                                Dikemas Oleh <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="packed_by_input" placeholder="Masukkan nama petugas packing"
+                                class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                required>
+                            <p class="text-xs text-gray-500 mt-1">Nama petugas yang melakukan proses packing</p>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -261,27 +199,16 @@
     </div>
 
     <div id="scanModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-
-        {{-- [DIUBAH] ID Overlay diubah agar tidak duplikat --}}
         <div id="scanModalBg" class="absolute inset-0"></div>
-
         <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
             <h2 class="text-lg font-semibold mb-4">Scan Item</h2>
-
             <div class="flex justify-between items-center mb-4 border-b pb-3">
                 <h3 id="scanModeTitle" class="font-medium text-gray-700">Mode Input Manual</h3>
-                {{-- <button id="toggleCameraBtn" type="button"
-                    class="px-3 py-1 text-sm text-white rounded-md transition duration-150 bg-blue-500 hover:bg-blue-600">
-                    <span>Gunakan Kamera</span>
-                </button> --}}
             </div>
-
-            {{-- Form Input di dalam Modal --}}
             <form id="scanForm" class="">
                 <input type="text" id="qrInput" placeholder="Scan QR Code di sini..."
                     class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 p-2">
                 <div class="mt-4 flex justify-end gap-2">
-                    {{-- Tombol batal ini sekarang menggunakan data-action --}}
                     <button type="button" data-action="close-scan-modal"
                         class="px-4 py-2 bg-gray-200 rounded-md text-gray-700">Batal</button>
                     <button type="submit" id="submitScanBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md">
@@ -290,7 +217,6 @@
                 </div>
             </form>
 
-            {{-- Kontainer Kamera --}}
             <div id="cameraContainer" class="hidden">
                 <div id="reader" class="w-full" style="min-height: 250px;"></div>
                 <p class="text-xs text-center text-gray-500 mt-2">Arahkan kamera ke QR/Barcode</p>
@@ -304,85 +230,11 @@
     </div>
 </x-app-layout>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
+{{-- GLOBAL FUNCTION --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('addManualItemModal');
-        const openBtn = document.getElementById('openAddItemManualModalBtn');
-        const closeBtn = document.getElementById('closeManualModalBtn');
-        const overlay = document.getElementById('modalOverlay');
-        const submitBtn = document.getElementById('submitManualItemBtn');
-        const form = document.getElementById('manualItemForm');
-
-        function openModal() {
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        openBtn.addEventListener('click', openModal);
-        closeBtn.addEventListener('click', closeModal);
-        overlay.addEventListener('click', closeModal);
-
-        // Event Listener untuk tombol submit
-        submitBtn.addEventListener('click', function() {
-            closeModal();
-        });
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
-        });
-    });
-</script>
-
-
-<script>
-    // --- KONFIGURASI ENDPOINTS & STORAGE ---
-    const API_VALIDATE_QR = '/admin/outbound/packing-lists/validate-qr';
-    const API_ADD_ITEM = '/admin/outbound/packing-lists/add-temp-item';
-    const API_SUBMIT_PACKING_LIST = '/admin/outbound/packing-lists/store'; // <--- ENDPOINT BARU
-    const STORAGE_KEY = 'temp_scanned_items';
-    const CSRF_TOKEN = '{{ csrf_token() }}';
-
-    function getStoredItems() {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-    }
-
-    function setStoredItems(items) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    }
-
-    const manualModal = document.getElementById('addManualItemModal');
-    const scanConfirmModal = document.getElementById('scanConfirmModal');
-
-    function openManualModal() {
-        manualModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeManualModal() {
-        manualModal.classList.add('hidden');
-        document.body.style.overflow = '';
-        document.getElementById('addManualItemForm').reset();
-    }
-
-    function openScanConfirmModal() {
-        scanConfirmModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeScanConfirmModal() {
-        scanConfirmModal.classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
     window.removeTempItem = function(index) {
         if (!confirm('Anda yakin ingin menghapus item ini?')) return;
         let items = getStoredItems();
@@ -399,16 +251,12 @@
             timer: 3000
         });
     }
-
     window.updateItemQuantity = function(index, inputElement) {
         let items = getStoredItems();
         let item = items[index];
         const newQuantity = parseInt(inputElement.value);
         const qtyReady = parseInt(item.quantity_ready);
-
-        // 1. Validasi Angka Positif
         if (isNaN(newQuantity) || newQuantity <= 0) {
-            // Kembalikan ke nilai sebelumnya jika input tidak valid
             inputElement.value = item.quantity;
             Swal.fire({
                 icon: 'warning',
@@ -421,14 +269,10 @@
             });
             return;
         }
-
-        // 2. Validasi Batas Qty Ready
         if (newQuantity > qtyReady) {
-            // Kembalikan ke nilai batas maksimal Qty Ready
             inputElement.value = qtyReady;
-            item.quantity = qtyReady; // Update di data
-            setStoredItems(items); // Simpan perubahan
-
+            item.quantity = qtyReady;
+            setStoredItems(items);
             Swal.fire({
                 icon: 'error',
                 title: 'Kuantitas Melebihi Batas!',
@@ -440,11 +284,8 @@
             });
             return;
         }
-
-        // 3. Update dan Simpan Jika Valid
         item.quantity = newQuantity;
         setStoredItems(items);
-
         Swal.fire({
             icon: 'success',
             title: 'Berhasil Update!',
@@ -455,8 +296,39 @@
             timer: 3000
         });
     };
+</script>
 
-    // --- FUNGSI REVISI: RENDER TABEL ---
+
+<script>
+    const API_VALIDATE_QR = '/admin/outbound/packing-lists/validate-qr';
+    const API_ADD_ITEM = '/admin/outbound/packing-lists/add-temp-item';
+    const API_SUBMIT_PACKING_LIST = '/admin/outbound/packing-lists/store';
+    const STORAGE_KEY = 'temp_scanned_items';
+    const CSRF_TOKEN = '{{ csrf_token() }}';
+
+    // LOCAL STORAGE
+    function getStoredItems() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    function setStoredItems(items) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    // SCANNING 
+    const scanConfirmModal = document.getElementById('scanConfirmModal');
+
+    function openScanConfirmModal() {
+        scanConfirmModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeScanConfirmModal() {
+        scanConfirmModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
     function renderScannedTable() {
         const items = getStoredItems();
         const tbody = document.querySelector('.overflow-x-auto table tbody');
@@ -464,7 +336,6 @@
 
         tbody.innerHTML = '';
         if (items.length === 0) {
-            // Colspan diubah menjadi 7 (QR, Code, Item, Qty Out, Qty Ready, Lokasi, Aksi)
             tbody.innerHTML =
                 `<tr><td colspan="7" class="px-4 py-6 text-center text-gray-500">Belum ada item.</td></tr>`;
             return;
@@ -505,13 +376,10 @@
         `;
         });
     }
-
     async function validateQrCode(qrCode) {
         const urlParams = new URLSearchParams(window.location.search);
         const so_id = urlParams.get('so_id') || 'UNKNOWN';
-
         if (!qrCode) return;
-
         Swal.fire({
             title: 'Memvalidasi...',
             text: 'Mencari item dengan QR Code: ' + qrCode,
@@ -519,7 +387,6 @@
             allowOutsideClick: false,
             allowEscapeKey: false
         });
-
         try {
             const response = await fetch(API_VALIDATE_QR, {
                 method: 'POST',
@@ -603,7 +470,7 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: `${newItem.item_name} berhasil ditambahkan.`,
+                text: `${newItem.fg_name} berhasil ditambahkan.`,
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
@@ -636,7 +503,6 @@
             });
             return;
         }
-        closeManualModal();
         const itemData = {
             fg_id: fgId,
             quantity: quantity,
@@ -645,30 +511,23 @@
     }
 
     function showConfirmModal(itemData) {
-        // Ambil elemen yang diperlukan
         const confirmBtn = document.getElementById('confirmAddItemBtn');
         const originalQtyInput = document.getElementById('original_quantity');
         const displayOriginalQty = document.getElementById('display_original_quantity');
         const inputQty = document.getElementById('scan_input_quantity');
         const qtyError = document.getElementById('qty_error_message');
 
-        // Simpan data item ke tombol konfirmasi (untuk diakses nanti)
         confirmBtn.itemData = itemData;
-
-        // Isi detail di modal
         document.getElementById('confirm_qr_code').textContent = itemData.qr_code;
         document.getElementById('confirm_fg_id').textContent = itemData.fg_id;
         document.getElementById('confirm_item_name').textContent = itemData.item_name;
 
-        // Isi dan tampilkan kuantitas asli
-        originalQtyInput.value = itemData.quantity; // Hidden field
-        displayOriginalQty.textContent = itemData.quantity; // Display
+        originalQtyInput.value = itemData.quantity;
+        displayOriginalQty.textContent = itemData.quantity;
 
-        // Atur input field kuantitas ke nilai default QR dan batasan MAX
         inputQty.value = itemData.quantity;
-        inputQty.max = itemData.quantity; // Batasi max input agar tidak melebihi kuantitas asli
-        qtyError.classList.add('hidden'); // Sembunyikan pesan error awal
-
+        inputQty.max = itemData.quantity;
+        qtyError.classList.add('hidden');
         openScanConfirmModal();
     }
 
@@ -682,12 +541,6 @@
             validateQrCode(qrCodeInput.value);
             qrCodeInput.value = ''
         });
-
-
-        document.getElementById('openAddItemManualModalBtn').addEventListener('click', openManualModal);
-        document.getElementById('closeManualModalBtn').addEventListener('click', closeManualModal);
-        document.getElementById('submitManualItemBtn').addEventListener('click', addTempItem);
-
         document.getElementById('cancelScanConfirmBtn').addEventListener('click', closeScanConfirmModal);
         document.getElementById('scanModalOverlay').addEventListener('click', closeScanConfirmModal);
 
@@ -706,7 +559,6 @@
                 });
                 return;
             }
-
             if (inputQty > originalQty) {
                 qtyError.textContent =
                     `Kuantitas tidak boleh melebihi kuantitas asli (${originalQty}).`;
@@ -715,7 +567,6 @@
             } else {
                 qtyError.classList.add('hidden');
             }
-
             if (itemData) {
                 itemData.quantity = inputQty;
                 const transformedData = {
@@ -727,14 +578,18 @@
         });
     });
 
-    // SUBMIT PACKINGLIST
+
     function openSubmitModal() {
         const items = getStoredItems();
         const countDisplay = document.getElementById('totalItemsCount');
         const warning = document.getElementById('emptyListWarning');
         const confirmBtn = document.getElementById('confirmSubmitBtn');
+        const packedByInput = document.getElementById('packed_by_input');
 
         countDisplay.textContent = items.length;
+
+        // Reset input packed_by
+        packedByInput.value = '';
 
         if (items.length === 0) {
             warning.style.display = 'block';
@@ -746,6 +601,8 @@
 
         submitPackingListModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+
+        setTimeout(() => packedByInput.focus(), 100);
     }
 
     function closeSubmitModal() {
@@ -757,6 +614,19 @@
         const items = getStoredItems();
         const urlParams = new URLSearchParams(window.location.search);
         const so_number = '{{ $salesOrder['number'] }}';
+        const packedByInput = document.getElementById('packed_by_input');
+        const packedBy = packedByInput.value.trim();
+
+        // Validasi input packed_by
+        if (!packedBy) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Tidak Lengkap',
+                text: 'Harap isi nama petugas packing terlebih dahulu.'
+            });
+            packedByInput.focus();
+            return;
+        }
 
         closeSubmitModal();
 
@@ -770,6 +640,7 @@
 
         const payload = {
             so_number: so_number,
+            packed_by: packedBy, // Tambahkan packed_by ke payload
             items: items,
         };
 
@@ -797,18 +668,18 @@
 
             // Sukses: Bersihkan local storage dan tampilkan pesan sukses
             localStorage.removeItem(STORAGE_KEY);
-            renderScannedTable(); // Perbarui tampilan tabel kosong
+            renderScannedTable();
 
             Swal.fire({
                 icon: 'success',
                 title: 'Packing List Berhasil Dibuat!',
-                text: `Nomor PL: ${result.packing_list_number || 'Tersimpan'}`,
+                text: `Packing list berhasil tersimpan. Dikemas oleh: ${packedBy}`,
                 confirmButtonText: 'OK'
-            }).then(() => {
-                // Opsional: Redirect ke halaman detail/daftar Packing List
-                // window.location.href = result.redirect_url || '/admin/outbound/packing-lists'; 
+            }).then((res) => {
+                const id = result?.packingId
+                const baseUrl = '/admin/outbound/packing-lists/detail'
+                window.location.href = `${baseUrl}/${id}`
             });
-
 
         } catch (error) {
             console.error('Error saat submit Packing List:', error);
@@ -827,43 +698,31 @@
         document.getElementById('confirmSubmitBtn').addEventListener('click', submitPackingList);
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                closeManualModal();
                 closeScanConfirmModal();
                 closeSubmitModal();
             }
         });
     });
-
 </script>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
-    // Pastikan ini dieksekusi setelah semua elemen DOM dimuat
     document.addEventListener('DOMContentLoaded', () => {
-
-        // --- Variabel State ---
         let cameraMode = false;
         let html5QrCode = null;
 
-        // --- Seleksi Elemen DOM (Modal Scan) ---
         const scanModal = document.getElementById('scanModal');
-        const scanModalBg = document.getElementById('scanModalBg'); // <-- ID yang sudah diubah
-        const qrInput = document.getElementById('qrInput'); // Input *inside* modal
+        const scanModalBg = document.getElementById('scanModalBg');
+        const qrInput = document.getElementById('qrInput');
         const scanForm = document.getElementById('scanForm');
         const cameraContainer = document.getElementById('cameraContainer');
-        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
         const cancelCameraBtn = document.getElementById('cancelCameraBtn');
-        const submitScanBtn = document.getElementById('submitScanBtn'); // Tombol verifikasi di modal
+        const submitScanBtn = document.getElementById('submitScanBtn');
         const scanModeTitle = document.getElementById('scanModeTitle');
 
-        // --- Seleksi Elemen DOM (Tombol di Halaman Utama) ---
-        const globalScanBtn = document.getElementById('openGlobalScanBtn'); // Tombol "Scan Item" (hijau)
-        const openCameraBtn = document.getElementById('openCameraScanBtn'); // Tombol "Camera" (biru)
+        const globalScanBtn = document.getElementById('openGlobalScanBtn');
+        const openCameraBtn = document.getElementById('openCameraScanBtn');
 
-        // --- Helper Functions ---
-
-        /** Mengatur tampilan modal berdasarkan state */
         function updateModalView() {
             scanForm.classList.add('hidden');
             cameraContainer.classList.add('hidden');
@@ -871,80 +730,68 @@
             if (cameraMode) {
                 cameraContainer.classList.remove('hidden');
                 scanModeTitle.textContent = 'Mode Kamera';
-                // toggleCameraBtn.textContent = 'Gunakan Input';
-                // toggleCameraBtn.classList.replace('bg-blue-500', 'bg-red-500');
-                // toggleCameraBtn.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
             } else {
                 scanForm.classList.remove('hidden');
                 scanModeTitle.textContent = 'Mode Input Manual';
-                // toggleCameraBtn.textContent = 'Gunakan Kamera';
-                // toggleCameraBtn.classList.replace('bg-red-500', 'bg-blue-500');
-                // toggleCameraBtn.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
             }
         }
 
-        /** [DIUBAH] Membuka Modal - Mode Input */
         function openInputModal() {
             cameraMode = false;
             qrInput.value = '';
-            updateModalView(); // Atur ke mode input
+            updateModalView();
             scanModal.classList.remove('hidden');
             qrInput.focus();
         }
 
-        /** [BARU] Membuka Modal - Mode Kamera */
         function openCameraModal() {
             cameraMode = true;
             qrInput.value = '';
-            updateModalView(); // Atur ke mode camera
+            updateModalView();
             scanModal.classList.remove('hidden');
-            startScan(); // Langsung nyalakan kamera
+            startScan();
         }
 
-        /** Menutup Modal */
         function closeModal() {
             scanModal.classList.add('hidden');
-            stopScan(); // Selalu matikan kamera saat modal ditutup
+            stopScan();
         }
 
-        /** Memulai Scan Kamera */
         function startScan() {
             if (html5QrCode) {
-                // Jika sudah ada, coba stop dulu
                 stopScan();
             }
 
             html5QrCode = new Html5Qrcode('reader');
             const config = {
                 fps: 10,
-                qrbox: { width: 250, height: 250 }
+                qrbox: {
+                    width: 250,
+                    height: 250
+                }
             };
 
-            html5QrCode.start(
-                { facingMode: 'environment' }, config,
+            html5QrCode.start({
+                    facingMode: 'environment'
+                }, config,
                 (decodedText, decodedResult) => {
-                    // --- Sukses Scan Kamera ---
                     stopScan();
-                    closeModal(); // 1. Tutup modal scan
+                    closeModal();
 
-                    // 2. Panggil fungsi validasi global (dari skrip Anda yang lain)
                     if (window.validateQrCode) {
                         window.validateQrCode(decodedText);
                         document.querySelector('#qrCodeInput').value = decodedText
                     } else {
-                        console.error('Fungsi validateQrCode() tidak ditemukan.');
                         alert('Error: Fungsi validasi tidak siap.');
                     }
                 },
-                (errorMessage) => { /* Abaikan error 'not found' */ }
+                (errorMessage) => {}
             ).catch((err) => {
-                console.error('Gagal memulai kamera:', err);
                 alert('Gagal memulai kamera. Pastikan Anda memberi izin akses.');
-                stopScan(); // Gagal, kembali ke mode input
+                stopScan();
             });
         }
 
-        /** Menghentikan Scan Kamera */
         function stopScan() {
             if (html5QrCode) {
                 try {
@@ -957,67 +804,41 @@
                     html5QrCode = null;
                 }
             }
-            cameraMode = false; 
+            cameraMode = false;
         }
 
-        /** Mengganti Mode Kamera/Input */
-        function toggleCamera() {
-            cameraMode = !cameraMode;
-            if (cameraMode) {
-                startScan();
-            } else {
-                stopScan();
-            }
-            updateModalView();
-        }
-
-        /** Mengirim data scan (HANYA DARI INPUT FORM MODAL) */
         function handleScanSubmit(event) {
             if (event) event.preventDefault();
-
             const qrCode = qrInput.value;
             if (!qrCode) return;
-
-            closeModal(); // 1. Tutup modal scan
-
-            // 2. Panggil fungsi validasi global
+            closeModal();
             if (window.validateQrCode) {
                 window.validateQrCode(qrCode);
             } else {
-                console.error('Fungsi validateQrCode() tidak ditemukan.');
                 alert('Error: Fungsi validasi tidak siap.');
             }
         }
 
-        // --- Pendaftaran Event Listener ---
-
-        // 1. Tombol "Scan Item" (hijau) -> Buka Mode Input
         if (globalScanBtn) {
             globalScanBtn.addEventListener('click', openInputModal);
         }
 
-        // 2. Tombol "Camera" (biru) -> Buka Mode Kamera
         if (openCameraBtn) {
             openCameraBtn.addEventListener('click', openCameraModal);
         }
 
-        // 3. Tombol Batal di dalam modal
         document.querySelectorAll('[data-action="close-scan-modal"]').forEach(button => {
             button.addEventListener('click', closeModal);
         });
-        
-        // 4. Klik overlay modal scan
+
         if (scanModalBg) {
             scanModalBg.addEventListener('click', closeModal);
         }
-        
-        // 6. Tombol Batal saat kamera nyala
+
         cancelCameraBtn.addEventListener('click', () => {
-             scanModal.classList.add('hidden');
-            stopScan(); // Selalu matikan kamera saat modal ditutup
-        }); 
-        
-        // 7. Submit form input di dalam modal
+            scanModal.classList.add('hidden');
+            stopScan();
+        });
         scanForm.addEventListener('submit', handleScanSubmit);
     });
 </script>

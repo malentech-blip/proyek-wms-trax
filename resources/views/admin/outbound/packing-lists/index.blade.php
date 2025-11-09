@@ -55,26 +55,33 @@
 
 <x-app-layout>
     <x-slot name="header">
-        Create Packing List
+        List Packing List (Outbound)
     </x-slot>
     <div class="bg-white rounded-xl shadow-sm">
         <div class="p-6 border-b">
             <h3 class="text-lg font-semibold text-gray-800">Filter Packing List</h3>
 
             <form method="GET" action="{{ route('admin.outbound.packing-lists.index') }}">
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div>
-                        <label for="search" class="text-sm font-medium text-gray-700">Cari PL Number / SO Number</label>
+                        <label for="search" class="text-sm font-medium text-gray-700">Tanggal Packing</label>
+                        <input type="date" name="packed_date" id="packed_date" value="{{ request('packed_date') }}"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="search" class="text-sm font-medium text-gray-700">Cari SO Number</label>
                         <input type="text" name="search" id="search" value="{{ request('search') }}"
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="Cari nomor PL atau SO...">
                     </div>
                     <div>
                         <label for="status" class="text-sm font-medium text-gray-700">Status</label>
-                        <select name="status" id="status"
+                        <select name="status" id="status" onchange="this.form.submit()"
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">All Status</option>
                             <option value="Packed" {{ request('status') === 'Packed' ? 'selected' : '' }}>Packed
+                            </option>
+                            <option value="In Transit" {{ request('status') === 'In Transit' ? 'selected' : '' }}>In Transit
                             </option>
                             <option value="Ready to Ship" {{ request('status') === 'Ready to Ship' ? 'selected' : '' }}>
                                 Ready to Ship</option>
@@ -82,14 +89,14 @@
                             </option>
                         </select>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-1">
                         <button type="submit"
                             class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
                             Cari
                         </button>
                         @if (request()->hasAny(['search', 'status']))
                             <a href="{{ route('admin.outbound.packing-lists.index') }}"
-                                class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 shadow-sm">
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 shadow-sm">
                                 Reset
                             </a>
                         @endif
@@ -108,7 +115,6 @@
                         <th class="p-4 text-left font-semibold text-gray-700">Packed By</th>
                         <th class="p-4 text-left font-semibold text-gray-700">Packed Date</th>
                         <th class="p-4 text-left font-semibold text-gray-700">Status</th>
-                        <th class="p-4 text-left font-semibold text-gray-700">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -136,32 +142,6 @@
                                     class="bg-{{ $color }}-100 text-{{ $color }}-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                                     {{ $pl->status }}
                                 </span>
-                            </td>
-                            <td class="p-4">
-                                @if (in_array($pl->status, ['Ready to Ship', 'Packed']))
-                                    <button
-                                        onclick="confirmTransit(event, {{ $pl->id }}, '{{ $pl->sales_order->so_number ?? 'N/A' }}')"
-                                        class="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
-                                        title="Lanjut ke Transit">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                                        </svg>
-                                        Lanjut Transit
-                                    </button>
-                                @endif
-                                @if ($pl->status === 'Shipped')
-                                    <span
-                                        class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-500 text-sm font-medium rounded-lg">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Sudah Dikirim
-                                    </span>
-                                @endif
                             </td>
                         </tr>
                     @empty
@@ -266,7 +246,11 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3">
+            <div class="flex items-center gap-3 bg-gray-50 px-6 py-4 rounded-b-xl justify-end">
+                <button onclick="timelineOutbound()"
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                    Lihat Timeline
+                </button>
                 <button onclick="closeDetailModal()"
                     class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors shadow-sm">
                     Tutup
@@ -323,12 +307,15 @@
     </div>
 </x-app-layout>
 
-
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script>
+    let currentPackingListId = null;
+
     function openDetailModal(packingListId) {
         const modal = document.getElementById('detail-modal');
         const loadingState = document.getElementById('loading-modal');
         const contentState = document.getElementById('content-modal');
+        currentPackingListId = packingListId;
 
         modal.classList.remove('hidden');
         loadingState.classList.remove('hidden');
@@ -337,7 +324,6 @@
         document.body.style.overflow = 'hidden';
 
         const url = `/admin/outbound/packing-lists/${packingListId}/items`;
-        console.log('Fetching:', url);
 
         fetch(url)
             .then(response => {
@@ -363,24 +349,32 @@
                         const row = document.createElement('tr');
                         row.className = 'hover:bg-gray-50 transition-colors';
                         row.innerHTML = `
-                        <td class="px-4 py-3 text-sm font-medium text-gray-900">${index + 1}</td>
-                        <td class="px-4 py-3">
+                          <td class="px-4 py-3 text-sm font-medium text-gray-900">${index + 1}</td>
+                          <td class="px-4 py-3">
                             <div class="font-semibold text-gray-900">${item.product_code || 'N/A'}</div>
                             <div class="text-sm text-gray-500">${item.product_name || '-'}</div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-medium bg-indigo-100 text-indigo-800">
-                                ${item.label_code || item.qr_code || 'N/A'}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3">
+                          </td>
+                          <td class="px-4 py-3">
+                            <svg id="barcode-${index}" class="h-10"></svg>
+                          </td>
+                          <td class="px-4 py-3">
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800">
-                                ${item.quantity || 0}
+                              ${item.quantity || 0}
                             </span>
-                        </td>
-                    `;
+                          </td>
+                        `;
                         tableBody.appendChild(row);
+
+                        // 🔥 Generate barcode dynamically
+                        JsBarcode(`#barcode-${index}`, item.label_code || item.qr_code || "N/A", {
+                            format: "CODE128",
+                            lineColor: "#000",
+                            width: 2,
+                            height: 40,
+                            displayValue: false
+                        });
                     });
+
                 } else {
                     document.getElementById('items-count').textContent = '0 items';
                     tableBody.innerHTML = `
@@ -419,6 +413,11 @@
                 contentState.classList.remove('hidden');
             });
     }
+
+    function timelineOutbound() {
+        window.location.href = `/admin/outbound/packing-lists/detail/${currentPackingListId}`;
+    }
+
     function closeDetailModal() {
         const modal = document.getElementById('detail-modal');
         modal.classList.add('hidden');
@@ -533,4 +532,3 @@
         }
     });
 </script>
-

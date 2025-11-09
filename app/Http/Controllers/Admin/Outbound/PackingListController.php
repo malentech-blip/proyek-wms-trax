@@ -20,18 +20,54 @@ use Illuminate\Validation\ValidationException;
 class PackingListController extends Controller
 {
 
-  public function index()
+  public function index(Request $request)
   {
-    $packingLists = PackingList::with(['sales_order'])->get();
+    $plQuery = PackingList::query();
+    if($request->has('packed_date') && $request->get('packed_date') !== null) {
+      $plQuery = $plQuery->whereDate('packed_at', $request->packed_date);
+    }
+    if($request->has('status') && $request->get('status') !== null) {
+      $plQuery = $plQuery->where('status', $request->status);
+    }
+    if($request->has('search') && $request->get('search') !== null) {
+      $plQuery = $plQuery->whereHas('sales_order', function ($query) use ($request) {
+        $query->where('so_number', 'like', '%' . $request->get('search') . '%');
+      });
+    }
+    $packingLists = $plQuery->with(['sales_order'])->get();
     return view('admin.outbound.packing-lists.index', compact('packingLists'));
   }
 
-  public function create(Request $request, AccurateService $accurate): View
+  public function detail(int $packing_id, AccurateService $accurate)
+  {
+    $packingList = PackingList::with(['sales_order'])->where("id", $packing_id)->first();
+    if (!$packingList) {
+      return redirect()->route("admin.outbound.packing-lists.index");
+    }
+    $items = OutboundPackingItem::where('packing_id', $packing_id)->with(['finished_good.item', 'finished_good.production_item_label'])->get();
+    $soNumber = $packingList->sales_order->so_number;
+    $so = $accurate->getSalesOrderByNumber($soNumber);
+    return view("admin.outbound.packing-lists.detail", compact("packingList", "items", "so"));
+  }
+
+  public function create(Request $request, AccurateService $accurate)
   {
     $soId = (int) $request->get('so_id');
     $salesOrder = $soId ? $accurate->getSalesOrderDetail($soId) : null;
     $finishedGoods = FinishedGood::with(['item', 'production_item_label'])->where("status", "Stored")->get();
-
+    if (!$request->filled('so_id')) {
+      return redirect()->route('admin.outbound.sales-orders.index'); 
+    }
+    if($salesOrder && isset($salesOrder[0]) && $salesOrder[0] == "Pesanan Penjualan tidak tepat") {
+      return redirect()->route('admin.outbound.sales-orders.index');
+    }
+    $existedSo = SalesOrder::where("so_number", $salesOrder['number'])->first();
+    if(!$existedSo) {
+      return redirect()->route('admin.outbound.sales-orders.index'); 
+    }
+    if($existedSo->status !== 'Pending') {
+      return redirect()->route('admin.outbound.sales-orders.index'); 
+    }
     return view('admin.outbound.packing-lists.create', [
       'salesOrder' => $salesOrder,
       'finishedGoods' => $finishedGoods
@@ -73,12 +109,11 @@ class PackingListController extends Controller
 
     $qrCode = $validated['qr_code'];
 
-    $label = ProductionItemLabel::with(['location'])->where('qr_code', $qrCode)->first();
+    $label = ProductionItemLabel::with(['location'])->where('barcode', $qrCode)->first();
     if (!$label) {
       return response()->json(['success' => false, 'message' => 'QR Code tidak ditemukan.'], 404);
     }
 
-    // 2. Cari Finished Good terkait dengan Label
     $fg = FinishedGood::with('production_item_label')->find($label->id);
     if (!$fg) {
       return response()->json(['success' => false, 'message' => 'Item terkait tidak ditemukan.'], 404);
@@ -129,7 +164,7 @@ class PackingListController extends Controller
 
     return response()->json([
       'success' => true,
-      'message' => 'QR Code Valid.',
+      'message' => 'Barcode Valid.',
       'data' => $itemData
     ]);
   }
@@ -140,6 +175,7 @@ class PackingListController extends Controller
       $validated = $request->validate([
         'so_number' => 'required|string|exists:sales_orders,so_number',
         'items' => 'required|array|min:1',
+        'packed_by' => 'required|string',
         'items.*.fg_id' => 'required|string|exists:finished_goods,id',
         'items.*.quantity' => 'required|integer|min:1',
       ]);
@@ -159,7 +195,7 @@ class PackingListController extends Controller
       $packingList = PackingList::create([
         'so_id' => $salesOrder->id,
         'status' => 'Packed',
-        'packed_by' => "-",
+        'packed_by' => $validated['packed_by'],
         'packed_at' => now(),
       ]);
 
@@ -179,8 +215,7 @@ class PackingListController extends Controller
       return response()->json([
         'success' => true,
         'message' => 'Packing List berhasil dibuat dan item tersimpan.',
-        'packing_list_id' => $packingList->id,
-        'packing_list_number' => $packingList->packing_list_number,
+        'packingId' => $packingList->id,
       ]);
     } catch (\Exception $e) {
       DB::rollBack();
@@ -192,28 +227,29 @@ class PackingListController extends Controller
     }
   }
 
-  public function getItems(PackingList $packingList)
+  public function getItems(PackingList $packingList, AccurateService $accurate)
   {
     $items = OutboundPackingItem::with(['packing_list', 'finished_good'])->where("packing_id", $packingList->id)->get();
+
+    $customer = $accurate->getCustomerDetail($packingList->sales_order->customer_id);
 
     return response()->json([
       'pl_number' => $packingList->id,
       'so_number' => $packingList->sales_order->so_number ?? 'N/A',
-      'customer_name' => $packingList->sales_order->customer_id ?? 'N/A',
+      'customer_name' => $customer['name'] ?? 'N/A',
       'packed_by' => $packingList->packed_by ?? 'System',
       'packed_at' => $packingList->packed_at ? Carbon::parse($packingList->packed_at)->format('d/m/Y H:i') : 'N/A',
       'items' => $items->map(function ($item) {
         return [
           'product_code' => $item->finished_good->item->item_code ?? 'N/A',
           'product_name' => $item->finished_good->item->item_name ?? 'N/A',
-          'label_code' => $item->finished_good->production_item_label->qr_code,
-          'qr_code' => $item->finished_good->production_item_label->qr_code,
+          'label_code' => $item->finished_good->production_item_label->barcode,
+          'qr_code' => $item->finished_good->production_item_label->barcode,
           'quantity' => $item->quantity,
         ];
       })
     ]);
   }
-
 
   public function transit(PackingList $packingList)
   {
