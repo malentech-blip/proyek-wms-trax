@@ -14,27 +14,24 @@ class SalesOrderController extends Controller
   public function index(Request $request, AccurateService $accurate): View
   {
     $accurateSalesOrders = $accurate->getSalesOrders($request);
-
     $numbers = $accurateSalesOrders->pluck('number')->filter()->values()->all();
 
-    // Ambil data lokal berdasarkan nomor SO Accurate
     $localByNumber = LocalSalesOrder::query()
       ->with(['packingLists.deliveryOrders'])
       ->whereIn('so_number', $numbers)
       ->get()
       ->keyBy('so_number');
 
-    // 🔄 Sinkronisasi data Accurate → Local
+
     foreach ($accurateSalesOrders as $so) {
       $number = $so['number'] ?? null;
       if (!$number) continue;
 
       $local = $localByNumber->get($number);
-
       $data = [
         'so_number'   => $number,
         'customer_id' => $so['customer']['id'] ?? null,
-        'sync_status' => $so['status'] ?? 'Open', // status dari Accurate
+        'sync_status' => $so['status'] ?? 'Open', 
       ];
 
       if ($local) {
@@ -45,12 +42,12 @@ class SalesOrderController extends Controller
       }
     }
 
-    // 🚚 Hitung status lokal + tambahkan ke hasil view
+
     $withStatuses = $accurateSalesOrders->map(function (array $so) use ($localByNumber) {
       $local = $localByNumber->get($so['number'] ?? '');
 
       $localStatus = 'Pending';
-      $syncStatus = $so['status'] ?? 'Open'; // default dari Accurate
+      $syncStatus = $so['status'] ?? 'Open'; 
 
       if ($local) {
         $hasPacking = $local->packingLists->isNotEmpty();
@@ -60,7 +57,6 @@ class SalesOrderController extends Controller
             ->flatMap
             ->deliveryOrders
             ->contains(fn($do) => ($do->status ?? '') === 'Delivered');
-
           $localStatus = $isShipped ? 'Shipped' : 'Packed';
         }
 
@@ -74,10 +70,8 @@ class SalesOrderController extends Controller
           $local->update(['sync_status' => $syncStatus]);
         }
       }
-
-      // Tambahkan ke hasil untuk view
-      $so['localStatus'] = $localStatus;   // dari lokal
-      $so['syncStatus'] = $syncStatus;     // dari Accurate
+      $so['localStatus'] = $localStatus;  
+      $so['syncStatus'] = $syncStatus;   
       $so['hasLocal'] = (bool) $local;
 
       return $so;

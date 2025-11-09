@@ -227,6 +227,58 @@ class AccurateService
       return null;
     }
   }
+  public function getSalesOrderByNumber(string $soNumber)
+  {
+    try {
+      // 1️⃣ Cari sales order berdasarkan nomor
+      $params = [
+        'fields' => 'id,number,transDate,customer,totalAmount,status',
+        'filter.number' => 'EQUALS',
+        'filter.number.val' => $soNumber,
+      ];
+
+      $response = $this->dataClient()->get('/api/sales-order/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mencari Sales Order berdasarkan nomor', [
+          'so_number' => $soNumber,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      $list = collect($response->json()['d'] ?? []);
+
+      // 2️⃣ Pastikan ada hasil
+      if ($list->isEmpty()) {
+        Log::warning('Sales Order tidak ditemukan berdasarkan nomor', [
+          'so_number' => $soNumber,
+        ]);
+        return null;
+      }
+
+      // 3️⃣ Ambil ID pertama yang ditemukan
+      $soId = $list->first()['id'] ?? null;
+
+      if (!$soId) {
+        Log::warning('Sales Order ditemukan tapi tidak punya ID', [
+          'so_number' => $soNumber,
+          'data' => $list->first(),
+        ]);
+        return null;
+      }
+
+      // 4️⃣ Ambil detail berdasarkan ID
+      return $this->getSalesOrderDetail((int) $soId);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil Sales Order berdasarkan nomor', [
+        'so_number' => $soNumber,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
 
 
   // FINISHED GOOD ACCURATE API
@@ -264,7 +316,6 @@ class AccurateService
       return collect([]);
     }
   }
-
 
   public function getFinishedGoodSlipDetail(int $id)
   {
@@ -366,7 +417,7 @@ class AccurateService
 
 
 
-  
+
   // WORK ORDER ACCURATE API
   public function getWorkOrders(Request $request)
   {
@@ -490,6 +541,32 @@ class AccurateService
         'message' => $e->getMessage()
       ]);
       throw $e;
+    }
+  }
+
+  public function getCustomerDetail(int $id)
+  {
+    try {
+      // Panggil endpoint Accurate untuk ambil detail customer
+      $response = $this->dataClient()->get('/api/customer/detail.do', ['id' => $id]);
+
+      // Jika gagal, log error dan kembalikan null
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Customer dari Accurate', [
+          'id' => $id,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      // Ambil hasil dari response
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Customer', [
+        'id' => $id,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
     }
   }
 }

@@ -411,6 +411,8 @@ Route::middleware('auth')->group(function () {
             ])->name('rejects-production.store');
           });
 
+
+        // OUTBOUND
         Route::prefix('outbound')
           ->name('outbound.')
           ->group(function () {
@@ -419,7 +421,7 @@ Route::middleware('auth')->group(function () {
               'index',
             ])->name('dashboard');
 
-            // Sales Orders
+            // --- SALES ORDERS ---
             Route::get('sales-orders', [
               SalesOrderController::class,
               'index',
@@ -429,41 +431,59 @@ Route::middleware('auth')->group(function () {
               'createPackingList',
             ])->name('sales-orders.create-packing-list');
 
-            // Packing Lists (create form from SO)
+            // --- PACKING LIST ---
+            // index (GET)
             Route::get('packing-lists', [
               PackingListController::class,
               'index',
             ])->name('packing-lists.index');
+            // detail (GET)
+            Route::get('packing-lists/detail/{packing_id}', [
+              PackingListController::class,
+              'detail',
+            ])->name('packing-lists.detail');
+            // get items (GET)
             Route::get('packing-lists/{packingList}/items', [
               PackingListController::class,
               'getItems'
             ])->name('packing-lists.getItems');
+            // create (GET)
             Route::get('packing-lists/create', [
               PackingListController::class,
               'create',
             ])->name('packing-lists.create');
+            // add temp item (POST)
             Route::post('packing-lists/add-temp-item', [
               PackingListController::class,
               'addTempItem',
             ])->name('packing-lists.add-temp-item');
+            // validate qr (POST)
             Route::post('packing-lists/validate-qr', [
               PackingListController::class,
               'validateQr',
             ])->name('packing-lists.validate-qr');
+            // store (POST)
             Route::post('packing-lists/store', [
               PackingListController::class,
               'store'
             ])->name('packing-lists.store');
+            // transit packing list (POST)
             Route::post('packing-lists/{packingList}/transit', [
               PackingListController::class,
               'transit'
             ])->name('packing-lists.transit');
 
+            // --- TRANSIT INVENTORY ---
             Route::get('transit-inventory', [
               TransitInventoryController::class,
               'index'
             ])->name('transit-inventory.index');
+            Route::get('transit-inventory/detail/{packing_id}', [
+              TransitInventoryController::class,
+              'detail',
+            ])->name('transit-inventory.detail');
 
+            // --- DELIVERY ORDERS ---
             Route::resource('delivery-orders', DeliveryOrderController::class)->only(['index']);
             Route::post('delivery-orders/{do_id}/mark-delivered', [
               DeliveryOrderController::class,

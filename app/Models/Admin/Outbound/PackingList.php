@@ -4,6 +4,7 @@ namespace App\Models\Admin\Outbound;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class PackingList extends Model
 {
@@ -24,4 +25,15 @@ class PackingList extends Model
     {
         return $this->hasMany(DeliveryOrder::class);
     }
+    protected static function boot()
+  {
+    parent::boot();
+
+    static::creating(function ($label) {
+      if (empty($label->barcode)) {
+        $uuid = str_replace('-', '', (string) Str::uuid());
+        $label->barcode = strtoupper(substr($uuid, 0, 7));
+      }
+    });
+  }
 }
