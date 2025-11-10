@@ -76,7 +76,7 @@
             <label for="physical_quantity" class="block text-sm font-medium text-gray-700 mb-2">
                 Stok Fisik <span class="text-red-500">*</span>
             </label>
-            <input type="number" id="physical_quantity" wire:model.live="physicalQuantity" min="0"
+<input type="number" id="physical_quantity" wire:model.debounce="physicalQuantity" min="0"
                 class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
             <p class="mt-1 text-xs text-gray-500">Jumlah aktual dari inventaris fisik</p>
             @error('physicalQuantity')
