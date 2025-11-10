@@ -2,6 +2,7 @@
 
 namespace App\Models\Admin\Production;
 
+use App\Models\Admin\Outbound\SalesOrder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,9 @@ class MaterialRequest extends Model
   public function pickingList()
   {
     return $this->hasMany(PickingList::class, 'mr_id', 'id');
+  }
+  public function salesOrder() {
+    return $this->belongsTo(SalesOrder::class, 'so_id', 'id');
   }
 
   protected static function boot()

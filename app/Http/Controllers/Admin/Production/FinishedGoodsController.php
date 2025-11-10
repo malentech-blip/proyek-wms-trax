@@ -12,23 +12,39 @@ use App\Models\SuperAdmin\MasterData\Location;
 use App\Models\SuperAdmin\MasterData\Pallet;
 use App\Models\SuperAdmin\MasterData\Rack;
 use App\Services\AccurateService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Milon\Barcode\DNS1D;
 
 class FinishedGoodsController extends Controller
 {
   public function index(Request $request)
   {
-    $finishedGoods = FinishedGood::with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->orderBy("created_at", "desc")->get();
+    $fgQuery = FinishedGood::query();
+    if ($request->has('create_date') && $request->get('create_date') !== null) {
+      $fgQuery = $fgQuery->whereDate('created_at', $request->get('create_date'));
+    }
+    if ($request->has('search') && $request->get('search') !== null) {
+      $fgQuery = $fgQuery
+        ->whereHas('item', function ($query) use ($request) {
+          $query->where('item_name', 'like', '%' . $request->get('search') . '%')
+            ->orWhere('item_code', 'like', '%' . $request->get('search') . '%');
+        })
+        ->orWhereHas('production_item_label', function ($query) use ($request) {
+          $query->where('batch_no', 'like', '%' . $request->get('search') . '%');
+        });
+    }
+    $finishedGoods = $fgQuery->with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->orderBy("created_at", "desc")->get();
 
     return view("admin.production.finished-goods.index", compact("finishedGoods"));
   }
 
   public function detail(int $mr_id)
   {
-    $wipRecord = WipRecord::where('id', $mr_id)->first();
+    $wipRecord = WipRecord::where('mr_id', $mr_id)->first();
     if ($wipRecord) {
       $finishedGood = FinishedGood::with(["wip_record", "item", "production_item_label", "production_item_label.location", "production_item_label.rack", "production_item_label.pallet"])->where('wip_id', $wipRecord->id)->first();
     } else {
@@ -42,10 +58,10 @@ class FinishedGoodsController extends Controller
     $racks = Rack::all();
     $pallets = Pallet::all();
     $items = Item::where("item_type", "Finished Good")->get();
-    return view('admin.production.finished-goods.detail', compact('wipRecord','finishedGood', 'mrId', 'locations', 'racks', 'pallets', 'items'));
+    return view('admin.production.finished-goods.detail', compact('wipRecord', 'finishedGood', 'mrId', 'locations', 'racks', 'pallets', 'items'));
   }
 
-  public function storeFG(Request $request)
+  public function storeFG(Request $request, AccurateService $accurate)
   {
     $validated_data = $request->validate([
       "wip_id"      => ["required", "string", "exists:wip_records,id"],
@@ -57,11 +73,32 @@ class FinishedGoodsController extends Controller
       "batch_no"    => ["required", "string", "max:50"]
     ]);
 
+    DB::beginTransaction();
     try {
-      DB::beginTransaction();
+      $item = Item::findOrFail($validated_data['item_id']);
+      $location = Location::findOrFail($validated_data['location_id']);
+      $itemCode = $item->item_code;
+      $warehouseNo = $location->code;
+
+      $fgData = [
+        "transDate" => now()->format('d/m/Y'),
+        "warehouseNo" => "GUDANG UTAMA",
+        "memo" => "Hasil produksi dari WIP #{$validated_data['wip_id']}",
+        "detailItem" => [
+          [
+            "itemNo" => $itemCode,
+            "quantity" => $validated_data["quantity"],
+            "unit" => $item->uom ?? "PCS",
+            "warehouseNo" => $warehouseNo,
+            "memo" => "Batch {$validated_data['batch_no']}"
+          ]
+        ]
+      ];
+
+      $fgSlip = $accurate->saveFinishedGoodSlip($fgData);
+
       $label = ProductionItemLabel::create([
         "item_id"     => $validated_data['item_id'],
-        "qr_code"     => Str::uuid(),
         "quantity"    => $validated_data["quantity"],
         "batch_no"    => $validated_data["batch_no"],
         "location_id" => $validated_data['location_id'],
@@ -82,8 +119,8 @@ class FinishedGoodsController extends Controller
       return response()->json([
         'status'  => 'success',
         'message' => 'Finished goods berhasil dibuat.',
-        'data'    => $finishedGood 
-      ], 201); 
+        'data'    => $fgSlip
+      ], 201);
     } catch (\Throwable $th) {
       DB::rollBack();
       return response()->json([
@@ -93,10 +130,11 @@ class FinishedGoodsController extends Controller
     }
   }
 
-  public function storingInv(int $fg_id) {
+  public function storingInv(int $fg_id)
+  {
     $finished_good = FinishedGood::where("id", $fg_id)->first();
 
-    if(!$finished_good) {
+    if (!$finished_good) {
       return response()->json([
         'status'  => 'error',
         'message' => 'Finished Good tidak ditemukan.',
@@ -104,12 +142,37 @@ class FinishedGoodsController extends Controller
     }
 
     $finished_good->update([
-      "stored_at" => now()
+      "stored_at" => now(),
+      "status"    => "Stored"
     ]);
 
     return response()->json([
       'status' => 'success',
       'message' => 'Finished Good updated to stored.',
     ], 200);
+  }
+
+  public function getRacksByLocation($locationId)
+  {
+    $racks = Rack::where('location_id', $locationId)->get(['id', 'code']);
+    return response()->json($racks);
+  }
+
+  public function getPalletsByRack($rackId)
+  {
+    $pallets = Pallet::where('rack_id', $rackId)->get(['id', 'code']);
+    return response()->json($pallets);
+  }
+
+  public function printLabel(int $labelId)
+  {
+    $itemLabels = ProductionItemLabel::where('id', $labelId)->get();
+
+    $widthInPoints = 52 * 2.83465;
+    $heightInPoints = 32 * 2.83465;
+
+    $pdf = Pdf::loadView('admin.production.finished-goods.label-pdf', compact('itemLabels'))
+      ->setPaper("a7", "portrait");
+    return $pdf->stream('labels-' . $labelId . '.pdf');
   }
 }

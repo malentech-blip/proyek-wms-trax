@@ -4,8 +4,49 @@
         List Rejects Production (Production)
     </x-slot>
 
+    @php
+        $actions = [
+          "rework",
+          "scrap",
+        ];
+    @endphp
+
     <div class="bg-white rounded-xl shadow-sm">
         <div class="p-6 border-b">
+            <h3 class="text-lg font-semibold text-gray-800">Filter Rejects Production</h3>
+            <form method="GET">
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label for="create_date" class="text-sm font-medium text-gray-700">
+                            Tanggal Produksi
+                        </label>
+                        <input type="date" name="create_date" id="create_date" onblur="this.form.submit()"
+                            value="{{ request('create_date') }}"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="action" class="text-sm font-medium text-gray-700">Action</label>
+                        <select name="action" id="action" value="{{ request('action') }}" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+                          <option value="">Pilih action</option>
+                          @foreach ($actions as $action)
+                            <option value="{{ $action }}" {{ request("action") == $action ? "selected" : "" }} >{{ $action }}</option>  
+                          @endforeach
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="search" class="text-sm font-medium text-gray-700">Cari Rejects Production</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="text" name="search" id="search" value="{{ request('search') }}"
+                                class="flex-1 block w-full border-gray-300 rounded-none rounded-l-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Cari rejects production berdasarkan keyword apapun...">
+                            <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 bg-gray-50 text-sm font-medium text-gray-700 rounded-r-md hover:bg-gray-100">
+                                Cari
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">

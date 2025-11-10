@@ -67,7 +67,7 @@ class PickingListsController extends Controller
       ->select(
         'picking_lists.*',
         'items.item_name as item_name',
-        'items.item_name as item_code',
+        'items.item_code as item_code',
         'racks.code as rack_code',
         'inventories.quantity as item_quantity',
         'locations.name as location_name',
@@ -96,6 +96,7 @@ class PickingListsController extends Controller
           'item_labels.qr_code as qr_code',
         )
         ->where("date_picked", null)
+        ->where("mr_id", $request["mr_id"])
         ->first();
 
       // Jika tidak ditemukan
@@ -103,7 +104,7 @@ class PickingListsController extends Controller
         return response()->json([
           'success' => false,
           'message' => '❌ QR Code tidak ditemukan dalam daftar picking list.',
-          'data' => $itemLabel
+          'data' => $itemPickingList
         ], 404);
       }
       return response()->json([

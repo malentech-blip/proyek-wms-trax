@@ -162,6 +162,8 @@ class AccurateService
     }
   }
 
+
+  // SALES ORDER ACCURATE API
   public function getSalesOrders(Request $request)
   {
     try {
@@ -204,28 +206,367 @@ class AccurateService
     }
   }
   public function getSalesOrderDetail(int $soId)
-{
+  {
     try {
-        // Endpoint untuk detail Sales Order
-        $response = $this->dataClient()->get('/api/sales-order/detail.do', ['id' => $soId]);
+      $response = $this->dataClient()->get('/api/sales-order/detail.do', ['id' => $soId]);
 
-        if ($response->failed()) {
-            Log::error('Gagal mengambil detail Sales Order dari Accurate', [
-                'so_id' => $soId,
-                'response' => $response->json(),
-            ]);
-            return null;
-        }
-
-        return $response->json()['d'] ?? null;
-
-    } catch (\Exception $e) {
-        Log::error('Exception saat mengambil detail Sales Order', [
-            'so_id' => $soId,
-            'message' => $e->getMessage(),
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Sales Order dari Accurate', [
+          'so_id' => $soId,
+          'response' => $response->json(),
         ]);
         return null;
-    }
-}
+      }
 
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Sales Order', [
+        'so_id' => $soId,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+  public function getSalesOrderByNumber(string $soNumber)
+  {
+    try {
+      // 1️⃣ Cari sales order berdasarkan nomor
+      $params = [
+        'fields' => 'id,number,transDate,customer,totalAmount,status',
+        'filter.number' => 'EQUALS',
+        'filter.number.val' => $soNumber,
+      ];
+
+      $response = $this->dataClient()->get('/api/sales-order/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mencari Sales Order berdasarkan nomor', [
+          'so_number' => $soNumber,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      $list = collect($response->json()['d'] ?? []);
+
+      // 2️⃣ Pastikan ada hasil
+      if ($list->isEmpty()) {
+        Log::warning('Sales Order tidak ditemukan berdasarkan nomor', [
+          'so_number' => $soNumber,
+        ]);
+        return null;
+      }
+
+      // 3️⃣ Ambil ID pertama yang ditemukan
+      $soId = $list->first()['id'] ?? null;
+
+      if (!$soId) {
+        Log::warning('Sales Order ditemukan tapi tidak punya ID', [
+          'so_number' => $soNumber,
+          'data' => $list->first(),
+        ]);
+        return null;
+      }
+
+      // 4️⃣ Ambil detail berdasarkan ID
+      return $this->getSalesOrderDetail((int) $soId);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil Sales Order berdasarkan nomor', [
+        'so_number' => $soNumber,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
+
+
+  // FINISHED GOOD ACCURATE API
+  public function getFinishedGoodSlips(Request $request)
+  {
+    try {
+      $params = [
+        'fields' => 'id,number,transDate,warehouse,totalQuantity,status',
+        'sort' => 'transDate desc',
+        'sp.page' => $request->get('page', 1),
+        'sp.pageSize' => 20,
+      ];
+
+      if ($request->filled(['start_date', 'end_date'])) {
+        $params['filter.transDate.op'] = 'BETWEEN';
+        $params['filter.transDate.val[0]'] = $request->start_date;
+        $params['filter.transDate.val[1]'] = $request->end_date;
+      }
+
+      if ($request->filled('search')) {
+        $params['filter.keywords.op'] = 'CONTAIN';
+        $params['filter.keywords.val'] = $request->search;
+      }
+
+      $response = $this->dataClient()->get('/api/finished-good-slip/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal ambil daftar Finished Good Slip', $response->json());
+        return collect([]);
+      }
+
+      return collect($response->json()['d'] ?? []);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat ambil Finished Good Slip', ['message' => $e->getMessage()]);
+      return collect([]);
+    }
+  }
+
+  public function getFinishedGoodSlipDetail(int $id)
+  {
+    try {
+      $response = $this->dataClient()->get('/api/finished-good-slip/detail.do', ['id' => $id]);
+      if ($response->failed()) {
+        Log::error('Gagal ambil detail Finished Good Slip', ['id' => $id, 'response' => $response->json()]);
+        return null;
+      }
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception ambil detail Finished Good Slip', ['id' => $id, 'message' => $e->getMessage()]);
+      return null;
+    }
+  }
+
+
+  public function saveFinishedGoodSlip(array $data)
+  {
+    try {
+      $response = $this->dataClient()->asForm()->post('/api/finished-good-slip/save.do', $data);
+
+      if ($response->failed()) {
+        Log::error('Gagal menyimpan Finished Good Slip', [
+          'data' => $data,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menyimpan Finished Good Slip.');
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat menyimpan Finished Good Slip', [
+        'message' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
+
+  public function deleteFinishedGoodSlip(int $id)
+  {
+    try {
+      $response = $this->dataClient()->post('/api/finished-good-slip/delete.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal menghapus Finished Good Slip', [
+          'id' => $id,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menghapus Finished Good Slip.');
+      }
+
+      return $response->json()['d'] ?? true;
+    } catch (\Exception $e) {
+      Log::error('Exception saat hapus Finished Good Slip', [
+        'id' => $id,
+        'message' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
+
+  public function findFinishedGoodSlipByItemNo(string $itemNo)
+  {
+    try {
+      $params = [
+        'fields' => 'id,number,transDate,warehouse,status,detailItem',
+        'filter.detailItem.itemNo.op' => 'EQUAL',
+        'filter.detailItem.itemNo.val' => $itemNo,
+        'sort' => 'transDate desc',
+        'sp.pageSize' => 1 // ambil hanya 1 yang terbaru
+      ];
+
+      $response = $this->dataClient()->get('/api/finished-good-slip/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mencari Finished Good Slip berdasarkan itemNo', [
+          'itemNo' => $itemNo,
+          'response' => $response->json()
+        ]);
+        return null;
+      }
+
+      $data = $response->json()['d'] ?? [];
+      if (empty($data)) {
+        return null;
+      }
+
+      // Ambil yang pertama (hasil paling baru)
+      return $data[0];
+    } catch (\Exception $e) {
+      Log::error('Exception saat mencari Finished Good Slip by itemNo', [
+        'itemNo' => $itemNo,
+        'message' => $e->getMessage()
+      ]);
+      return null;
+    }
+  }
+
+
+
+
+  // WORK ORDER ACCURATE API
+  public function getWorkOrders(Request $request)
+  {
+    try {
+      $params = [
+        'fields' => 'id,number,transDate,item,quantity,warehouse,status,bom',
+        'sort' => 'transDate desc',
+        'sp.page' => $request->get('page', 1),
+        'sp.pageSize' => 20,
+      ];
+
+      // Filter tanggal (opsional)
+      if ($request->filled(['start_date', 'end_date'])) {
+        $params['filter.transDate.op'] = 'BETWEEN';
+        $params['filter.transDate.val[0]'] = $request->start_date;
+        $params['filter.transDate.val[1]'] = $request->end_date;
+      }
+
+      // Filter pencarian (opsional)
+      if ($request->filled('search')) {
+        $params['filter.keywords.op'] = 'CONTAIN';
+        $params['filter.keywords.val'] = $request->search;
+      }
+
+      // Request ke Accurate
+      $response = $this->dataClient()->get('/api/work-order/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil daftar Work Order dari Accurate', [
+          'response' => $response->json()
+        ]);
+        return collect([]);
+      }
+
+      return collect($response->json()['d'] ?? []);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil daftar Work Order', [
+        'message' => $e->getMessage()
+      ]);
+      return collect([]);
+    }
+  }
+
+  public function getWorkOrderDetail(int $id)
+  {
+    try {
+      $response = $this->dataClient()->get('/api/work-order/detail.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Work Order dari Accurate', [
+          'id' => $id,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Work Order', [
+        'id' => $id,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
+  /**
+   * Menyimpan (membuat baru atau update) Work Order (Perintah Kerja).
+   * Data $data harus dalam format form-data yang sesuai dengan Accurate API.
+   *
+   * Contoh $data:
+   * [
+   * 'transDate' => '31/10/2024',
+   * 'itemNo' => 'SKU-BARANG-JADI',
+   * 'quantity' => 10,
+   * 'warehouseId' => 1, // ID Gudang
+   * 'bomId' => 5 // ID Bill of Material
+   * ]
+   */
+  public function saveWorkOrder(array $data)
+  {
+    try {
+      // Endpoint save menggunakan method POST dan asForm
+      $response = $this->dataClient()->asForm()->post('/api/work-order/save.do', $data);
+
+      if ($response->failed()) {
+        Log::error('Gagal menyimpan Work Order ke Accurate', [
+          'data' => $data,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menyimpan Work Order: ' . ($response->json()['s']['m'] ?? 'Error tidak diketahui'));
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat menyimpan Work Order', [
+        'message' => $e->getMessage(),
+        'data' => $data
+      ]);
+      throw $e;
+    }
+  }
+
+  public function deleteWorkOrder(int $id)
+  {
+    try {
+      $response = $this->dataClient()->post('/api/work-order/delete.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal menghapus Work Order dari Accurate', [
+          'id' => $id,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menghapus Work Order.');
+      }
+
+      return $response->json()['s'] ?? true; // 's' biasanya true jika sukses
+    } catch (\Exception $e) {
+      Log::error('Exception saat menghapus Work Order', [
+        'id' => $id,
+        'message' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
+
+  public function getCustomerDetail(int $id)
+  {
+    try {
+      // Panggil endpoint Accurate untuk ambil detail customer
+      $response = $this->dataClient()->get('/api/customer/detail.do', ['id' => $id]);
+
+      // Jika gagal, log error dan kembalikan null
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Customer dari Accurate', [
+          'id' => $id,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      // Ambil hasil dari response
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Customer', [
+        'id' => $id,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
 }

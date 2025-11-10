@@ -5,14 +5,14 @@ namespace App\Models\Admin\Outbound;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class SalesOrder extends Model
+class TransitInventory extends Model
 {
     use HasFactory;
 
     protected $guarded = [];
 
-    public function packingLists()
+    public function packingList()
     {
-        return $this->hasMany(PackingList::class, 'so_id');
+        return $this->belongsTo(PackingList::class, "packing_id");
     }
 }
