@@ -6,20 +6,20 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {{-- KPI Cards --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 {{-- Total Stock KPI --}}
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <div class="flex items-center justify-between">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Total Stock</p>
                                 <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($totalStock) }}</p>
                                 <p class="text-xs text-gray-400 mt-1">Total jumlah stok semua item</p>
                             </div>
-                            <div class="bg-blue-100 rounded-full p-4">
-                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="self-start sm:self-auto bg-blue-100 rounded-full p-3 sm:p-4">
+    <svg class="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                                 </svg>
                             </div>
@@ -30,14 +30,15 @@
                 {{-- Low Stock Alert KPI --}}
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <div class="flex items-center justify-between">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Low Stock Alert</p>
                                 <p class="text-3xl font-bold text-{{ $lowStockAlert > 0 ? 'red' : 'green' }}-600 mt-2">{{ $lowStockAlert }}</p>
                                 <p class="text-xs text-gray-400 mt-1">Item dengan stok ≤ 10 unit</p>
                             </div>
-                            <div class="bg-{{ $lowStockAlert > 0 ? 'red' : 'green' }}-100 rounded-full p-4">
-                                <svg class="w-8 h-8 text-{{ $lowStockAlert > 0 ? 'red' : 'green' }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="self-start sm:self-auto bg-{{ $lowStockAlert > 0 ? 'red' : 'green' }}-100 rounded-full p-3 sm:p-4">
+    <svg class="w-7 h-7 sm:w-8 sm:h-8 text-{{ $lowStockAlert > 0 ? 'red' : 'green' }}-600" fill="none"
+        stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                                 </svg>
                             </div>
@@ -52,13 +53,11 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Stock Value per Category (%)</h3>
-                        <div class="flex flex-col md:flex-row gap-4 items-center md:items-start">
-                            <div class="flex-shrink-0" style="width: 300px; height: 300px;">
-                                <canvas id="stockValueChart"></canvas>
+<div class="flex flex-col md:flex-row gap-6 items-center md:items-start">
+    <div class="w-full max-w-xs sm:max-w-sm md:max-w-[300px]">
+        <canvas id="stockValueChart" class="w-full h-full"></canvas>
                             </div>
-                            <div id="chart-legend" class="flex-1 flex flex-col gap-2 mt-2">
-                                {{-- Legend will be rendered here --}}
-                            </div>
+<div id="chart-legend" class="w-full flex flex-col gap-2 mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -67,25 +66,25 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Scan QR</h3>
-                        <div class="space-y-4">
+<div class="space-y-5">
                             <div>
                                 <label for="qr_code" class="block text-sm font-medium text-gray-700 mb-2">
                                     Scan atau masukkan QR Code
                                 </label>
-                                <div class="flex gap-2">
+<div class="flex flex-col sm:flex-row gap-3">
                                     <input type="text"
                                         id="qr_code"
                                         name="qr_code"
                                         placeholder="Scan QR code atau ketik manual"
-                                        class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
                                     <button type="button"
                                         onclick="startCamera()"
-                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                         </svg>
-                                        Camera
+<span>Camera</span>
                                     </button>
                                 </div>
                                 <button type="button"
@@ -97,7 +96,7 @@
 
                             {{-- QR Scan Result --}}
                             <div id="qr-result" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
-                                <div class="flex justify-between items-start mb-2">
+<div class="flex flex-wrap justify-between items-start gap-2 mb-2">
                                     <h4 class="font-semibold text-gray-900">Hasil Scan</h4>
                                     <button type="button" onclick="closeResult()" class="text-gray-400 hover:text-gray-600">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,9 +104,7 @@
                                         </svg>
                                     </button>
                                 </div>
-                                <div id="qr-result-content" class="text-sm text-gray-600">
-                                    {{-- Result content will be populated here --}}
-                                </div>
+<div id="qr-result-content" class="text-sm text-gray-600"></div>
                             </div>
 
                             {{-- Loading State --}}
@@ -128,9 +125,9 @@
     </div>
 
     {{-- Camera Modal for QR Scanning --}}
-    <div id="camera-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div class="flex justify-between items-center mb-4">
+    <div id="camera-modal" class="hidden fixed inset-0 z-50 bg-black/80 px-4 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
                 <h3 class="text-lg font-semibold">Scan QR Code</h3>
                 <button type="button" onclick="closeCamera()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +135,7 @@
                     </svg>
                 </button>
             </div>
-            <video id="camera-video" class="w-full rounded-lg" autoplay playsinline></video>
+<video id="camera-video" class="w-full rounded-lg aspect-video bg-black" autoplay playsinline></video>
             <p class="text-sm text-gray-500 mt-4 text-center">Arahkan kamera ke QR code</p>
         </div>
     </div>
@@ -149,7 +146,7 @@
     <script>
         // Chart.js configuration
         const chartData = @json($chartData);
-        
+
         const ctx = document.getElementById('stockValueChart').getContext('2d');
         const stockValueChart = new Chart(ctx, {
             type: 'doughnut',
@@ -181,7 +178,7 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+maintainAspectRatio: false,
                 aspectRatio: 1,
                 plugins: {
                     legend: {
@@ -208,11 +205,11 @@
             if (!legendContainer || !chartData.categories) return;
 
             legendContainer.innerHTML = '';
-            
+
             chartData.categories.forEach((category, index) => {
                 const percentage = chartData.percentages[index];
                 const value = chartData.values[index];
-                
+
                 const legendItem = document.createElement('div');
                 legendItem.className = 'flex items-center gap-3 p-2 rounded hover:bg-gray-50';
                 legendItem.innerHTML = `
@@ -236,14 +233,14 @@
         function startCamera() {
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('camera-video');
-            
+
             modal.classList.remove('hidden');
 
             navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                 .then(function(mediaStream) {
                     stream = mediaStream;
                     video.srcObject = mediaStream;
-                    
+
                     QrScanner.hasCamera().then(hasCamera => {
                         if (hasCamera) {
                             qrScanner = new QrScanner(
@@ -270,25 +267,24 @@
 
         function closeCamera() {
             const modal = document.getElementById('camera-modal');
-            
+
             if (qrScanner) {
                 qrScanner.stop();
                 qrScanner.destroy();
                 qrScanner = null;
             }
-            
+
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
 
-            modal.classList.add('hidden');
-            modal.style.display = 'none';
+modal.classList.add('hidden');
         }
 
         function scanQR() {
             const qrCode = document.getElementById('qr_code').value.trim();
-            
+
             if (!qrCode) {
                 alert('Masukkan QR code terlebih dahulu');
                 return;
@@ -315,7 +311,7 @@
             .then(response => response.json())
             .then(data => {
                 loadingDiv.classList.add('hidden');
-                
+
                 if (data.success) {
                     const item = data.data;
                     resultContent.innerHTML = `
