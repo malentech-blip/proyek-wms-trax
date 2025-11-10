@@ -3,24 +3,32 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\Admin\Inventory\Inventory;
+use App\Models\SuperAdmin\MasterData\Item;
+use App\Models\SuperAdmin\MasterData\Location;
 
 class InventoriesSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Generate 100 inventory records using factories
-        $items = \App\Models\SuperAdmin\MasterData\Item::all();
-        $locations = \App\Models\SuperAdmin\MasterData\Location::all();
+        $items = Item::all();
+        $locations = Location::all();
 
-        // Create inventory records
-        for ($i = 0; $i < 100; $i++) {
-            \App\Models\Admin\Inventory\Inventory::factory()->create([
-                'item_id' => $items->random()->id ?? \App\Models\SuperAdmin\MasterData\Item::factory()->create()->id,
-                'location_id' => $locations->random()->id ?? \App\Models\SuperAdmin\MasterData\Location::factory()->create()->id,
+        if ($items->count() < 1) {
+            $this->command->warn('⚠️ Tidak ada item ditemukan. Seeder dibatalkan.');
+            return;
+        }
+
+        // Hapus semua data lama agar tidak duplikat
+        Inventory::truncate();
+
+        foreach ($items as $item) {
+            Inventory::factory()->create([
+                'item_id' => $item->id,
+                'location_id' => $locations->random()->id ?? Location::factory()->create()->id,
             ]);
         }
+
+        $this->command->info('✅ Inventories berhasil di-seed (1 per item, unique item_id).');
     }
 }
