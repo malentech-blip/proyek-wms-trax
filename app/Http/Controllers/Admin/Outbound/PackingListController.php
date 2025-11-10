@@ -7,6 +7,7 @@ use App\Models\Admin\Inventory\Inventory;
 use App\Models\Admin\Outbound\OutboundPackingItem;
 use App\Models\Admin\Outbound\PackingList;
 use App\Models\Admin\Outbound\SalesOrder;
+use App\Models\Admin\Outbound\TransitInventory;
 use App\Models\Admin\Production\FinishedGood;
 use App\Models\Admin\Production\ProductionItemLabel;
 use App\Models\SuperAdmin\MasterData\Item;
@@ -254,7 +255,6 @@ class PackingListController extends Controller
   public function transit(PackingList $packingList)
   {
     try {
-      // Validasi status - hanya Packed atau Ready to Ship yang bisa di-transit
       if (!in_array($packingList->status, ['Packed', 'Ready to Ship'])) {
         return response()->json([
           'success' => false,
@@ -263,10 +263,11 @@ class PackingListController extends Controller
       }
 
       DB::beginTransaction();
-
-      // Update packing list status
       $packingList->update([
-        'status' => 'In Transit', // atau 'In Transit' sesuai kebutuhan
+        'status' => 'In Transit',
+      ]);
+      TransitInventory::create([
+        "packing_id" => $packingList->id
       ]);
 
       DB::commit();

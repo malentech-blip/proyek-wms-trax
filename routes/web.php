@@ -482,13 +482,30 @@ Route::middleware('auth')->group(function () {
               TransitInventoryController::class,
               'detail',
             ])->name('transit-inventory.detail');
+            Route::post('transit-inventory/validate-barcode/{packing_id}', [
+              TransitInventoryController::class,
+              'validateBarcode',
+            ])->name('transit-inventory.validate-barcode');
+            Route::post('transit-inventory/validate-barcodes', [
+              TransitInventoryController::class,
+              'validateBarcodes',
+            ])->name('transit-inventory.validate-barcodes');
 
             // --- DELIVERY ORDERS ---
-            Route::resource('delivery-orders', DeliveryOrderController::class)->only(['index']);
+            Route::get('delivery-orders', [DeliveryOrderController::class, "index"])->name("delivery-orders.index");
+            Route::get('delivery-orders/detail/{packing_id}', [DeliveryOrderController::class, "detail"])->name("delivery-orders.detail");
             Route::post('delivery-orders/{do_id}/mark-delivered', [
               DeliveryOrderController::class,
               'markDelivered',
             ])->name('delivery-orders.mark-delivered');
+            Route::post('delivery-orders/store', [
+              DeliveryOrderController::class,
+              'store',
+            ])->name('delivery-orders.store');
+            Route::get('delivery-orders/{do_id}/getDetails', [
+              DeliveryOrderController::class,
+              'getDetails',
+            ])->name('delivery-orders.getDetails');
             Route::get('delivery-orders/{do_id}/print-pdf', [
               DeliveryOrderController::class,
               'printPDF',
