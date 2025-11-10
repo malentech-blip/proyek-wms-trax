@@ -1,8 +1,8 @@
 <div class="space-y-6" wire:key="raw-material-table">
     {{-- Search and Filter Bar --}}
-    <div class="flex justify-between items-center gap-4">
+<div class="flex flex-wrap justify-between items-center gap-4">
         {{-- Search Bar --}}
-        <div class="flex-1 relative">
+<div class="flex-1 min-w-[220px] relative">
             <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari No / Supplier"
                 class="w-full border-gray-300 rounded-[15px] shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 pl-10 pr-4 py-2">
             <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -18,18 +18,38 @@
             </div>
         </div>
 
-        {{-- Filter Dropdown --}}
-        <div class="relative">
-            <select wire:model.live="locationId" class="border-gray-300 rounded-[15px] shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 pr-8 pl-4 py-2 appearance-none bg-white">
-                <option value="all">Filter : Status</option>
-                @foreach ($locations as $location)
+<div class="flex flex-wrap items-center gap-3">
+            <div class="relative">
+                <select wire:model.live="locationId"
+                    class="border-gray-300 rounded-[15px] shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 pr-8 pl-4 py-2 appearance-none bg-white">
+                    <option value="all">Filter : Status</option>
+                    @foreach ($locations as $location)
                     <option value="{{ $location->id }}">{{ $location->name }}</option>
-                @endforeach
-            </select>
-            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
+                    @endforeach
+                </select>
+                <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+</div>
+                </div>
+
+                <select wire:model.live="dateRangePreset"
+                    class="border-gray-300 rounded-[15px] shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-4 bg-white">
+                    <option value="all">Semua Waktu</option>
+                    <option value="today">Hari Ini</option>
+                    <option value="this_week">Minggu Ini</option>
+                    <option value="this_month">Bulan Ini</option>
+                    <option value="last_30_days">30 Hari Terakhir</option>
+                    <option value="custom">Rentang Tanggal</option>
+                </select>
+
+                <div class="flex items-center gap-2">
+                    <input type="date" wire:model.live="dateFrom"
+                        class="border-gray-300 rounded-[15px] shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3">
+                    <span class="text-gray-400 text-sm">s/d</span>
+                    <input type="date" wire:model.live="dateTo"
+                        class="border-gray-300 rounded-[15px] shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3">
             </div>
         </div>
     </div>
@@ -37,7 +57,7 @@
     {{-- Filter Panel (Collapsible) --}}
     <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
         <h3 class="text-sm font-medium text-gray-700 mb-4">Filter Panel (Collapsible) :</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-4">
             {{-- Lokasi Filter --}}
             <div>
                 <label for="filter-location" class="block text-sm font-medium text-gray-700 mb-2">Lokasi :</label>

@@ -1,12 +1,13 @@
 <div class="space-y-6">
     <div class="flex justify-between items-center">
-        <form wire:submit.prevent class="flex items-center space-x-4">
+<form wire:submit.prevent class="flex flex-wrap items-center gap-4">
             <select wire:model.live="locationId" class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
                 <option value="all">All Locations</option>
                 @foreach ($locations as $location)
                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                 @endforeach
             </select>
+
             <div class="relative">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari Nama atau Item..."
                     class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 w-64">
@@ -17,6 +18,23 @@
                     </svg>
                 </div>
             </div>
+<select wire:model.live="dateRangePreset"
+    class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+    <option value="all">Semua Waktu</option>
+    <option value="today">Hari Ini</option>
+    <option value="this_week">Minggu Ini</option>
+    <option value="this_month">Bulan Ini</option>
+    <option value="last_30_days">30 Hari Terakhir</option>
+    <option value="custom">Rentang Tanggal</option>
+</select>
+
+<div class="flex items-center gap-2">
+    <input type="date" wire:model.live="dateFrom"
+        class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+    <span class="text-gray-400 text-sm">s/d</span>
+    <input type="date" wire:model.live="dateTo"
+        class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+</div>
         </form>
     </div>
     <div class="overflow-x-auto">
