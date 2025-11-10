@@ -14,9 +14,20 @@ class RejectsProductionController extends Controller
 {
   public function index(Request $request)
   {
-    $rejectsProduction = RejectProduction::query()
-      ->with("wip_record")
-      ->orderBy("created_at", "desc")->get();
+    $rpQuery = RejectProduction::query();
+    if ($request->has('create_date') && $request->get('create_date') !== null) {
+      $rpQuery = $rpQuery->whereDate('date', $request->get('create_date'));
+    }
+    if ($request->has('search') && $request->get('search') !== null) {
+      $rpQuery = $rpQuery->where('reason', 'like', '%' . $request->get('search') . '%')
+        ->orWhere('handled_by', 'like', '%' . $request->get('search') . '%');
+    }
+    if ($request->has('action') && $request->get('action') !== null) {
+      $rpQuery = $rpQuery->where('action', $request->get('action'));
+    }
+    $rejectsProduction = $rpQuery->with("wip_record")
+      ->orderBy("created_at", "desc")
+      ->get();
     $wipRecords = WipRecord::query()
       ->where("status", "Completed")
       ->orderBy("created_at", "desc")
@@ -26,14 +37,14 @@ class RejectsProductionController extends Controller
 
   public function detail(int $mr_id)
   {
-    $wipRecord = WipRecord::where('id', $mr_id)->first();
-    if($wipRecord) {
+    $wipRecord = WipRecord::where('mr_id', $mr_id)->first();
+    if ($wipRecord) {
       $rejectProduction = RejectProduction::where('wip_id', $wipRecord->id)->first();
     } else {
       return redirect()->route("admin.production.material-request.index");
     }
     $mrId = $mr_id;
-    if($wipRecord->status !== "Completed") {
+    if ($wipRecord->status !== "Completed") {
       return redirect()->route("admin.production.wip.detail", $wipRecord->id);
     }
     return view('admin.production.rejects-production.detail', compact('rejectProduction', 'wipRecord', "mrId"));

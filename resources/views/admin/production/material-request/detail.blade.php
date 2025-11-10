@@ -14,7 +14,7 @@
             <div class="flex flex-col gap-3 mt-2">
                 <div class="flex items-center gap-2">
                     <p class="w-[200px] text-sm text-gray-600">Sales Order:</p>
-                    <p class="font-medium">{{ $so['number'] }}</p>
+                    <p class="font-medium">{{ $mr->salesOrder->so_number }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <p class="w-[200px] text-sm text-gray-600">Requested By:</p>
@@ -144,7 +144,6 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         const completeProductionForm = document.getElementById('completeProductionForm');
-
         if (completeProductionForm) {
             completeProductionForm.addEventListener('submit', async function(event) {
                 event.preventDefault();

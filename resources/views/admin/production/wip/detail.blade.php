@@ -82,8 +82,8 @@
             </div>
         @endif
         {{-- Table --}}
-        <div class="w-full overflow-x-auto">
-            <table class="min-w-max text-sm border-collapse">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm border-collapse">
                 <thead class="bg-blue-50">
                     <tr>
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[200px]">WIP. No</th>
