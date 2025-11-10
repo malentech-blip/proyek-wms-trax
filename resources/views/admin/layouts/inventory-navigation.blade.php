@@ -39,7 +39,6 @@
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Raw Material Storage</span>
         </a>
 
-        {{-- TODO: PLEASE UPDATE THE LINK! --}}
         <a href="{{ route('admin.inventory.move-stock') }}"
             class="{{ $linkClasses }} {{ request()->routeIs('admin.inventory.move-stock') ? $activeClasses : $inactiveClasses }}"
             :class="!sidebarOpen && 'justify-center'">
@@ -62,7 +61,6 @@
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Stock Adjustment</span>
         </a>
 
-        {{-- TODO END! --}}
 
         <a href="{{ route('admin.inventory.reject-warehouses') }}"
             class="{{ $linkClasses }} {{ request()->routeIs('admin.inventory.reject-warehouses') ? $activeClasses : $inactiveClasses }}"

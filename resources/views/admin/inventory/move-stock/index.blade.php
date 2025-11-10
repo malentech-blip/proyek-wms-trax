@@ -8,6 +8,8 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {{-- @livewire('admin.inventory.stock-adjusment-form') --}}
+<div class="md:col-span-3">
+    @livewire('admin.inventory.move-stock-form')
+</div>
     </div>
 </x-app-layout>
