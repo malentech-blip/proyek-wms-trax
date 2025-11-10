@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\SuperAdmin\MasterData\Location;
-use App\Models\SuperAdmin\MasterData\Rack;
 use App\Models\SuperAdmin\MasterData\Pallet;
+use App\Models\SuperAdmin\MasterData\Rack;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class LocationSeeder extends Seeder

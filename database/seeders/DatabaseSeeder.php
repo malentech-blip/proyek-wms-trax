@@ -53,7 +53,7 @@ class DatabaseSeeder extends Seeder
 
             // Eleventh: WIP Records (requires material requests)
             // WipRecordSeeder::class,
-            
+
             // Twelfth: Finished Goods (requires WIP records and items)
             // FinishedGoodSeeder::class,
 

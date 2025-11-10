@@ -1,5 +1,5 @@
 <div class="space-y-6">
-    <form wire:submit.prevent class="flex justify-between items-center">
+<form wire:submit.prevent class="flex flex-wrap justify-between items-center gap-4">
         <div class="flex items-center space-x-4">
             <select wire:model.live="status" class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
                 <option value="all">Filter: Status</option>
@@ -18,6 +18,25 @@
                 </div>
             </div>
         </div>
+<div class="flex flex-wrap items-center gap-3">
+    <select wire:model.live="dateRangePreset"
+        class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-4 bg-white">
+        <option value="all">Semua Waktu</option>
+        <option value="today">Hari Ini</option>
+        <option value="this_week">Minggu Ini</option>
+        <option value="this_month">Bulan Ini</option>
+        <option value="last_30_days">30 Hari Terakhir</option>
+        <option value="custom">Rentang Tanggal</option>
+    </select>
+
+    <div class="flex items-center gap-2">
+        <input type="date" wire:model.live="dateFrom"
+            class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3">
+        <span class="text-gray-400 text-sm">s/d</span>
+        <input type="date" wire:model.live="dateTo"
+            class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3">
+    </div>
+</div>
     </form>
 
     <div class="bg-white rounded-xl shadow-sm">
