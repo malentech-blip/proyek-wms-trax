@@ -86,23 +86,25 @@
             }
         },
     }" class="bg-white rounded-xl shadow-sm mt-8">
-        <div class="p-6 border-b flex flex-col gap-2">
+        <div class="p-6 max-sm:overflow-x-auto max-sm:min-w-full border-b flex flex-col gap-2">
             <h3 class="text-lg font-semibold text-gray-800">Detail Picking List</h3>
             <div class="flex flex-col gap-3 mt-2">
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">MR. No:</p>
-                    <p class="font-medium">{{ $mr->mr_no }}</p>
+                    <p class="max-sm:w-[70px] w-[200px] text-sm text-gray-600">MR. No:</p>
+                    <p class="font-medium max-sm:min-w-[150px]">{{ $mr->mr_no }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Status:</p>
-                    <p class="font-medium">{{ $mr->status }}</p>
+                    <p class="max-sm:w-[70px] w-[200px] text-sm text-gray-600">Status:</p>
+                    <p class="font-medium max-sm:min-w-[150px]">{{ $mr->status }}</p>
                 </div>
                 <div class="flex items-center gap-3 mt-3">
-                    <button type="button" id="openGlobalScanBtn"
-                        class="w-max border-none rounded py-2 px-4 bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400">
-                        Scan Item
-                    </button>
-                    @if ($mr->status == 'Requested')
+                    @if ($confirmPickedDisabled)
+                        <button type="button" id="openGlobalScanBtn"
+                            class="w-max border-none rounded py-2 px-4 bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400">
+                            Scan Item
+                        </button>
+                    @endif
+                    @if ($mr->status == 'Requested' && !$confirmPickedDisabled)
                         <button type="button" onclick="showConfirmPickedModal()" id="btnConfirmPicked"
                             {{ $confirmPickedDisabled ? 'disabled' : '' }}
                             class="w-max border-none rounded py-2 px-4 
@@ -110,11 +112,6 @@
                                 ? 'bg-gray-400 text-gray-100 cursor-not-allowed'
                                 : 'bg-blue-500 text-white hover:bg-blue-600' }}">
                             Confirm Picked
-                        </button>
-                    @else
-                        <button type="button" disabled
-                            class="w-max border-none rounded py-2 px-4 bg-gray-400 text-gray-100 cursor-not-allowed">
-                            Picked
                         </button>
                     @endif
                     @if ($mr->status == 'Picked')
@@ -126,11 +123,6 @@
                                 : 'bg-orange-500 text-white hover:bg-orange-600' }}">
                             Deliver to WIP
                         </button>
-                    @else
-                        <button type="button" disabled
-                            class="w-max border-none rounded py-2 px-4 bg-gray-400 text-gray-100 cursor-not-allowed">
-                            Delivered to WIP
-                        </button>
                     @endif
                 </div>
             </div>
@@ -141,7 +133,7 @@
                 <thead class="bg-blue-50">
                     <tr>
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[60px]">No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[60px]">Item Code</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[120px]">Item Code</th>
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[200px]">Item Name</th>
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[160px]">Location</th>
                         <th class="p-4 text-left font-semibold text-gray-600 min-w-[120px]">Rack</th>

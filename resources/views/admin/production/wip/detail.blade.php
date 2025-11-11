@@ -21,23 +21,23 @@
                 <h3 class="text-lg font-semibold text-gray-800">Detail WIP</h3>
                 <div class="flex flex-col gap-3 mt-2">
                     <div class="flex items-center gap-2">
-                        <p class="w-[200px] text-sm text-gray-600">WIP. No:</p>
+                        <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">WIP. No:</p>
                         <p class="font-medium">{{ $wipRecord->wip_no }}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <p class="w-[200px] text-sm text-gray-600">Status:</p>
+                        <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Status:</p>
                         <p class="font-medium">{{ $wipRecord->status }}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <p class="w-[200px] text-sm text-gray-600">Started At:</p>
+                        <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Started At:</p>
                         <p class="font-medium">{{ $wipRecord->started_at ?? '--:--:--' }}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <p class="w-[200px] text-sm text-gray-600">Finished At:</p>
+                        <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Finished At:</p>
                         <p class="font-medium">{{ $wipRecord->finished_at ?? '--:--:--' }}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <p class="w-[200px] text-sm text-gray-600">Timer:</p>
+                        <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Timer:</p>
                         <p class="timer font-medium" data-status="{{ $wipRecord->status }}"
                             data-started-at="{{ $wipRecord->started_at ? \Carbon\Carbon::parse($wipRecord->started_at)->format('Y-m-d\TH:i:s') : '' }}"
                             data-elapsed="{{ $wipRecord->elapsed_seconds }}">00:00:00</p>

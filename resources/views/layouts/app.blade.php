@@ -13,41 +13,70 @@
 </head>
 
 <body class="font-sans antialiased bg-gray-50">
-    <div class="flex h-screen bg-gray-50" x-data="{ sidebarOpen: true }">
-        <aside class="bg-white flex-shrink-0 border-r transition-all duration-300"
-            :class="sidebarOpen ? 'w-64' : 'w-20'">
-            @auth
-            @if (Auth::user()->hasRole('Super Admin'))
-            {{-- Muat menu navigasi dari folder super-admin --}}
-            @include('super-admin.layouts.navigation-superadmin')
+    <div class="flex h-screen bg-gray-50" x-data="{ 
+        sidebarOpen: window.innerWidth >= 1024,
+        init() {
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1024) {
+                    this.sidebarOpen = true;
+                } else {
+                    this.sidebarOpen = false;
+                }
+            });
+        }
+    }">
+        
+        <!-- Overlay backdrop untuk mobile -->
+        <div x-show="sidebarOpen" 
+             @click="sidebarOpen = false"
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden"
+             style="display: none;">
+        </div>
 
-            @elseif (Auth::user()->hasRole('Admin Inventory'))
-            @include('admin.layouts.inventory-navigation')
-            @elseif (Auth::user()->hasRole("Admin Production"))
-            @include('admin.layouts.production-navigation')
-            @elseif (Auth::user()->hasRole("Admin Outbound"))
-            @include('admin.layouts.outbound-navigation')
-            @else
-            {{-- Untuk semua role admin lainnya, muat menu navigasi dari folder admin --}}
-            @include('admin.layouts.navigation')
-            @endif
+        <!-- Sidebar -->
+        <aside class="bg-white border-r transition-all duration-300 fixed lg:relative inset-y-0 left-0 z-30"
+            :class="{
+                'w-64': sidebarOpen,
+                'w-20 -translate-x-full lg:translate-x-0': !sidebarOpen
+            }">
+            @auth
+                @if (Auth::user()->hasRole('Super Admin'))
+                    {{-- Muat menu navigasi dari folder super-admin --}}
+                    @include('super-admin.layouts.navigation-superadmin')
+                @elseif (Auth::user()->hasRole('Admin Inventory'))
+                    @include('admin.layouts.inventory-navigation')
+                @elseif (Auth::user()->hasRole('Admin Production'))
+                    @include('admin.layouts.production-navigation')
+                @elseif (Auth::user()->hasRole('Admin Outbound'))
+                    @include('admin.layouts.outbound-navigation')
+                @else
+                    {{-- Untuk semua role admin lainnya, muat menu navigasi dari folder admin --}}
+                    @include('admin.layouts.navigation')
+                @endif
             @endauth
         </aside>
 
+        <!-- Main content area -->
         <div class="flex-1 flex flex-col overflow-hidden">
 
             <header class="bg-white border-b border-gray-200 py-3 px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none lg:hidden">
+                        <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none">
                             <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
-                        <h1 class="text-xl font-semibold text-gray-800 ml-4">
+                        <h1 class="max-sm:hidden text-xl font-semibold text-gray-800 ml-4">
                             @if (isset($header))
-                            {{ $header }}
+                                {{ $header }}
                             @endif
                         </h1>
                     </div>
@@ -77,8 +106,8 @@
                                 <div class="border-t border-gray-200"></div>
                                 <form method="POST" action="{{ route('logout') }}" x-data>
                                     @csrf
-                                    <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">{{
-                                        __('Log Out') }}</x-dropdown-link>
+                                    <x-dropdown-link href="{{ route('logout') }}"
+                                        @click.prevent="$root.submit();">{{ __('Log Out') }}</x-dropdown-link>
                                 </form>
                             </x-slot>
                         </x-dropdown>
