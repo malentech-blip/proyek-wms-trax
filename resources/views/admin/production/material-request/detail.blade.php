@@ -13,20 +13,20 @@
             <h3 class="text-lg font-semibold text-gray-800">Detail Material Request</h3>
             <div class="flex flex-col gap-3 mt-2">
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Sales Order:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Sales Order:</p>
                     <p class="font-medium">{{ $mr->salesOrder->so_number }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Requested By:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Requested By:</p>
                     <p class="font-medium">{{ $mr->requested_by }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Request Date:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Request Date:</p>
                     <p class="font-medium">
                         {{ \Carbon\Carbon::createFromFormat('Y-m-d', $mr->request_date)->format('d/m/Y') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Status:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Status:</p>
                     <p class="font-medium">{{ $mr->status }}</p>
                 </div>
             </div>
@@ -41,11 +41,11 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-blue-50">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600">MR. No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Request</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Requested By</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Request Date</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Status</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[140px]">MR. No</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[200px]">Item Request</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[150px]">Requested By</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[150px]">Request Date</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[200px]">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">

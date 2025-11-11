@@ -6,8 +6,8 @@
     <div class="bg-white rounded-xl shadow-sm">
         <div class="p-6 border-b flex flex-col gap-2">
             <h3 class="text-lg font-semibold text-gray-800">Permintaan Bahan</h3>
-            <form class="flex flex-col gap-3 border border-gray-200 rounded-md p-3">
-                <div class="flex items-center gap-2">
+            <form class="flex flex-col gap-3 sm:border border-gray-200 rounded-md sm:p-3">
+                <div class="flex max-sm:flex-col max-sm:items-start items-center gap-2">
                     <label for="so_id" class="w-[200px]">Sales Order:</label>
                     <select name="so_id" id="so_id" class="border border-gray-200 rounded text-sm min-w-[300px]">
                         <option value="">Pilih Sales Order</option>
@@ -17,12 +17,12 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-start items-center gap-2">
                     <label for="requested_by" class="w-[200px]">Requested By:</label>
                     <input type="text" name="requested_by" id="requested_by"
                         class="border border-gray-200 rounded text-sm min-w-[300px]">
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-start items-center gap-2">
                     <label for="request_date" class="w-[200px]">Requested Date:</label>
                     <input type="date" name="request_date" id="request_date" min="{{ date('Y-m-d') }}"
                         class="border border-gray-200 rounded text-sm min-w-[300px]">
@@ -34,7 +34,7 @@
                     </button>
                     <button type="button" id="btnCreateMR" onclick="showConfirmMRModal()"
                         class="w-max border-none bg-blue-500 text-white rounded py-2 px-4">
-                        Create MR and Picking List
+                        Create MR
                     </button>
                 </div>
             </form>
@@ -106,10 +106,10 @@
                 <thead class="bg-blue-50">
                     <tr>
                         <th class="p-4 text-left font-semibold text-gray-600">No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Name</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Item Name</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Quantity</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Quantity Ready</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Picked By</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[150px]">Quantity Ready</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Picked By</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Location</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Action</th>
                     </tr>

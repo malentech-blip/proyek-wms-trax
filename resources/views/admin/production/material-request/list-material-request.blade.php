@@ -47,11 +47,11 @@
                 <thead class="bg-blue-50">
                     <tr>
                         <th class="p-4 text-left font-semibold text-gray-600">No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">MR. No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Request</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Requested By</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Request Date</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Status</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[100px]">MR. No</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[150px]">Item Request</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[150px]">Requested By</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[150px]">Request Date</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[200px]">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
