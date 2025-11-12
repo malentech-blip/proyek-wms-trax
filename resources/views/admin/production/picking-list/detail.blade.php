@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <x-app-layout>
     <x-slot name="header">
         Timeline Production (Picking List)
@@ -214,7 +215,7 @@
         {{-- MODAL CONFIRMATION --}}
         <div id="confirmPickedModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
             aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div onclick="hideConfirmPickedModal()"
                     class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
                 </div>
@@ -253,7 +254,7 @@
         <div id="confirmDeliverWIPModal" style="display: none;"
             class="fixed inset-0 z-50 overflow-y-auto modal-container" aria-labelledby="modal-title" role="dialog"
             aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div onclick="hideConfirmDeliverWIPModal()"
                     class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
                 </div>

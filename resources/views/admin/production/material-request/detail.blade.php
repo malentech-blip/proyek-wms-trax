@@ -74,7 +74,7 @@
 
     <div id="completeProductionModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
         aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div onclick="hideCompleteProductionModal()"
                 class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
             </div>

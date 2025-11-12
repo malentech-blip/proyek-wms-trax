@@ -53,11 +53,11 @@
                 <thead class="bg-blue-50">
                     <tr>
                         <th class="p-4 text-left font-semibold text-gray-600">No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">WIP. No</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">WIP. No</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Quantity</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Reason</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Action</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Handle By</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Handle By</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Date</th>
                     </tr>
                 </thead>
