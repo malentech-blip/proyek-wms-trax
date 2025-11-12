@@ -9,25 +9,25 @@
             <h3 class="text-lg font-semibold text-gray-800">Detail Packing Lists</h3>
             <div class="flex flex-col gap-3 mt-2">
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Sales Order:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Sales Order:</p>
                     <p class="font-medium">{{ $so['number'] }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Customer:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Customer:</p>
                     <p class="font-medium">{{ $so['customer']['name'] }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Packed Date:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Packed Date:</p>
                     <p class="font-medium">
                         {{ $packingList->packed_at }}
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Status:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Status:</p>
                     <p class="font-medium">{{ $packingList->status }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Barcode:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Barcode:</p>
                     <p class="font-medium">
                         {!! DNS1D::getBarcodeHTML($packingList->barcode, 'C128', 1.5, 40) !!}
                     </p>
@@ -51,8 +51,8 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-blue-50">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Code</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Name</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[100px]">Item Code</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[200px]">Item Name</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Quantity</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Barcode</th>
                     </tr>
@@ -82,7 +82,7 @@
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                class="inline-block max-sm:w-full align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div
@@ -93,7 +93,7 @@
                                 </path>
                             </svg>
                         </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <div class="mt-3 sm:mt-0 sm:ml-4 text-left w-full">
                             <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
                                 Buat Delivery Order
                             </h3>

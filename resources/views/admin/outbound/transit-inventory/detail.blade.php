@@ -33,8 +33,8 @@
                 <thead class="bg-indigo-50">
                     <tr>
                         <th class="p-4 text-left font-semibold text-gray-700">Sales Order</th>
-                        <th class="p-4 text-left font-semibold text-gray-700">Customer Id</th>
-                        <th class="p-4 text-left font-semibold text-gray-700">Total Items</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Customer Id</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Total Items</th>
                         <th class="p-4 text-left font-semibold text-gray-700">Status</th>
                     </tr>
                 </thead>

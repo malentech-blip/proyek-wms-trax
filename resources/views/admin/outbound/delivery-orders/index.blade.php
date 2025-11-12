@@ -112,12 +112,12 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-blue-50">
                         <tr>
-                            <th class="p-4 text-left font-semibold text-gray-600">DO Number</th>
-                            <th class="p-4 text-left font-semibold text-gray-600">Sales Order</th>
-                            <th class="p-4 text-left font-semibold text-gray-600">Driver Name</th>
-                            <th class="p-4 text-left font-semibold text-gray-600">Delivery Date</th>
-                            <th class="p-4 text-left font-semibold text-gray-600">Status</th>
-                            <th class="p-4 text-left font-semibold text-gray-600">Actions</th>
+                            <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">DO Number</th>
+                            <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Sales Order</th>
+                            <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Driver Name</th>
+                            <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[150px]">Delivery Date</th>
+                            <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Status</th>
+                            <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
