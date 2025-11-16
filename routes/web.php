@@ -468,7 +468,7 @@ Route::middleware('auth')->group(function () {
               'store'
             ])->name('packing-lists.store');
             // transit packing list (POST)
-            Route::post('packing-lists/{packingList}/transit', [
+            Route::post('packing-lists/{packing_id}/in-transit', [
               PackingListController::class,
               'transit'
             ])->name('packing-lists.transit');
@@ -490,6 +490,14 @@ Route::middleware('auth')->group(function () {
               TransitInventoryController::class,
               'validateBarcodes',
             ])->name('transit-inventory.validate-barcodes');
+            Route::post('transit-inventory/update-status/{transit_id}', [
+              TransitInventoryController::class,
+              'updateStatus',
+            ])->name('transit-inventory.update-status');
+            Route::post('transit-inventory/create-do/{packing_id}', [
+              TransitInventoryController::class,
+              'createDeliveryOrderFromTransit',
+            ])->name('transit-inventory.create-do');
 
             // --- DELIVERY ORDERS ---
             Route::get('delivery-orders', [DeliveryOrderController::class, "index"])->name("delivery-orders.index");
@@ -502,7 +510,7 @@ Route::middleware('auth')->group(function () {
               DeliveryOrderController::class,
               'store',
             ])->name('delivery-orders.store');
-            Route::get('delivery-orders/{do_id}/getDetails', [
+            Route::get('delivery-orders/{do_id}/get-details', [
               DeliveryOrderController::class,
               'getDetails',
             ])->name('delivery-orders.getDetails');

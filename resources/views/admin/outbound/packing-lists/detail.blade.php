@@ -33,16 +33,28 @@
                     </p>
                 </div>
             </div>
+            
+            {{-- Action Buttons --}}
             @if ($packingList->status == 'Packed')
-                <div class="flex items-center gap-3 !mt-5">
+                <div class="flex items-center gap-3 !mt-5 max-sm:flex-col">
                     <button id="openDeliveryOrderModalBtn"
-                        class="flex w-max items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                        class="flex w-max max-sm:w-full max-sm:justify-center items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                             </path>
                         </svg>
                         Buat Delivery Order
+                    </button>
+                    
+                    <button id="markAsInTransitBtn"
+                        class="flex w-max max-sm:w-full max-sm:justify-center items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z">
+                            </path>
+                        </svg>
+                        Tandai In Transit
                     </button>
                 </div>
             @endif
@@ -158,12 +170,12 @@
 
 </x-app-layout>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     const CSRF_TOKEN = '{{ csrf_token() }}';
     const PACKING_ID = '{{ $packingList->id }}';
     const API_CREATE_DELIVERY_ORDER = '/admin/outbound/delivery-orders/store';
+    const API_UPDATE_STATUS_IN_TRANSIT = '/admin/outbound/packing-lists/' + PACKING_ID + '/in-transit';
 
     // Modal Functions
     function openDeliveryOrderModal() {
@@ -306,12 +318,98 @@
         }
     }
 
+    // Mark as In Transit Function
+    async function markAsInTransit() {
+        const confirmResult = await Swal.fire({
+            title: 'Konfirmasi In Transit',
+            html: `
+                <div class="text-left space-y-2 text-sm">
+                    <p>Anda akan mengubah status packing list menjadi <strong class="text-green-600">In Transit</strong>.</p>
+                    <div class="bg-yellow-50 p-3 rounded-md mt-3 border border-yellow-200">
+                        <p class="text-yellow-800"><strong>⚠️ Perhatian:</strong></p>
+                        <p class="text-yellow-700 mt-1">Pastikan barang sudah siap untuk dikirim sebelum mengubah status.</p>
+                    </div>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Tandai In Transit',
+            cancelButtonText: 'Batal'
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
+
+        Swal.fire({
+            title: 'Memproses...',
+            html: 'Sedang mengubah status menjadi In Transit...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            const response = await fetch(API_UPDATE_STATUS_IN_TRANSIT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal mengubah status');
+            }
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Status Berhasil Diubah!',
+                html: `
+                    <div class="text-sm space-y-2">
+                        <p>Status packing list telah diubah menjadi <strong class="text-green-600">In Transit</strong>.</p>
+                        <div class="bg-green-50 p-3 rounded-md mt-2">
+                            <p class="text-green-700">Barang dalam perjalanan menuju customer.</p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#16a34a'
+            });
+
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Error updating status:', error);
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengubah Status',
+                text: error.message || 'Terjadi kesalahan saat mengubah status. Silakan coba lagi.',
+                confirmButtonColor: '#dc2626'
+            });
+        }
+    }
+
     // Event Listeners
     document.addEventListener('DOMContentLoaded', function() {
         // Open Modal Button
         const openModalBtn = document.getElementById('openDeliveryOrderModalBtn');
         if (openModalBtn) {
             openModalBtn.addEventListener('click', openDeliveryOrderModal);
+        }
+
+        // Mark as In Transit Button
+        const markAsInTransitBtn = document.getElementById('markAsInTransitBtn');
+        if (markAsInTransitBtn) {
+            markAsInTransitBtn.addEventListener('click', markAsInTransit);
         }
 
         // Cancel Button

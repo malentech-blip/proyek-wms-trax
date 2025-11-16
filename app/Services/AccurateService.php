@@ -641,20 +641,7 @@ class AccurateService
     }
   }
 
-  /**
-   * Menyimpan (membuat baru atau update) Delivery Order.
-   * Contoh data:
-   * [
-   *   'transDate' => '13/11/2025',
-   *   'customerId' => 123,
-   *   'warehouseId' => 2,
-   *   'driverName' => 'Budi',
-   *   'vehicleNo' => 'B 1234 CD',
-   *   'deliveryOrderDetail[0].salesOrderId' => 45,
-   *   'deliveryOrderDetail[0].itemId' => 10,
-   *   'deliveryOrderDetail[0].quantity' => 5,
-   * ]
-   */
+
   public function saveDeliveryOrder(array $data)
   {
     try {
@@ -665,7 +652,9 @@ class AccurateService
           'data' => $data,
           'response' => $response->json()
         ]);
-        throw new Exception('Gagal menyimpan Delivery Order: ' . ($response->json()['s']['m'] ?? 'Error tidak diketahui'));
+
+        $errorMessage = $response->json()['s']['m'] ?? 'Error tidak diketahui';
+        throw new Exception('Gagal menyimpan Delivery Order: ' . $errorMessage);
       }
 
       return $response->json()['d'] ?? null;
@@ -677,6 +666,7 @@ class AccurateService
       throw $e;
     }
   }
+
 
   public function deleteDeliveryOrder(int $id)
   {

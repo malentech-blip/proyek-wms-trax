@@ -677,8 +677,8 @@
                 confirmButtonText: 'OK'
             }).then((res) => {
                 const id = result?.packingId
-                const baseUrl = '/admin/outbound/packing-lists/detail'
-                window.location.href = `${baseUrl}/${id}`
+                const baseUrl = '/admin/outbound/packing-lists'
+                window.location.href = `${baseUrl}`
             });
 
         } catch (error) {

@@ -9,29 +9,38 @@ use App\Models\Admin\Outbound\PackingList;
 use App\Models\Admin\Outbound\TransitInventory;
 use App\Services\AccurateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\FacadesDB;
 
 class TransitInventoryController extends Controller
 {
   public function index()
   {
-    $deliveryOrders = DeliveryOrder::with(['packingList.sales_order'])->where('status', 'In Transit')->get();
-    return view('admin.outbound.transit-inventory.index', compact('deliveryOrders'));
+    $transitInventories = TransitInventory::with("packingList.sales_order")->whereHas("packingList", function($query) {
+      $query->whereIn("status", ["In Transit", "Ready to Ship", "Shipped"]);
+    })->orderBy("created_at", "desc")->paginate(20);
+    return view('admin.outbound.transit-inventory.index', compact('transitInventories'));
   }
 
-  public function detail(int $packing_id)
+  public function detail(int $packing_id, AccurateService $accurate)
   {
-    $packingList = PackingList::where([
-      ['id', $packing_id],
-    ])->with(['sales_order', 'items'])->first();
-    return view('admin.outbound.transit-inventory.detail', compact('packingList'));
+    $transitInventory = TransitInventory::with("packingList.sales_order")->where([
+      ['packing_id', $packing_id],
+    ])->first();
+    $customer = $accurate->getCustomerDetail($transitInventory->packingList->sales_order->customer_id);
+    return view('admin.outbound.transit-inventory.detail', compact('transitInventory', 'customer'));
   }
 
-  public function validateBarcode(int $packing_id, AccurateService $accurate)
+  public function validateBarcode(int $packing_id, Request $request, AccurateService $accurate)
   {
+    $validated = $request->validate([
+      'qr_code' => 'required|string',
+    ]);
     try {
       $tiQuery = TransitInventory::with(['packingList.sales_order']);
-      $transitInventory = $tiQuery->where('packing_id', $packing_id)
-                                  ->where('status', 'In Transit')->first();
+      $transitInventory = $tiQuery->whereHas('packingList', function ($query) use ($validated) {
+        $query->where('barcode', $validated['qr_code']);
+      })->first();
       if (!$transitInventory) {
         return response()->json([
           'success' => false,
@@ -89,20 +98,19 @@ class TransitInventoryController extends Controller
       $validated = $request->validate([
         'barcode' => 'required|string',
       ]);
-      $tiQuery = DeliveryOrder::with(['packingList.sales_order'])->where("status", "In Transit");
-      $transitInventories = $tiQuery->whereHas('packingList', function ($query) use ($validated) {
+      $transitInventory = TransitInventory::with("packingList.sales_order")->whereHas('packingList', function ($query) use ($validated) {
         $query->where('barcode', $validated['barcode'])
-          ->where('status', 'Shipped');
+          ->whereIn('status', ['In Transit', 'Ready to Ship']);
       })->first();
 
-      if (!$transitInventories) {
+      if (!$transitInventory) {
         return response()->json([
           'success' => false,
           'message' => 'Data transit inventory dengan barcode tersebut tidak ditemukan atau tidak dalam status In Transit.'
         ], 404);
       }
 
-      $packingList = $transitInventories->packingList;
+      $packingList = $transitInventory->packingList;
       $so = $packingList->sales_order;
       if (!$so) {
         return response()->json([
@@ -125,6 +133,7 @@ class TransitInventoryController extends Controller
         'success' => true,
         'data' => [
           'so_number' => $so->so_number,
+          'transit_id' => $transitInventory->id,
           'customer_name' => $customer['name'],
           'total_items' => $packingList->items->count(),
           'packed_date' => $packingList->packed_at,
@@ -142,6 +151,118 @@ class TransitInventoryController extends Controller
       return response()->json([
         'success' => false,
         'message' => 'Terjadi kesalahan saat memvalidasi barcode.',
+        'error' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+      ], 500);
+    }
+  }
+
+  public function updateStatus(int $transit_id, Request $request)
+  {
+    $validated = $request->validate([
+      'status' => 'required|string'
+    ]);
+    $transitInventory = TransitInventory::find($transit_id);
+    if (!$transitInventory) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Data transit inventory tidak ditemukan.'
+      ], 404);
+    }
+    $packingList = PackingList::where("id", $transitInventory->packing_id)->first();
+    if (!$packingList) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Data packing list tidak ditemukan.'
+      ], 404);
+    }
+    $packingList->status = $validated['status'];
+    $packingList->save();
+    return response()->json([
+      'success' => true,
+      'message' => 'Status transit inventory berhasil diubah menjadi Delivered.'
+    ], 200);
+  }
+
+
+  public function createDeliveryOrderFromTransit(Request $request, int $packing_id)
+  {
+    try {
+      $validated = $request->validate([
+        'delivery_date' => 'required|date',
+        'driver_name' => 'required|string|max:255',
+      ]);
+
+      $packingList = PackingList::with(['sales_order'])->findOrFail($packing_id);
+
+      if ($packingList->status !== 'Ready to Ship') {
+        return response()->json([
+          'success' => false,
+          'message' => 'Packing List harus dalam status "Ready to Ship" untuk membuat Delivery Order.'
+        ], 422);
+      }
+      $existingDO = DeliveryOrder::where('packing_id', $packingList->id)->first();
+      if ($existingDO) {
+        return response()->json([
+          'success' => false,
+          'message' => 'Delivery Order sudah pernah dibuat untuk Packing List ini.'
+        ], 422);
+      }
+
+
+      DB::beginTransaction();
+
+      try {
+        $deliveryOrder = DeliveryOrder::create([
+          'packing_id' => $packing_id,
+          'delivery_date' => $validated['delivery_date'],
+          'driver_name' => $validated['driver_name'],
+          'status' => 'In Delivery',
+        ]);
+
+        $packingList->update([
+          'status' => 'Shipped',
+        ]);
+
+        $transitInventory = TransitInventory::where('packing_id', $packingList->id)->first();
+        if ($transitInventory) {
+          $transitInventory->update([
+            'transit_out_at' => now(),
+          ]);
+        }
+
+        DB::commit();
+        return response()->json([
+          'success' => true,
+          'message' => 'Delivery Order berhasil dibuat',
+          'do_number' => $deliveryOrder->delivery_no,
+          'data' => [
+            'id' => $deliveryOrder->id,
+            'do_number' => $deliveryOrder->delivery_no,
+            'packing_list_id' => $packingList->id,
+            'so_number' => $packingList->sales_order->so_number ?? 'N/A',
+            'driver_name' => $validated['driver_name'],
+            'delivery_date' => $validated['delivery_date'],
+          ]
+        ], 201);
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw $e;
+      }
+    } catch (\Illuminate\Validation\ValidationException $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Validasi gagal',
+        'errors' => $e->errors()
+      ], 422);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Packing List tidak ditemukan.'
+      ], 404);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Terjadi kesalahan saat membuat Delivery Order.',
         'error' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
       ], 500);
     }
