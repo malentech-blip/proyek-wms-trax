@@ -1,4 +1,3 @@
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     /* Modal Overlay */
     .modal-overlay {
@@ -7,7 +6,9 @@
     }
 
     /* Modal positioning */
-    #detail-modal, #status-update-modal {
+    #detail-modal,
+    #status-update-modal,
+    #delivery-order-modal {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
@@ -20,12 +21,16 @@
         padding: 1rem !important;
     }
 
-    #detail-modal.hidden, #status-update-modal.hidden {
+    #detail-modal.hidden,
+    #status-update-modal.hidden,
+    #delivery-order-modal.hidden {
         display: none !important;
     }
 
     /* Modal content */
-    #modal-content-container, #status-modal-content {
+    #modal-content-container,
+    #status-modal-content,
+    #do-modal-content {
         max-width: 56rem;
         width: 100%;
         max-height: 90vh;
@@ -34,8 +39,9 @@
         z-index: 10000;
     }
 
-    #status-modal-content {
-        max-width: 40rem;
+    #status-modal-content,
+    #do-modal-content {
+        max-width: 42rem;
     }
 
     /* Smooth animations */
@@ -44,20 +50,23 @@
             opacity: 0;
             transform: scale(0.95);
         }
+
         to {
             opacity: 1;
             transform: scale(1);
         }
     }
 
-    #modal-content-container, #status-modal-content {
+    #modal-content-container,
+    #status-modal-content,
+    #do-modal-content {
         animation: modalFadeIn 0.2s ease-out;
     }
 </style>
 
 <x-app-layout>
     <x-slot name="header">
-        Create Packing List
+        Transit Inventory
     </x-slot>
     <div class="bg-white rounded-xl shadow-sm">
         <div class="p-6 border-b flex flex-col gap-2">
@@ -87,36 +96,62 @@
                     <tr>
                         <th class="p-4 text-left font-semibold text-gray-700">No</th>
                         <th class="p-4 text-left font-semibold text-gray-700">Sales Order</th>
-                        <th class="p-4 text-left font-semibold text-gray-700">Customer Id</th>
-                        <th class="p-4 text-left font-semibold text-gray-700">Total Items</th>
-                        <th class="p-4 text-left font-semibold text-gray-700">Status</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Customer Id</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Total Items</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Transit at</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Transit out</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[180px]">Status</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[180px]">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
-                    @forelse ($deliveryOrders as $do)
-                        <tr class="hover:bg-gray-50 cursor-pointer transition-colors"
-                            onclick="openDetailModal({{ $do->packingList->id }})">
+                    @forelse ($transitInventories as $transit)
+                        <tr class="hover:bg-gray-50 transition-colors cursor-pointer"
+                            onclick="openDetailModal({{ $transit->packing_id }})">
                             <td class="p-4 text-gray-700 font-medium">{{ $loop->iteration }}</td>
-                            <td class="p-4 text-gray-500">{{ $do->packingList->sales_order->so_number ?? 'N/A' }}</td>
-                            <td class="p-4 text-gray-500">{{ $do->packingList->sales_order->customer_id ?? 'N/A' }}</td>
-                            <td class="p-4 text-gray-500">{{ $do->packingList->items->count() }} Items</td>
+                            <td class="p-4 text-gray-500 cursor-pointer">
+                                <span
+                                    class="hover:underline">{{ $transit->packingList->sales_order->so_number ?? 'N/A' }}</span>
+                            </td>
+                            <td class="p-4 text-gray-500">
+                                {{ $transit->packingList->sales_order->customer_id ?? 'N/A' }}</td>
+                            <td class="p-4 text-gray-500">{{ $transit->packingList->items->count() }} Items</td>
+                            <td class="p-4 text-gray-500">{{ $transit->transit_in_at }}</td>
+                            <td class="p-4 text-gray-500">{{ $transit->transit_out_at ?? '--' }}</td>
                             <td class="p-4">
                                 @php
-                                    $color = match ($do->status) {
+                                    $color = match ($transit->packingList->status) {
                                         'Shipped' => 'green',
                                         'Ready to Ship' => 'blue',
                                         default => 'yellow',
                                     };
                                 @endphp
-                                <span class="bg-{{ $color }}-100 text-{{ $color }}-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                    {{ $do->status }}
+                                <span
+                                    class="bg-{{ $color }}-100 text-{{ $color }}-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                    {{ $transit->packingList->status }}
                                 </span>
+                            </td>
+                            <td class="p-4">
+                                @if ($transit->packingList->status === 'Ready to Ship')
+                                    <button onclick="openDeliveryOrderModal(event, {{ $transit->packing_id }})"
+                                        class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                            </path>
+                                        </svg>
+                                        Buat DO
+                                    </button>
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
+                                @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center p-12 text-gray-500">
-                                Tidak ada data Packing List ditemukan.
+                            <td colspan="6" class="text-center p-12 text-gray-500">
+                                Tidak ada data Transit Inventory ditemukan.
                             </td>
                         </tr>
                     @endforelse
@@ -125,26 +160,121 @@
         </div>
     </div>
 
-    {{-- MODAL STATUS UPDATE --}}
-    <div id="status-update-modal" class="modal-overlay hidden">
-        <div id="status-modal-content" class="bg-white rounded-xl shadow-2xl">
-            <!-- Modal Header -->
-            <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 rounded-t-xl">
+    {{-- MODAL DELIVERY ORDER --}}
+    <div id="delivery-order-modal" class="modal-overlay hidden">
+        <div id="do-modal-content" class="bg-white rounded-xl shadow-2xl">
+            <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 rounded-t-xl">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-white">
-                        Informasi Transit Inventory
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Buat Delivery Order
                     </h3>
-                    <button onclick="closeStatusUpdateModal()" class="text-white hover:text-gray-200 transition-colors">
+                    <button onclick="closeDeliveryOrderModal()"
+                        class="text-white hover:text-gray-200 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
             </div>
+            <div id="loading-do-modal" class="px-6 py-12 text-center">
+                <svg class="animate-spin h-12 w-12 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                        stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <p class="text-gray-600 mt-4 font-medium">Memuat data transit inventory...</p>
+            </div>
+            <div id="content-do-modal" class="hidden">
+                <div class="px-6 py-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="text-xs text-blue-600 font-semibold uppercase mb-1">Sales Order</div>
+                            <div class="text-lg font-bold text-blue-900" id="do-so-number">-</div>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div class="text-xs text-green-600 font-semibold uppercase mb-1">Customer</div>
+                            <div class="text-base font-bold text-green-900" id="do-customer-name">-</div>
+                        </div>
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div class="text-xs text-purple-600 font-semibold uppercase mb-1">Total Items</div>
+                            <div class="text-lg font-bold text-purple-900" id="do-total-items">-</div>
+                        </div>
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <div class="text-xs text-orange-600 font-semibold uppercase mb-1">Packed Date</div>
+                            <div class="text-sm font-bold text-orange-900" id="do-packed-date">-</div>
+                        </div>
+                    </div>
 
-            <!-- Modal Body -->
+                    <form id="deliveryOrderForm" class="space-y-4">
+                        <input type="hidden" id="do-packing-list-id" name="packing_list_id">
+                        <div>
+                            <label for="delivery_date" class="block text-sm font-medium text-gray-700 mb-1">
+                                Tanggal Pengiriman <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" id="delivery_date" name="delivery_date" required
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <p class="text-xs text-gray-500 mt-1">Tanggal pengiriman barang ke customer</p>
+                        </div>
+                        <div>
+                            <label for="driver_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nama Driver <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="driver_name" name="driver_name" required
+                                placeholder="Masukkan nama driver"
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3">
+                    <button onclick="closeDeliveryOrderModal()"
+                        class="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                        Batal
+                    </button>
+                    <button onclick="submitDeliveryOrder()"
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        Buat Delivery Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- MODAL STATUS UPDATE --}}
+    <div id="status-update-modal" class="modal-overlay hidden">
+        <div id="status-modal-content" class="bg-white rounded-xl shadow-2xl">
+            <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 rounded-t-xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                            </path>
+                        </svg>
+                        Validasi Transit Inventory
+                    </h3>
+                    <button onclick="closeStatusUpdateModal()"
+                        class="text-white hover:text-gray-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
             <div class="px-6 py-6">
-                <!-- Info Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div class="text-xs text-blue-600 font-semibold uppercase mb-1">Sales Order</div>
@@ -163,90 +293,41 @@
                         <div class="text-lg font-bold text-orange-900" id="status-packed-date">-</div>
                     </div>
                 </div>
-
-                <!-- Current Status -->
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-gray-600 font-semibold uppercase mb-1">Status Saat Ini</div>
-                            <div class="text-lg font-bold text-gray-900" id="status-current">-</div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-gray-600 font-semibold uppercase mb-1">Barcode</div>
-                            <div class="text-sm font-mono font-bold text-indigo-900" id="status-barcode">-</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status Update Form -->
                 <div class="border-t pt-6">
-                    <h4 class="text-lg font-bold text-gray-800 mb-4">Update Status Pengiriman</h4>
+                    <h4 class="text-lg font-bold text-gray-800 mb-4">Update Status Transit</h4>
                     <form id="statusUpdateForm" class="space-y-4">
-                        <input type="hidden" id="update-barcode" name="barcode">
-                        
-                        <!-- Status Selection -->
+                        <input type="hidden" id="transit-id" name="transit-id">
                         <div>
-                            <label for="new-status" class="block text-sm font-medium text-gray-700 mb-2">
-                                Status Baru <span class="text-red-500">*</span>
+                            <label for="transit-status" class="block text-sm font-medium text-gray-700 mb-2">
+                                Status Transit <span class="text-red-500">*</span>
                             </label>
-                            <select id="new-status" name="status" required
-                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                <option value="">-- Pilih Status --</option>
-                                <option value="Delivered">Delivered (Terkirim)</option>
+                            <select id="transit-status" name="status" required
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Pilih Status</option>
+                                <option value="In Transit">In Transit</option>
+                                <option value="Ready to Ship">Ready to Ship</option>
                             </select>
-                            <p class="text-xs text-gray-500 mt-1">Ubah status menjadi "Delivered" jika barang sudah sampai ke customer</p>
-                        </div>
-
-                        <!-- Delivery Date -->
-                        <div>
-                            <label for="delivery-date" class="block text-sm font-medium text-gray-700 mb-2">
-                                Tanggal Pengiriman <span class="text-red-500">*</span>
-                            </label>
-                            <input type="datetime-local" id="delivery-date" name="delivery_date" required
-                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                        </div>
-
-                        <!-- Received By -->
-                        <div>
-                            <label for="received-by" class="block text-sm font-medium text-gray-700 mb-2">
-                                Diterima Oleh <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" id="received-by" name="received_by" required
-                                placeholder="Nama penerima barang"
-                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                        </div>
-
-                        <!-- Notes -->
-                        <div>
-                            <label for="delivery-notes" class="block text-sm font-medium text-gray-700 mb-2">
-                                Catatan Pengiriman
-                            </label>
-                            <textarea id="delivery-notes" name="notes" rows="3"
-                                placeholder="Catatan tambahan (opsional)"
-                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Pilih status sesuai kondisi barang saat ini</p>
                         </div>
                     </form>
                 </div>
             </div>
-
-            <!-- Modal Footer -->
             <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3">
                 <button onclick="closeStatusUpdateModal()"
                     class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors shadow-sm">
                     Batal
                 </button>
                 <button onclick="submitStatusUpdate()"
-                    class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                    class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm">
                     Update Status
                 </button>
             </div>
         </div>
     </div>
 
-    {{-- MODAL DETAIL (existing) --}}
+    {{-- MODAL DETAIL --}}
     <div id="detail-modal" class="modal-overlay hidden">
         <div id="modal-content-container" class="bg-white rounded-xl shadow-2xl">
-            <!-- Modal Header -->
             <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 rounded-t-xl">
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-bold text-white">
@@ -260,10 +341,7 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Modal Body -->
             <div class="px-6 py-4">
-                <!-- Loading State -->
                 <div id="loading-modal" class="py-12 text-center">
                     <svg class="animate-spin h-12 w-12 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 24 24">
@@ -275,10 +353,7 @@
                     </svg>
                     <p class="text-gray-600 mt-4 font-medium">Memuat data item...</p>
                 </div>
-
-                <!-- Content State -->
                 <div id="content-modal" class="hidden">
-                    <!-- Info Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <div class="text-xs text-blue-600 font-semibold uppercase mb-1">Sales Order</div>
@@ -297,8 +372,6 @@
                             <div class="text-lg font-bold text-orange-900" id="packed-at-info">-</div>
                         </div>
                     </div>
-
-                    <!-- Items Table -->
                     <div class="mt-6">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="text-lg font-bold text-gray-800">Packing Items</h4>
@@ -309,14 +382,21 @@
                                 <table class="min-w-full">
                                     <thead class="bg-gradient-to-r from-indigo-50 to-blue-50">
                                         <tr>
-                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">#</th>
-                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Product</th>
-                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Label/QR Code</th>
-                                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Quantity</th>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                #</th>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Product</th>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Label/QR Code</th>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Quantity</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200" id="items-table-body">
-                                        <!-- Items will be inserted here -->
                                     </tbody>
                                 </table>
                             </div>
@@ -324,8 +404,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Modal Footer -->
             <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3">
                 <button onclick="closeDetailModal()"
                     class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors shadow-sm">
@@ -354,7 +432,6 @@
                     </button>
                 </div>
             </form>
-
             <div id="cameraContainer" class="hidden">
                 <div id="reader" class="w-full" style="min-height: 250px;"></div>
                 <p class="text-xs text-center text-gray-500 mt-2">Arahkan kamera ke QR/Barcode</p>
@@ -368,54 +445,14 @@
     </div>
 </x-app-layout>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
-
+{{-- SCRIPT VALIDATE BARCODE/QR --}}
 <script>
     const CSRF_TOKEN = '{{ csrf_token() }}';
     const API_VALIDATE_QR = '/admin/outbound/transit-inventory/validate-barcodes';
-    const API_UPDATE_STATUS = '/admin/outbound/transit-inventory/update-status'; // Route untuk update status
 
-    // Modal Status Update Functions
-    function openStatusUpdateModal(data) {
-        const modal = document.getElementById('status-update-modal');
-        
-        // Populate data
-        document.getElementById('status-so-number').textContent = data.so_number || '-';
-        document.getElementById('status-customer-name').textContent = data.customer_name || '-';
-        document.getElementById('status-total-items').textContent = data.total_items || '-';
-        document.getElementById('status-packed-date').textContent = data.packed_date || '-';
-        document.getElementById('status-current').textContent = data.status || '-';
-        document.getElementById('status-barcode').textContent = data.barcode || '-';
-        document.getElementById('update-barcode').value = data.barcode || '';
-        
-        // Set default delivery date to now
-        const now = new Date();
-        const formatted = now.toISOString().slice(0, 16);
-        document.getElementById('delivery-date').value = formatted;
-        
-        // Show modal
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        
-        // Focus on status select
-        setTimeout(() => {
-            document.getElementById('new-status').focus();
-        }, 100);
-    }
 
-    function closeStatusUpdateModal() {
-        const modal = document.getElementById('status-update-modal');
-        modal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        
-        // Reset form
-        document.getElementById('statusUpdateForm').reset();
-    }
-
-    // Validate QR Code
     async function validateQrCode(qrCode) {
         if (!qrCode) return;
-        
         Swal.fire({
             title: 'Memvalidasi...',
             text: 'Mencari item dengan QR Code: ' + qrCode,
@@ -423,7 +460,6 @@
             allowOutsideClick: false,
             allowEscapeKey: false
         });
-        
         try {
             const response = await fetch(API_VALIDATE_QR, {
                 method: 'POST',
@@ -436,10 +472,8 @@
                     barcode: qrCode,
                 })
             });
-
             const result = await response.json();
             Swal.close();
-            
             if (!response.ok) {
                 Swal.fire({
                     icon: 'error',
@@ -448,8 +482,6 @@
                 });
                 return;
             }
-            
-            // Open status update modal instead of just showing info
             openStatusUpdateModal(result.data);
 
         } catch (error) {
@@ -463,148 +495,64 @@
         }
     }
 
-    // Submit Status Update
-    async function submitStatusUpdate() {
-        const form = document.getElementById('statusUpdateForm');
-        const barcode = document.getElementById('update-barcode').value;
-        const newStatus = document.getElementById('new-status').value;
-        const deliveryDate = document.getElementById('delivery-date').value;
-        const receivedBy = document.getElementById('received-by').value.trim();
-        const notes = document.getElementById('delivery-notes').value.trim();
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        const qrScanForm = document.getElementById('qrScanForm');
+        const qrCodeInput = document.getElementById('qrCodeInput');
 
-        // Validation
-        if (!newStatus) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Data Tidak Lengkap',
-                text: 'Harap pilih status baru.'
-            });
-            document.getElementById('new-status').focus();
-            return;
-        }
-
-        if (!deliveryDate) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Data Tidak Lengkap',
-                text: 'Harap isi tanggal pengiriman.'
-            });
-            document.getElementById('delivery-date').focus();
-            return;
-        }
-
-        if (!receivedBy) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Data Tidak Lengkap',
-                text: 'Harap isi nama penerima barang.'
-            });
-            document.getElementById('received-by').focus();
-            return;
-        }
-
-        // Confirmation
-        const confirmResult = await Swal.fire({
-            title: 'Konfirmasi Update Status',
-            html: `
-                <div class="text-left space-y-2 text-sm">
-                    <p>Anda akan mengupdate status pengiriman:</p>
-                    <div class="bg-gray-50 p-3 rounded-md mt-3">
-                        <p><strong>Barcode:</strong> ${barcode}</p>
-                        <p><strong>Status Baru:</strong> <span class="text-green-600 font-bold">${newStatus}</span></p>
-                        <p><strong>Diterima Oleh:</strong> ${receivedBy}</p>
-                        <p><strong>Tanggal:</strong> ${new Date(deliveryDate).toLocaleString('id-ID')}</p>
-                        ${notes ? `<p><strong>Catatan:</strong> ${notes}</p>` : ''}
-                    </div>
-                    <p class="text-gray-600 mt-3">Pastikan semua data sudah benar.</p>
-                </div>
-            `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#16a34a',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Ya, Update',
-            cancelButtonText: 'Periksa Kembali',
-            width: '500px'
+        qrScanForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            validateQrCode(qrCodeInput.value);
+            qrCodeInput.value = '';
         });
 
-        if (!confirmResult.isConfirmed) {
-            return;
-        }
+        // Close modals on overlay click
+        ['detail-modal', 'status-update-modal', 'delivery-order-modal'].forEach(modalId => {
+            document.getElementById(modalId).addEventListener('click', function(e) {
+                if (e.target === this) {
+                    if (modalId === 'detail-modal') closeDetailModal();
+                    if (modalId === 'status-update-modal') closeStatusUpdateModal();
+                    if (modalId === 'delivery-order-modal') closeDeliveryOrderModal();
+                }
+            });
+        });
 
-        // Close modal and show loading
-        closeStatusUpdateModal();
-        
-        Swal.fire({
-            title: 'Memproses...',
-            html: 'Sedang mengupdate status pengiriman...',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            didOpen: () => {
-                Swal.showLoading();
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                ['detail-modal', 'status-update-modal', 'delivery-order-modal'].forEach(modalId => {
+                    const modal = document.getElementById(modalId);
+                    if (!modal.classList.contains('hidden')) {
+                        if (modalId === 'detail-modal') closeDetailModal();
+                        if (modalId === 'status-update-modal') closeStatusUpdateModal();
+                        if (modalId === 'delivery-order-modal') closeDeliveryOrderModal();
+                    }
+                });
             }
         });
 
-        try {
-            const response = await fetch(API_UPDATE_STATUS, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    barcode: barcode,
-                    status: newStatus,
-                    delivery_date: deliveryDate,
-                    received_by: receivedBy,
-                    notes: notes
-                })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || 'Gagal mengupdate status');
-            }
-
-            // Success
-            await Swal.fire({
-                icon: 'success',
-                title: 'Status Berhasil Diupdate!',
-                html: `
-                    <div class="text-sm space-y-2">
-                        <p>Status pengiriman telah berhasil diupdate:</p>
-                        <div class="bg-green-50 p-3 rounded-md mt-2 text-left">
-                            <p><strong>Status:</strong> ${newStatus}</p>
-                            <p><strong>Diterima Oleh:</strong> ${receivedBy}</p>
-                            <p><strong>Tanggal:</strong> ${new Date(deliveryDate).toLocaleString('id-ID')}</p>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#16a34a'
-            });
-
-            // Reload page
-            window.location.reload();
-
-        } catch (error) {
-            console.error('Error updating status:', error);
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal Update Status',
-                text: error.message || 'Terjadi kesalahan saat mengupdate status. Silakan coba lagi.',
-                confirmButtonColor: '#dc2626'
+        // Auto format vehicle number
+        const vehicleInput = document.getElementById('vehicle_number');
+        if (vehicleInput) {
+            vehicleInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
             });
         }
-    }
 
-    // Detail Modal Functions (existing)
+        // Phone number validation
+        const phoneInput = document.getElementById('phone_number');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+        }
+    });
+</script>
+
+{{-- SCRIPT OPEN DETAIL MODAL --}}
+<script>
+    // Detail Modal Functions
     function openDetailModal(packingListId) {
-        console.log('Opening modal for ID:', packingListId);
-
         const modal = document.getElementById('detail-modal');
         const loadingState = document.getElementById('loading-modal');
         const contentState = document.getElementById('content-modal');
@@ -615,17 +563,13 @@
         document.body.style.overflow = 'hidden';
 
         const url = `/admin/outbound/packing-lists/${packingListId}/items`;
-        console.log('Fetching:', url);
 
         fetch(url)
             .then(response => {
-                console.log('Response status:', response.status);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                console.log('Data received:', data);
-
                 document.getElementById('packing-list-number-title').textContent = data.pl_number || 'N/A';
                 document.getElementById('so-number-info').textContent = data.so_number || 'N/A';
                 document.getElementById('customer-name-info').textContent = data.customer_name || 'N/A';
@@ -664,13 +608,8 @@
                     document.getElementById('items-count').textContent = '0 items';
                     tableBody.innerHTML = `
                     <tr>
-                        <td colspan="4" class="px-4 py-8 text-center">
-                            <div class="text-gray-400">
-                                <svg class="w-16 h-16 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                                </svg>
-                                <p class="text-lg font-medium">Tidak ada item ditemukan</p>
-                            </div>
+                        <td colspan="4" class="px-4 py-8 text-center text-gray-400">
+                            <p class="text-lg font-medium">Tidak ada item ditemukan</p>
                         </td>
                     </tr>
                 `;
@@ -681,23 +620,6 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-
-                document.getElementById('packing-list-number-title').textContent = 'Error';
-                const tableBody = document.getElementById('items-table-body');
-                tableBody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="px-4 py-8 text-center">
-                        <div class="text-red-500">
-                            <svg class="w-16 h-16 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <p class="text-lg font-bold">Gagal memuat data</p>
-                            <p class="text-sm mt-1">${error.message}</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-
                 loadingState.classList.add('hidden');
                 contentState.classList.remove('hidden');
             });
@@ -708,48 +630,307 @@
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
     }
-
-    // Event Listeners
-    document.addEventListener('DOMContentLoaded', function() {
-        const qrScanForm = document.getElementById('qrScanForm');
-        const qrCodeInput = document.getElementById('qrCodeInput');
-
-        qrScanForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            validateQrCode(qrCodeInput.value);
-            qrCodeInput.value = '';
-        });
-
-        // Close modals on overlay click
-        document.getElementById('detail-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeDetailModal();
-            }
-        });
-
-        document.getElementById('status-update-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeStatusUpdateModal();
-            }
-        });
-
-        // Close on ESC key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const detailModal = document.getElementById('detail-modal');
-                const statusModal = document.getElementById('status-update-modal');
-                
-                if (!detailModal.classList.contains('hidden')) {
-                    closeDetailModal();
-                }
-                if (!statusModal.classList.contains('hidden')) {
-                    closeStatusUpdateModal();
-                }
-            }
-        });
-    });
 </script>
 
+{{-- SCRIPT OPEN MODAL UPDATE STATUS --}}
+<script>
+    const API_UPDATE_STATUS = '/admin/outbound/transit-inventory/update-status';
+
+    function openStatusUpdateModal(data) {
+        const modal = document.getElementById('status-update-modal');
+        document.getElementById('status-so-number').textContent = data.so_number || '-';
+        document.getElementById('status-customer-name').textContent = data.customer_name || '-';
+        document.getElementById('status-total-items').textContent = data.total_items || '-';
+        document.getElementById('status-packed-date').textContent = data.packed_date || '-';
+        document.getElementById('transit-status').value = data.status || '';
+        document.getElementById('transit-id').value = data.transit_id || '';
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            document.getElementById('transit-status').focus();
+        }, 100);
+    }
+
+    function closeStatusUpdateModal() {
+        const modal = document.getElementById('status-update-modal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        document.getElementById('statusUpdateForm').reset();
+    }
+
+    async function submitStatusUpdate() {
+        const form = document.getElementById('statusUpdateForm');
+        const status = document.getElementById('transit-status').value;
+        const transitId = document.getElementById('transit-id').value;
+
+        if (!status) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Tidak Lengkap',
+                text: 'Harap pilih status baru.'
+            });
+            document.getElementById('transit-status').focus();
+            return;
+        }
+
+        closeStatusUpdateModal();
+
+        const confirmResult = await Swal.fire({
+            title: 'Konfirmasi Update Status',
+            html: `
+                <div class="text-left space-y-2 text-sm">
+                    <p>Anda akan mengupdate status transit:</p>
+                    <div class="bg-gray-50 p-3 rounded-md mt-3">
+                        <p><strong>Status Transit:</strong> <span class="text-indigo-600 font-bold">${status}</span></p>
+                    </div>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Update',
+            cancelButtonText: 'Periksa Kembali',
+            width: '500px'
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
+
+        Swal.fire({
+            title: 'Memproses...',
+            html: 'Sedang mengupdate status transit...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            const response = await fetch(`${API_UPDATE_STATUS}/${transitId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: status,
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal mengupdate status');
+            }
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Status Berhasil Diupdate!',
+                html: `
+                    <div class="text-sm space-y-2">
+                        <p>Status transit telah berhasil diupdate:</p>
+                        <div class="bg-green-50 p-3 rounded-md mt-2 text-left">
+                            <p><strong>Status Transit:</strong> ${status}</p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#4f46e5'
+            });
+
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Error updating status:', error);
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Update Status',
+                text: error.message || 'Terjadi kesalahan saat mengupdate status.',
+                confirmButtonColor: '#dc2626'
+            });
+        }
+    }
+</script>
+
+{{-- SCRIPT OPEN DELIVERY MODAL --}}
+<script>
+    const API_CREATE_DO = '/admin/outbound/transit-inventory/create-do';
+
+    async function openDeliveryOrderModal(event, packingListId) {
+        event.stopPropagation();
+        
+        const modal = document.getElementById('delivery-order-modal');
+        const loadingState = document.getElementById('loading-do-modal');
+        const contentState = document.getElementById('content-do-modal');
+        const packingIdDo = document.getElementById('packing-id-do');
+        modal.classList.remove('hidden');
+        loadingState.classList.remove('hidden');
+        contentState.classList.add('hidden');
+        document.body.style.overflow = 'hidden';
+
+        const url = `/admin/outbound/packing-lists/${packingListId}/items`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const data = await response.json();
+
+            document.getElementById('do-so-number').textContent = data.so_number || 'N/A';
+            document.getElementById('do-customer-name').textContent = data.customer_name || 'N/A';
+            document.getElementById('do-total-items').textContent = (data.items?.length || 0) + ' items';
+            document.getElementById('do-packed-date').textContent = data.packed_at || 'N/A';
+            document.getElementById('do-packing-list-id').value = packingListId;
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('delivery_date').value = today;
+
+            loadingState.classList.add('hidden');
+            contentState.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('delivery_date').focus();
+            }, 100);
+        } catch (error) {
+            console.error('Error fetching packing list details:', error);  
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Memuat Data',
+                text: 'Tidak dapat memuat detail packing list. Silakan coba lagi.',
+                confirmButtonColor: '#dc2626'
+            });
+            closeDeliveryOrderModal();
+        }
+    }
+
+    function closeDeliveryOrderModal() {
+        const modal = document.getElementById('delivery-order-modal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        const form = document.getElementById('deliveryOrderForm');
+        if (form) {
+            form.reset();
+        }
+    }
+
+    async function submitDeliveryOrder() {
+        const form = document.getElementById('deliveryOrderForm');
+        const formData = new FormData(form);
+        const packingListId = formData.get("packing_list_id");
+
+        const data = {
+            delivery_date: formData.get('delivery_date'),
+            driver_name: formData.get('driver_name').trim(),
+        };
+
+        closeDeliveryOrderModal()
+
+        // Validation
+        if (!data.delivery_date) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Tidak Lengkap',
+                text: 'Tanggal pengiriman harus diisi.'
+            });
+            return;
+        }
+
+        if (!data.driver_name) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Tidak Lengkap',
+                text: 'Nama driver harus diisi.'
+            });
+            document.getElementById('driver_name').focus();
+            return;
+        }
+
+        // Confirmation
+        const confirmResult = await Swal.fire({
+            title: 'Konfirmasi Pembuatan DO',
+            html: `
+                <div class="text-left space-y-2 text-sm">
+                    <p>Anda akan membuat Delivery Order dengan detail:</p>
+                    <div class="bg-gray-50 p-3 rounded-md mt-3">
+                        <p><strong>Tanggal Kirim:</strong> ${data.delivery_date}</p>
+                        <p><strong>Driver:</strong> ${data.driver_name}</p>
+                    </div>
+                    <p class="text-gray-600 mt-3">Pastikan semua data sudah benar.</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Buat DO',
+            cancelButtonText: 'Periksa Kembali',
+            width: '500px'
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
+        closeDeliveryOrderModal();
+        Swal.fire({
+            title: 'Memproses...',
+            html: 'Sedang membuat Delivery Order...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            const response = await fetch(`${API_CREATE_DO}/${packingListId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal membuat Delivery Order');
+            }
+            await Swal.fire({
+                icon: 'success',
+                title: 'Delivery Order Berhasil Dibuat!',
+                html: `
+                    <div class="text-sm space-y-2">
+                        <p>Delivery Order telah berhasil dibuat:</p>
+                        <div class="bg-green-50 p-3 rounded-md mt-2 text-left">
+                            <p><strong>DO Number:</strong> ${result.do_number || 'Generating...'}</p>
+                            <p><strong>Driver:</strong> ${data.driver_name}</p>
+                            <p><strong>Kendaraan:</strong> ${data.vehicle_number}</p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#16a34a'
+            })
+            window.location.reload();
+        } catch (error) {
+            console.error('Error creating delivery order:', error);
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Membuat Delivery Order',
+                text: error.message || 'Terjadi kesalahan saat membuat delivery order.',
+                confirmButtonColor: '#dc2626'
+            });
+        }
+    }
+</script>
+
+{{-- CAMERA SCANNER SCRIPT --}}
 <script>
     // Camera Scanner Implementation
     document.addEventListener('DOMContentLoaded', () => {
@@ -762,37 +943,18 @@
         const scanForm = document.getElementById('scanForm');
         const cameraContainer = document.getElementById('cameraContainer');
         const cancelCameraBtn = document.getElementById('cancelCameraBtn');
-        const submitScanBtn = document.getElementById('submitScanBtn');
-        const scanModeTitle = document.getElementById('scanModeTitle');
         const openCameraBtn = document.getElementById('openCameraScanBtn');
 
         function updateModalView() {
             scanForm.classList.add('hidden');
             cameraContainer.classList.add('hidden');
-
             if (cameraMode) {
                 cameraContainer.classList.remove('hidden');
-                scanModeTitle.textContent = 'Mode Kamera';
+                document.getElementById('scanModeTitle').textContent = 'Mode Kamera';
             } else {
                 scanForm.classList.remove('hidden');
-                scanModeTitle.textContent = 'Mode Input Manual';
+                document.getElementById('scanModeTitle').textContent = 'Mode Input Manual';
             }
-        }
-
-        function openInputModal() {
-            cameraMode = false;
-            qrInput.value = '';
-            updateModalView();
-            scanModal.classList.remove('hidden');
-            qrInput.focus();
-        }
-
-        function openCameraModal() {
-            cameraMode = true;
-            qrInput.value = '';
-            updateModalView();
-            scanModal.classList.remove('hidden');
-            startScan();
         }
 
         function closeModal() {
@@ -801,36 +963,28 @@
         }
 
         function startScan() {
-            if (html5QrCode) {
-                stopScan();
-            }
-
+            if (html5QrCode) stopScan();
             html5QrCode = new Html5Qrcode('reader');
-            const config = {
-                fps: 10,
-                qrbox: {
-                    width: 250,
-                    height: 250
-                }
-            };
-
-            html5QrCode.start(
-                { facingMode: 'environment' }, 
-                config,
-                (decodedText, decodedResult) => {
+            html5QrCode.start({
+                    facingMode: 'environment'
+                }, {
+                    fps: 10,
+                    qrbox: {
+                        width: 250,
+                        height: 250
+                    }
+                },
+                (decodedText) => {
                     stopScan();
                     closeModal();
-
                     if (window.validateQrCode) {
                         window.validateQrCode(decodedText);
                         document.querySelector('#qrCodeInput').value = decodedText;
-                    } else {
-                        alert('Error: Fungsi validasi tidak siap.');
                     }
                 },
-                (errorMessage) => {}
-            ).catch((err) => {
-                alert('Gagal memulai kamera. Pastikan Anda memberi izin akses.');
+                () => {}
+            ).catch(() => {
+                alert('Gagal memulai kamera.');
                 stopScan();
             });
         }
@@ -838,11 +992,7 @@
         function stopScan() {
             if (html5QrCode) {
                 try {
-                    html5QrCode.stop().then(() => {
-                        html5QrCode = null;
-                    }).catch(err => {
-                        html5QrCode = null;
-                    });
+                    html5QrCode.stop().then(() => html5QrCode = null).catch(() => html5QrCode = null);
                 } catch (e) {
                     html5QrCode = null;
                 }
@@ -850,35 +1000,28 @@
             cameraMode = false;
         }
 
-        function handleScanSubmit(event) {
-            if (event) event.preventDefault();
-            const qrCode = qrInput.value;
-            if (!qrCode) return;
-            closeModal();
-            if (window.validateQrCode) {
-                window.validateQrCode(qrCode);
-            } else {
-                alert('Error: Fungsi validasi tidak siap.');
-            }
-        }
-
         if (openCameraBtn) {
-            openCameraBtn.addEventListener('click', openCameraModal);
+            openCameraBtn.addEventListener('click', () => {
+                cameraMode = true;
+                updateModalView();
+                scanModal.classList.remove('hidden');
+                startScan();
+            });
         }
 
         document.querySelectorAll('[data-action="close-scan-modal"]').forEach(button => {
             button.addEventListener('click', closeModal);
         });
 
-        if (scanModalBg) {
-            scanModalBg.addEventListener('click', closeModal);
-        }
+        if (scanModalBg) scanModalBg.addEventListener('click', closeModal);
+        if (cancelCameraBtn) cancelCameraBtn.addEventListener('click', closeModal);
 
-        cancelCameraBtn.addEventListener('click', () => {
-            scanModal.classList.add('hidden');
-            stopScan();
+        scanForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const qrCode = qrInput.value;
+            if (!qrCode) return;
+            closeModal();
+            if (window.validateQrCode) window.validateQrCode(qrCode);
         });
-        
-        scanForm.addEventListener('submit', handleScanSubmit);
     });
 </script>

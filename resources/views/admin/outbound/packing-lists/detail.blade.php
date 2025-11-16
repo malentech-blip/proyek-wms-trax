@@ -9,40 +9,52 @@
             <h3 class="text-lg font-semibold text-gray-800">Detail Packing Lists</h3>
             <div class="flex flex-col gap-3 mt-2">
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Sales Order:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Sales Order:</p>
                     <p class="font-medium">{{ $so['number'] }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Customer:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Customer:</p>
                     <p class="font-medium">{{ $so['customer']['name'] }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Packed Date:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Packed Date:</p>
                     <p class="font-medium">
                         {{ $packingList->packed_at }}
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Status:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Status:</p>
                     <p class="font-medium">{{ $packingList->status }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <p class="w-[200px] text-sm text-gray-600">Barcode:</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Barcode:</p>
                     <p class="font-medium">
                         {!! DNS1D::getBarcodeHTML($packingList->barcode, 'C128', 1.5, 40) !!}
                     </p>
                 </div>
             </div>
+            
+            {{-- Action Buttons --}}
             @if ($packingList->status == 'Packed')
-                <div class="flex items-center gap-3 !mt-5">
+                <div class="flex items-center gap-3 !mt-5 max-sm:flex-col">
                     <button id="openDeliveryOrderModalBtn"
-                        class="flex w-max items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                        class="flex w-max max-sm:w-full max-sm:justify-center items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                             </path>
                         </svg>
                         Buat Delivery Order
+                    </button>
+                    
+                    <button id="markAsInTransitBtn"
+                        class="flex w-max max-sm:w-full max-sm:justify-center items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z">
+                            </path>
+                        </svg>
+                        Tandai In Transit
                     </button>
                 </div>
             @endif
@@ -51,8 +63,8 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-blue-50">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Code</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Name</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[100px]">Item Code</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[200px]">Item Name</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Quantity</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Barcode</th>
                     </tr>
@@ -82,7 +94,7 @@
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                class="inline-block max-sm:w-full align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div
@@ -93,7 +105,7 @@
                                 </path>
                             </svg>
                         </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <div class="mt-3 sm:mt-0 sm:ml-4 text-left w-full">
                             <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
                                 Buat Delivery Order
                             </h3>
@@ -158,12 +170,12 @@
 
 </x-app-layout>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     const CSRF_TOKEN = '{{ csrf_token() }}';
     const PACKING_ID = '{{ $packingList->id }}';
     const API_CREATE_DELIVERY_ORDER = '/admin/outbound/delivery-orders/store';
+    const API_UPDATE_STATUS_IN_TRANSIT = '/admin/outbound/packing-lists/' + PACKING_ID + '/in-transit';
 
     // Modal Functions
     function openDeliveryOrderModal() {
@@ -306,12 +318,98 @@
         }
     }
 
+    // Mark as In Transit Function
+    async function markAsInTransit() {
+        const confirmResult = await Swal.fire({
+            title: 'Konfirmasi In Transit',
+            html: `
+                <div class="text-left space-y-2 text-sm">
+                    <p>Anda akan mengubah status packing list menjadi <strong class="text-green-600">In Transit</strong>.</p>
+                    <div class="bg-yellow-50 p-3 rounded-md mt-3 border border-yellow-200">
+                        <p class="text-yellow-800"><strong>⚠️ Perhatian:</strong></p>
+                        <p class="text-yellow-700 mt-1">Pastikan barang sudah siap untuk dikirim sebelum mengubah status.</p>
+                    </div>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Tandai In Transit',
+            cancelButtonText: 'Batal'
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
+
+        Swal.fire({
+            title: 'Memproses...',
+            html: 'Sedang mengubah status menjadi In Transit...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            const response = await fetch(API_UPDATE_STATUS_IN_TRANSIT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal mengubah status');
+            }
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Status Berhasil Diubah!',
+                html: `
+                    <div class="text-sm space-y-2">
+                        <p>Status packing list telah diubah menjadi <strong class="text-green-600">In Transit</strong>.</p>
+                        <div class="bg-green-50 p-3 rounded-md mt-2">
+                            <p class="text-green-700">Barang dalam perjalanan menuju customer.</p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#16a34a'
+            });
+
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Error updating status:', error);
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengubah Status',
+                text: error.message || 'Terjadi kesalahan saat mengubah status. Silakan coba lagi.',
+                confirmButtonColor: '#dc2626'
+            });
+        }
+    }
+
     // Event Listeners
     document.addEventListener('DOMContentLoaded', function() {
         // Open Modal Button
         const openModalBtn = document.getElementById('openDeliveryOrderModalBtn');
         if (openModalBtn) {
             openModalBtn.addEventListener('click', openDeliveryOrderModal);
+        }
+
+        // Mark as In Transit Button
+        const markAsInTransitBtn = document.getElementById('markAsInTransitBtn');
+        if (markAsInTransitBtn) {
+            markAsInTransitBtn.addEventListener('click', markAsInTransit);
         }
 
         // Cancel Button

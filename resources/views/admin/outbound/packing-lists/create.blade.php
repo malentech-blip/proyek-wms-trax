@@ -20,7 +20,7 @@
                     $items = $salesOrder['detailItem'] ?? [];
                 @endphp
                 @foreach ($items as $item)
-                    <div class="grid grid-cols-5 gap-5 mt-10">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 mt-10">
                         <div class="flex flex-col gap-2">
                             <p class="text-gray-500 text-sm">Item No</p>
                             <p class="font-medium">{{ $item['item']['no'] }}</p>
@@ -74,13 +74,13 @@
                         <tr>
                             <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Code</th>
-                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider max-sm:min-w-[150px]">
                                 Item</th>
-                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider max-sm:min-w-[100px]">
                                 Qty Out</th>
-                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider max-sm:min-w-[120px]">
                                 Qty Ready</th>
-                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider max-sm:min-w-[100px]">
                                 Lokasi</th>
                             <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Aksi</th>
@@ -101,10 +101,10 @@
     <div id="scanConfirmModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
         role="dialog" aria-modal="true">
         <div id="scanModalOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex max-sm:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+                class="inline-block max-sm:w-full align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <h3 class="text-lg leading-6 font-medium text-gray-900">
                         Konfirmasi Item Scan
@@ -159,7 +159,7 @@
     <div id="submitPackingListModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title"
         role="dialog" aria-modal="true">
         <div id="submitModalOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div
                 class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
@@ -677,8 +677,8 @@
                 confirmButtonText: 'OK'
             }).then((res) => {
                 const id = result?.packingId
-                const baseUrl = '/admin/outbound/packing-lists/detail'
-                window.location.href = `${baseUrl}/${id}`
+                const baseUrl = '/admin/outbound/packing-lists'
+                window.location.href = `${baseUrl}`
             });
 
         } catch (error) {

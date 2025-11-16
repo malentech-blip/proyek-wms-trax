@@ -17,17 +17,17 @@
             </div>
         </form>
 
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto bg-white rounded-xl shadow-sm overflow-hidden">
             <table class="min-w-full">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="text-left px-4 py-3">SO Number</th>
                         <th class="text-left px-4 py-3">Date</th>
-                        <th class="text-left px-4 py-3">Customer</th>
+                        <th class="text-left px-4 py-3 max-sm:min-w-[200px]">Customer</th>
                         <th class="text-left px-4 py-3">Amount</th>
                         <th class="text-left px-4 py-3">Local Status</th>
                         <th class="text-left px-4 py-3">Sync Status Status</th>
-                        <th class="text-left px-4 py-3">Action</th>
+                        <th class="text-left px-4 py-3 max-sm:min-w-[200px]">Action</th>
                     </tr>
                 </thead>
                 <tbody>
