@@ -35,11 +35,11 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-blue-50">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Code</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Name</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Item Code</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Item Name</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Quantity</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Batch</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Status QC</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Batch</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Status QC</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Location</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Rack</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Pallet</th>

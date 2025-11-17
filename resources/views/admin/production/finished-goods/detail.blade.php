@@ -7,7 +7,7 @@
 
     <x-production.tabs-production :mrId="$mrId" :wip="$wipRecord" />
     <div class="bg-white rounded-xl shadow-sm mt-8">
-        <div class="p-6 border-b flex items-center gap-3">
+        <div class="p-6 max-sm:flex-col max-sm:items-start border-b flex items-center gap-3">
             @if ($wipRecord && !$finishedGood)
                 <button onclick="showAddFinishedModal()"
                     class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
@@ -32,16 +32,16 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-blue-50">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Code</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Item Name</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Item Code</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[200px]">Item Name</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Quantity</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Batch</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Status QC</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Status QC</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Location</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Rack</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Pallet</th>
                         <th class="p-4 text-left font-semibold text-gray-600">Status</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Barcode</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Barcode</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -81,7 +81,7 @@
     {{-- ADD FINISHED GOODS MODAL --}}
     <div id="adaFinishedModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
         aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {{-- Background overlay --}}
             <div onclick="hideAddFinishedModal()" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
                 aria-hidden="true">
@@ -91,13 +91,13 @@
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             <div
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all max-sm:w-full sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
 
                 {{-- Tambahkan ID pada Form --}}
                 <form id="finishedGoodForm">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="sm:flex sm:items-start">
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <div class="mt-3 max-sm:text-left text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
                                     Tambah Finished Goods
                                 </h3>
@@ -187,7 +187,7 @@
     {{-- STORE TO INVENTORY MODAL --}}
     <div id="storeInventoryModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
         aria-labelledby="store-modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {{-- Background overlay --}}
             <div onclick="hideStoreInventoryModal()"
                 class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
