@@ -120,7 +120,7 @@ class PickingListsController extends Controller
     } catch (\Throwable $e) {
       return response()->json([
         'success' => false,
-        'message' => 'Terjadi kesalahan tidak terduga: ' . $e->getMessage(),
+        'message' => 'Scan QR code tidak valid',
       ], 500);
     }
   }

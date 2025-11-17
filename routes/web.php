@@ -286,6 +286,7 @@ Route::middleware('auth')->group(function () {
         // Rute Production
         Route::prefix('production')
           ->name('production.')
+          ->middleware('can:manage_production')
           ->group(function () {
             // dashboard
             Route::get('/dashboard', [

@@ -22,6 +22,7 @@ class MaterialRequestController extends Controller
     $salesOrders = SalesOrder::where("status", 'Pending')->get();
     $soNumber = $request->query('so_id');
     $selectedSalesOrderDetail = null;
+    // $workOrders = $accurate->getWorkOrders($request);
 
     $rawItems = Item::where("item_type", "Raw Material")->get();
     return view("admin.production.material-request.index", compact("salesOrders", "selectedSalesOrderDetail", "rawItems"));

@@ -11,82 +11,8 @@
     @endphp
 
     <x-production.tabs-production :mrId="$mrId" :wip="$wip" />
-    <div x-data="{
-        open: false,
-        qr_code: '',
-        scanning: false,
-        scanResult: null,
-        submittingConfirm: false,
     
-        openModal(id) {
-            this.qr_code = '';
-            this.scanResult = null;
-            this.open = true;
-            this.$nextTick(() => this.$refs.qrInput.focus());
-        },
-    
-        async submitScan() {
-            this.scanning = true;
-            try {
-                const res = await fetch('{{ route('admin.production.picking-list.scan-item') }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        qr_code: this.qr_code,
-                    }),
-                });
-                const data = await res.json();
-                this.scanning = false;
-    
-                console.log(data)
-    
-                if (data.success) {
-                    this.scanResult = data.data;
-                } else {
-                    alert('❌ ' + data.message);
-                    this.scanResult = null;
-                }
-            } catch (err) {
-                this.scanning = false;
-                console.error(err);
-                alert('Terjadi error: ' + err.message);
-            }
-        },
-    
-        async confirmPick() {
-            if (!this.scanResult) return;
-    
-            this.submittingConfirm = true;
-            try {
-                const res = await fetch('{{ route('admin.production.picking-list.confirm-pick') }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        picking_id: this.scanResult.id,
-                    }),
-                });
-                const data = await res.json();
-                this.submittingConfirm = false;
-    
-                if (data.success) {
-                    alert('✅ ' + data.message);
-                    this.open = false;
-                    window.location.reload(); // Refresh table
-                } else {
-                    alert('❌ ' + data.message);
-                }
-            } catch (err) {
-                this.submittingConfirm = false;
-                alert('Terjadi error: ' + err.message);
-            }
-        },
-    }" class="bg-white rounded-xl shadow-sm mt-8">
+    <div class="bg-white rounded-xl shadow-sm mt-8">
         <div class="p-6 max-sm:overflow-x-auto max-sm:min-w-full border-b flex flex-col gap-2">
             <h3 class="text-lg font-semibold text-gray-800">Detail Picking List</h3>
             <div class="flex flex-col gap-3 mt-2">
@@ -106,7 +32,7 @@
                         </button>
                     @endif
                     @if ($mr->status == 'Requested' && !$confirmPickedDisabled)
-                        <button type="button" onclick="showConfirmPickedModal()" id="btnConfirmPicked"
+                        <button type="button" id="btnConfirmPicked"
                             {{ $confirmPickedDisabled ? 'disabled' : '' }}
                             class="w-max border-none rounded py-2 px-4 
                             {{ $confirmPickedDisabled
@@ -117,7 +43,7 @@
                     @endif
                     @if ($mr->status == 'Picked')
                         <button type="button" {{ $mr->status == 'Requested' ? 'disabled' : '' }}
-                            onclick="showConfirmDeliverWIPModal()" id="btnConfirmDeliverWIP"
+                            id="btnConfirmDeliverWIP"
                             class="w-max border-none rounded py-2 px-4 
                             {{ $mr->status == 'Requested'
                                 ? 'bg-gray-400 text-gray-100 cursor-not-allowed'
@@ -128,6 +54,7 @@
                 </div>
             </div>
         </div>
+
         {{-- TABLE --}}
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm border-collapse">
@@ -175,122 +102,8 @@
             </table>
         </div>
 
-        <!-- Modal Scan -->
-        <div x-show="open" x-cloak
-            class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50" x-transition>
-            <div @click.away="open = false" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-                <h2 class="text-lg font-semibold mb-4">Scan Item</h2>
-
-                <!-- Input Scan -->
-                <form @submit.prevent="submitScan" x-show="!scanResult">
-                    <input type="text" x-model="qr_code" x-ref="qrInput" placeholder="Scan QR Code di sini..."
-                        class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 p-2">
-                    <div class="mt-4 flex justify-end gap-2">
-                        <button type="button" @click="open = false"
-                            class="px-4 py-2 bg-gray-200 rounded-md text-gray-700">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md"
-                            x-text="scanning ? 'Memproses...' : 'Verifikasi'"></button>
-                    </div>
-                </form>
-
-                <!-- Hasil Scan -->
-                <div x-show="scanResult" class="space-y-3">
-                    <div class="border-t pt-4 mt-4">
-                        <p><strong>Item:</strong> <span x-text="scanResult.item_name"></span></p>
-                        <p><strong>QR Code:</strong> <span x-text="scanResult.qr_code"></span></p>
-                        <p><strong>Qty Request:</strong> <span x-text="scanResult.quantity"></span></p>
-                        <p><strong>Picked By:</strong> <span x-text="scanResult.picked_by"></span></p>
-                    </div>
-
-                    <div class="mt-4 flex justify-end gap-2">
-                        <button @click="open = false"
-                            class="px-4 py-2 bg-gray-200 rounded-md text-gray-700">Tutup</button>
-                        <button @click="confirmPick" class="px-4 py-2 bg-green-600 text-white rounded-md"
-                            x-text="submittingConfirm ? 'Menyimpan...' : 'Confirm Pick'"></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- MODAL CONFIRMATION --}}
-        <div id="confirmPickedModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
-            aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div onclick="hideConfirmPickedModal()"
-                    class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
-                </div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div
-                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                    Konfirmasi Material Request Picked?
-                                </h3>
-                                <p class="text-sm text-gray-500 mt-3">
-                                    Mengubah status Material Request No.**<span id="soNumberDisplay"
-                                        class="font-semibold text-blue-600">{{ $mr->mr_no }}</span>**.
-                                    menjadi <span class="text-black font-bold">Picked</span>.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" onclick="confirmPicked()"
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                            Ya, Confirm Picked
-                        </button>
-                        <button type="button" onclick="hideConfirmPickedModal()"
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                            Batal
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{-- MODAL CONFIRMATION DELIVERED --}}
-        <div id="confirmDeliverWIPModal" style="display: none;"
-            class="fixed inset-0 z-50 overflow-y-auto modal-container" aria-labelledby="modal-title" role="dialog"
-            aria-modal="true">
-            <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div onclick="hideConfirmDeliverWIPModal()"
-                    class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
-                </div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div
-                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                    Konfirmasi Deliver Picking List ke WIP?
-                                </h3>
-                                <p class="text-sm text-gray-500 mt-3">
-                                    Semua Picking List items akan di deliver ke WIP.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" onclick="deliveredToWIP()"
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                            Ya, Confirm Deliver WIP
-                        </button>
-                        <button type="button" onclick="hideConfirmDeliverWIPModal()"
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                            Batal
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <div id="scanModal"
-            class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        {{-- MODAL SCAN --}}
+        <div id="scanModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
             <div id="scanModalOverlay" class="absolute inset-0"></div>
 
             <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
@@ -304,7 +117,7 @@
                     </button>
                 </div>
 
-                <form id="scanForm" class="">
+                <form id="scanForm">
                     <input type="text" id="qrInput" placeholder="Scan QR Code di sini..."
                         class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 p-2">
                     <div class="mt-4 flex justify-end gap-2">
@@ -321,26 +134,165 @@
                     <div id="reader" class="w-full" style="min-height: 250px;"></div>
                     <p class="text-xs text-center text-gray-500 mt-2">Arahkan kamera ke QR/Barcode</p>
                     <div class="mt-4 flex justify-end">
-                        <button type"button" id="cancelCameraBtn" class="px-4 py-2 bg-red-600 text-white rounded-md">
+                        <button type="button" id="cancelCameraBtn" class="px-4 py-2 bg-red-600 text-white rounded-md">
                             Batalkan Scan
                         </button>
                     </div>
                 </div>
 
-                <div id="scanResultContainer" class="hidden space-y-3">
-                    <div class="border-t pt-4 mt-4">
-                        <p><strong>Item:</strong> <span id="resultItemName">-</span></p>
-                        <p><strong>QR Code:</strong> <span id="resultQrCode">-</span></p>
-                        <p><strong>Qty Request:</strong> <span id="resultQty">-</span></p>
-                        <p><strong>Picked By:</strong> <span id="resultPickedBy">-</span></p>
+                <div id="scanResultContainer" class="hidden">
+                    <!-- Success Icon -->
+                    <div class="flex justify-center mb-4">
+                        <div class="rounded-full bg-green-100 p-3">
+                            <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
                     </div>
 
-                    <div class="mt-4 flex justify-end gap-2">
+                    <h3 class="text-center text-lg font-semibold text-gray-900 mb-4">QR Code Valid!</h3>
+
+                    <!-- Item Details Card -->
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 mb-4 border border-blue-100">
+                        <div class="space-y-3">
+                            <!-- Item Name -->
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 mt-1">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-xs font-medium text-gray-600 mb-1">Item Name</p>
+                                    <p class="text-sm font-semibold text-gray-900" id="resultItemName">-</p>
+                                </div>
+                            </div>
+
+                            <!-- QR Code -->
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 mt-1">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-xs font-medium text-gray-600 mb-1">QR Code</p>
+                                    <p class="text-sm font-mono bg-white px-2 py-1 rounded border border-gray-200" id="resultQrCode">-</p>
+                                </div>
+                            </div>
+
+                            <!-- Quantity and Picked By Grid -->
+                            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-blue-200">
+                                <!-- Quantity -->
+                                <div class="flex items-start gap-2">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-xs font-medium text-gray-600 mb-1">Qty Request</p>
+                                        <p class="text-lg font-bold text-blue-700" id="resultQty">-</p>
+                                    </div>
+                                </div>
+
+                                <!-- Picked By -->
+                                <div class="flex items-start gap-2">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-xs font-medium text-gray-600 mb-1">Picked By</p>
+                                        <p class="text-sm font-semibold text-gray-900" id="resultPickedBy">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3 mt-6">
                         <button type="button" data-action="close-modal"
-                            class="px-4 py-2 bg-gray-200 rounded-md text-gray-700">Tutup</button>
+                            class="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium transition-colors duration-200">
+                            Tutup
+                        </button>
                         <button type="button" id="confirmPickBtn"
-                            class="px-4 py-2 bg-green-600 text-white rounded-md">
-                            Confirm Pick
+                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 rounded-lg text-white font-medium shadow-lg shadow-green-500/30 transition-all duration-200 transform hover:scale-105">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Confirm Pick
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- MODAL CONFIRMATION PICKED --}}
+        <div id="confirmPickedModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Konfirmasi Material Request Picked?
+                                </h3>
+                                <p class="text-sm text-gray-500 mt-3">
+                                    Mengubah status Material Request No.**<span class="font-semibold text-blue-600">{{ $mr->mr_no }}</span>**.
+                                    menjadi <span class="text-black font-bold">Picked</span>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" id="confirmPickedBtn"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Ya, Confirm Picked
+                        </button>
+                        <button type="button" data-dismiss="confirmPickedModal"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- MODAL CONFIRMATION DELIVERED --}}
+        <div id="confirmDeliverWIPModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                    Konfirmasi Deliver Picking List ke WIP?
+                                </h3>
+                                <p class="text-sm text-gray-500 mt-3">
+                                    Semua Picking List items akan di deliver ke WIP.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" id="confirmDeliverWIPBtn"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Ya, Confirm Deliver WIP
+                        </button>
+                        <button type="button" data-dismiss="confirmDeliverWIPModal"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
                         </button>
                     </div>
                 </div>
@@ -351,39 +303,31 @@
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-    window.showConfirmPickedModal = function() {
-        // Dipanggil oleh Alpine (pastikan isFormValid = true)
-        const modal = document.getElementById('confirmPickedModal')
-        if (modal) {
-            modal.style.display = 'block';
+    // ============================================
+    // MODAL MANAGEMENT
+    // ============================================
+    const ModalManager = {
+        show(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        },
+        hide(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+            }
         }
-    }
-    window.hideConfirmPickedModal = function() {
-        const modal = document.getElementById('confirmPickedModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
+    };
 
-    window.showConfirmDeliverWIPModal = function() {
-        // Dipanggil oleh Alpine (pastikan isFormValid = true)
-        const modal = document.getElementById('confirmDeliverWIPModal')
-        if (modal) {
-            modal.style.display = 'block';
-        }
-    }
-    window.hideConfirmDeliverWIPModal = function() {
-        const modal = document.getElementById('confirmDeliverWIPModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
-
-    window.confirmPicked = async function() {
-        hideConfirmPickedModal(); // Sembunyikan modal konfirmasi
+    // ============================================
+    // CONFIRM PICKED FUNCTIONALITY
+    // ============================================
+    async function confirmPicked() {
+        ModalManager.hide('confirmPickedModal');
 
         const mrId = '{{ $mrId }}';
-        // 1. Siapkan Payload JSON Lengkap
         const payload = {
             _token: '{{ csrf_token() }}',
             mr_id: mrId
@@ -398,12 +342,11 @@
             }
         });
 
-        // 2. Kirim ke API Endpoint Baru
         try {
             const response = await fetch('/admin/production/material-request/change-status', {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json', // Kirim sebagai JSON
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
@@ -418,8 +361,7 @@
                 return;
             }
 
-            Swal.fire('Berhasil!', result.message || 'Status material request Picked berhasil diubah.',
-                    'success')
+            Swal.fire('Berhasil!', result.message || 'Status material request Picked berhasil diubah.', 'success')
                 .then(() => {
                     window.location.reload();
                 });
@@ -430,10 +372,13 @@
         }
     }
 
-    window.deliveredToWIP = async function() {
-        hideConfirmDeliverWIPModal();
+    // ============================================
+    // DELIVER TO WIP FUNCTIONALITY
+    // ============================================
+    async function deliveredToWIP() {
+        ModalManager.hide('confirmDeliverWIPModal');
+        
         const mrId = '{{ $mrId }}';
-
         const payload = {
             _token: '{{ csrf_token() }}',
             mr_id: mrId
@@ -448,12 +393,11 @@
             }
         });
 
-        // 2. Kirim ke API Endpoint Baru
         try {
             const response = await fetch('/admin/production/work-in-progress/create-wip', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json', // Kirim sebagai JSON
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
@@ -468,8 +412,7 @@
                 return;
             }
 
-            Swal.fire('Berhasil!', result.message || 'Berhasil deliver picking list ke WIP.',
-                    'success')
+            Swal.fire('Berhasil!', result.message || 'Berhasil deliver picking list ke WIP.', 'success')
                 .then(() => {
                     let redirectUrl = `{{ route('admin.production.wip.detail', ['mr_id' => '__ID__']) }}`;
                     window.location = redirectUrl.replace('__ID__', mrId);
@@ -481,124 +424,136 @@
         }
     }
 
-
+    // ============================================
+    // SCAN MODAL FUNCTIONALITY
+    // ============================================
     document.addEventListener('DOMContentLoaded', () => {
+        // State Management
+        const state = {
+            cameraMode: false,
+            scanResult: null,
+            html5QrCode: null,
+            isScanningAPI: false,
+            isConfirmingPick: false
+        };
 
-        // --- Variabel State ---
-        let cameraMode = false;
-        let scanResult = null;
-        let html5QrCode = null;
-        let isScanningAPI = false;
-        let isConfirmingPick = false;
+        // DOM Elements
+        const elements = {
+            scanModal: document.getElementById('scanModal'),
+            scanModalOverlay: document.getElementById('scanModalOverlay'),
+            qrInput: document.getElementById('qrInput'),
+            scanForm: document.getElementById('scanForm'),
+            cameraContainer: document.getElementById('cameraContainer'),
+            scanResultContainer: document.getElementById('scanResultContainer'),
+            toggleCameraBtn: document.getElementById('toggleCameraBtn'),
+            cancelCameraBtn: document.getElementById('cancelCameraBtn'),
+            submitScanBtn: document.getElementById('submitScanBtn'),
+            confirmPickBtn: document.getElementById('confirmPickBtn'),
+            scanModeTitle: document.getElementById('scanModeTitle'),
+            resultItemName: document.getElementById('resultItemName'),
+            resultQrCode: document.getElementById('resultQrCode'),
+            resultQty: document.getElementById('resultQty'),
+            resultPickedBy: document.getElementById('resultPickedBy'),
+            globalScanBtn: document.getElementById('openGlobalScanBtn'),
+            btnConfirmPicked: document.getElementById('btnConfirmPicked'),
+            btnConfirmDeliverWIP: document.getElementById('btnConfirmDeliverWIP'),
+            confirmPickedBtn: document.getElementById('confirmPickedBtn'),
+            confirmDeliverWIPBtn: document.getElementById('confirmDeliverWIPBtn')
+        };
 
-        // --- Seleksi Elemen DOM ---
-        const scanModal = document.getElementById('scanModal');
-        const scanModalOverlay = document.getElementById('scanModalOverlay');
-        const qrInput = document.getElementById('qrInput');
-        const scanForm = document.getElementById('scanForm');
-        const cameraContainer = document.getElementById('cameraContainer');
-        const scanResultContainer = document.getElementById('scanResultContainer');
-        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
-        const cancelCameraBtn = document.getElementById('cancelCameraBtn');
-        const submitScanBtn = document.getElementById('submitScanBtn');
-        const confirmPickBtn = document.getElementById('confirmPickBtn');
-        const scanModeTitle = document.getElementById('scanModeTitle');
-        const resultItemName = document.getElementById('resultItemName');
-        const resultQrCode = document.getElementById('resultQrCode');
-        const resultQty = document.getElementById('resultQty');
-        const resultPickedBy = document.getElementById('resultPickedBy');
-
-        // [DIUBAH] Menyeleksi tombol scan global
-        const globalScanBtn = document.getElementById('openGlobalScanBtn');
-
-        // --- Helper Functions ---
-        // ... (Fungsi updateModalView() tidak berubah)
+        // Update Modal View
         function updateModalView() {
-            scanForm.classList.add('hidden');
-            cameraContainer.classList.add('hidden');
-            scanResultContainer.classList.add('hidden');
+            elements.scanForm.classList.add('hidden');
+            elements.cameraContainer.classList.add('hidden');
+            elements.scanResultContainer.classList.add('hidden');
 
-            if (scanResult) {
-                scanResultContainer.classList.remove('hidden');
-                resultItemName.textContent = scanResult.item_name || '-';
-                resultQrCode.textContent = scanResult.qr_code || '-';
-                resultQty.textContent = scanResult.quantity || '-';
-                resultPickedBy.textContent = scanResult.picked_by || '-';
-            } else if (cameraMode) {
-                cameraContainer.classList.remove('hidden');
-                scanModeTitle.textContent = 'Mode Kamera';
-                toggleCameraBtn.textContent = 'Gunakan Input';
-                toggleCameraBtn.classList.replace('bg-blue-500', 'bg-red-500');
-                toggleCameraBtn.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
+            if (state.scanResult) {
+                elements.scanResultContainer.classList.remove('hidden');
+                elements.resultItemName.textContent = state.scanResult.item_name || '-';
+                elements.resultQrCode.textContent = state.scanResult.qr_code || '-';
+                elements.resultQty.textContent = state.scanResult.quantity || '-';
+                elements.resultPickedBy.textContent = state.scanResult.picked_by || '-';
+            } else if (state.cameraMode) {
+                elements.cameraContainer.classList.remove('hidden');
+                elements.scanModeTitle.textContent = 'Mode Kamera';
+                elements.toggleCameraBtn.textContent = 'Gunakan Input';
+                elements.toggleCameraBtn.classList.replace('bg-blue-500', 'bg-red-500');
+                elements.toggleCameraBtn.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
             } else {
-                scanForm.classList.remove('hidden');
-                scanModeTitle.textContent = 'Mode Input Manual';
-                toggleCameraBtn.textContent = 'Gunakan Kamera';
-                toggleCameraBtn.classList.replace('bg-red-500', 'bg-blue-500');
-                toggleCameraBtn.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
+                elements.scanForm.classList.remove('hidden');
+                elements.scanModeTitle.textContent = 'Mode Input Manual';
+                elements.toggleCameraBtn.textContent = 'Gunakan Kamera';
+                elements.toggleCameraBtn.classList.replace('bg-red-500', 'bg-blue-500');
+                elements.toggleCameraBtn.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
             }
         }
 
-        // ... (Fungsi openModal() tidak berubah)
+        // Open Modal
         function openModal() {
-            scanResult = null;
-            cameraMode = false;
-            qrInput.value = '';
+            state.scanResult = null;
+            state.cameraMode = false;
+            elements.qrInput.value = '';
             updateModalView();
-            scanModal.classList.remove('hidden');
-            qrInput.focus();
+            elements.scanModal.classList.remove('hidden');
+            elements.qrInput.focus();
         }
 
-        // ... (Fungsi closeModal() tidak berubah)
+        // Close Modal
         function closeModal() {
-            scanModal.classList.add('hidden');
+            elements.scanModal.classList.add('hidden');
             stopScan();
         }
 
-        // ... (Fungsi startScan() tidak berubah)
+        // Start Camera Scan
         function startScan() {
-            if (html5QrCode) return;
-            html5QrCode = new Html5Qrcode('reader');
+            if (state.html5QrCode) return;
+            
+            state.html5QrCode = new Html5Qrcode('reader');
             const config = {
                 fps: 10,
-                qrbox: {
-                    width: 250,
-                    height: 250
-                }
+                qrbox: { width: 250, height: 250 }
             };
-            html5QrCode.start({
-                    facingMode: 'environment'
-                }, config,
-                (decodedText, decodedResult) => {
-                    qrInput.value = decodedText;
+
+            state.html5QrCode.start(
+                { facingMode: 'environment' },
+                config,
+                (decodedText) => {
+                    elements.qrInput.value = decodedText;
                     stopScan();
                     handleScanSubmit();
                 },
-                (errorMessage) => {}
+                (errorMessage) => {
+                    // Ignore scan errors
+                }
             ).catch((err) => {
                 console.error('Gagal memulai kamera:', err);
-                alert('Gagal memulai kamera. Pastikan Anda memberi izin.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Kamera Tidak Tersedia',
+                    text: 'Gagal memulai kamera. Pastikan Anda memberi izin akses kamera.',
+                    confirmButtonColor: '#3B82F6'
+                });
                 stopScan();
             });
         }
 
-        // ... (Fungsi stopScan() tidak berubah)
+        // Stop Camera Scan
         function stopScan() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode = null;
+            if (state.html5QrCode) {
+                state.html5QrCode.stop().then(() => {
+                    state.html5QrCode = null;
                 }).catch(err => {
                     console.error('Gagal menghentikan scanner:', err);
                 });
             }
-            cameraMode = false;
+            state.cameraMode = false;
             updateModalView();
         }
 
-        // ... (Fungsi toggleCamera() tidak berubah)
+        // Toggle Camera Mode
         function toggleCamera() {
-            cameraMode = !cameraMode;
-            if (cameraMode) {
+            state.cameraMode = !state.cameraMode;
+            if (state.cameraMode) {
                 startScan();
             } else {
                 stopScan();
@@ -606,14 +561,14 @@
             updateModalView();
         }
 
-        // ... (Fungsi handleScanSubmit() tidak berubah)
+        // Handle Scan Submit
         async function handleScanSubmit(event) {
             if (event) event.preventDefault();
-            if (isScanningAPI) return;
+            if (state.isScanningAPI) return;
 
-            isScanningAPI = true;
-            submitScanBtn.disabled = true;
-            submitScanBtn.textContent = 'Memproses...';
+            state.isScanningAPI = true;
+            elements.submitScanBtn.disabled = true;
+            elements.submitScanBtn.textContent = 'Memproses...';
 
             try {
                 const res = await fetch('{{ route('admin.production.picking-list.scan-item') }}', {
@@ -624,34 +579,47 @@
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        qr_code: qrInput.value,
+                        qr_code: elements.qrInput.value,
                         mr_id: '{{ $mrId }}'
                     }),
                 });
+                
                 const data = await res.json();
+                
                 if (data.success) {
-                    scanResult = data.data;
+                    state.scanResult = data.data;
                     updateModalView();
                 } else {
-                    alert('❌ ' + data.message);
-                    scanResult = null;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Scan Gagal',
+                        text: data.message,
+                        confirmButtonColor: '#3B82F6'
+                    });
+                    state.scanResult = null;
                 }
             } catch (err) {
                 console.error(err);
-                alert('Terjadi error: ' + err.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi Kesalahan',
+                    text: err.message || 'Gagal memproses scan QR Code',
+                    confirmButtonColor: '#3B82F6'
+                });
             } finally {
-                isScanningAPI = false;
-                submitScanBtn.disabled = false;
-                submitScanBtn.textContent = 'Verifikasi';
+                state.isScanningAPI = false;
+                elements.submitScanBtn.disabled = false;
+                elements.submitScanBtn.textContent = 'Verifikasi';
             }
         }
 
+        // Handle Confirm Pick
         async function handleConfirmPick() {
-            if (!scanResult || isConfirmingPick) return;
+            if (!state.scanResult || state.isConfirmingPick) return;
 
-            isConfirmingPick = true;
-            confirmPickBtn.disabled = true;
-            confirmPickBtn.textContent = 'Menyimpan...';
+            state.isConfirmingPick = true;
+            elements.confirmPickBtn.disabled = true;
+            elements.confirmPickBtn.textContent = 'Menyimpan...';
 
             try {
                 const res = await fetch('{{ route('admin.production.picking-list.confirm-pick') }}', {
@@ -662,37 +630,113 @@
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        picking_id: scanResult.id
+                        picking_id: state.scanResult.id
                     }),
                 });
+                
                 const data = await res.json();
+                
                 if (data.success) {
-                    alert('✅ ' + data.message);
-                    closeModal();
-                    window.location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message,
+                        confirmButtonColor: '#10B981',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        closeModal();
+                        window.location.reload();
+                    });
                 } else {
-                    alert('❌ ' + data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: data.message,
+                        confirmButtonColor: '#3B82F6'
+                    });
                 }
             } catch (err) {
-                alert('Terjadi error: ' + err.message);
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi Kesalahan',
+                    text: err.message || 'Gagal melakukan confirm pick',
+                    confirmButtonColor: '#3B82F6'
+                });
             } finally {
-                isConfirmingPick = false;
-                confirmPickBtn.disabled = false;
-                confirmPickBtn.textContent = 'Confirm Pick';
+                state.isConfirmingPick = false;
+                elements.confirmPickBtn.disabled = false;
+                elements.confirmPickBtn.textContent = 'Confirm Pick';
             }
         }
 
-        if (globalScanBtn) {
-            globalScanBtn.addEventListener('click', openModal);
+        // Event Listeners - Scan Modal
+        if (elements.globalScanBtn) {
+            elements.globalScanBtn.addEventListener('click', openModal);
         }
 
         document.querySelectorAll('[data-action="close-modal"]').forEach(button => {
             button.addEventListener('click', closeModal);
         });
-        scanModalOverlay.addEventListener('click', closeModal);
-        toggleCameraBtn.addEventListener('click', toggleCamera);
-        cancelCameraBtn.addEventListener('click', stopScan);
-        scanForm.addEventListener('submit', handleScanSubmit);
-        confirmPickBtn.addEventListener('click', handleConfirmPick);
+
+        if (elements.scanModalOverlay) {
+            elements.scanModalOverlay.addEventListener('click', closeModal);
+        }
+
+        if (elements.toggleCameraBtn) {
+            elements.toggleCameraBtn.addEventListener('click', toggleCamera);
+        }
+
+        if (elements.cancelCameraBtn) {
+            elements.cancelCameraBtn.addEventListener('click', stopScan);
+        }
+
+        if (elements.scanForm) {
+            elements.scanForm.addEventListener('submit', handleScanSubmit);
+        }
+
+        if (elements.confirmPickBtn) {
+            elements.confirmPickBtn.addEventListener('click', handleConfirmPick);
+        }
+
+        // Event Listeners - Confirmation Modals
+        if (elements.btnConfirmPicked) {
+            elements.btnConfirmPicked.addEventListener('click', () => {
+                ModalManager.show('confirmPickedModal');
+            });
+        }
+
+        if (elements.btnConfirmDeliverWIP) {
+            elements.btnConfirmDeliverWIP.addEventListener('click', () => {
+                ModalManager.show('confirmDeliverWIPModal');
+            });
+        }
+
+        if (elements.confirmPickedBtn) {
+            elements.confirmPickedBtn.addEventListener('click', confirmPicked);
+        }
+
+        if (elements.confirmDeliverWIPBtn) {
+            elements.confirmDeliverWIPBtn.addEventListener('click', deliveredToWIP);
+        }
+
+        // Close modal buttons
+        document.querySelectorAll('[data-dismiss]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const modalId = e.target.getAttribute('data-dismiss');
+                ModalManager.hide(modalId);
+            });
+        });
+
+        // Close modal when clicking overlay
+        document.querySelectorAll('.modal-container .fixed.inset-0.bg-gray-500').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                const modal = e.target.closest('.modal-container');
+                if (modal) {
+                    ModalManager.hide(modal.id);
+                }
+            });
+        });
     });
 </script>

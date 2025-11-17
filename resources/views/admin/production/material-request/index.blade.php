@@ -1,4 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <x-app-layout>
     <x-slot name="header">
         Create Material Request (Production)
@@ -30,11 +31,11 @@
                 </div>
                 <div class="mt-5 flex gap-3">
                     <button onclick="showRequestItemModal()" id="btnRequestItem" type="button"
-                        class="w-max border-none bg-blue-500 text-white rounded py-2 px-4">
+                        class="w-max border-none bg-blue-500 text-white rounded py-2 px-4 hover:bg-blue-600 transition-colors">
                         Request Item
                     </button>
                     <button type="button" id="btnCreateMR" onclick="showConfirmMRModal()"
-                        class="w-max border-none bg-blue-500 text-white rounded py-2 px-4">
+                        class="w-max border-none bg-blue-500 text-white rounded py-2 px-4 hover:bg-blue-600 transition-colors">
                         Create MR
                     </button>
                 </div>
@@ -42,40 +43,8 @@
         </div>
         @if (request('so_id'))
             @php
-                // $customer = $selectedSalesOrderDetail["customer"];
                 $items = $selectedSalesOrderDetail['detailItem'] ?? [];
             @endphp
-            {{-- <div class="p-6 border-b">
-                <h3 class="text-lg font-semibold text-gray-800">Customer Info</h3>
-                <div class="mt-4">
-                    <div class="grid grid-cols-3 gap-5">
-                        <div class="flex flex-col gap-2">
-                            <p class="text-gray-500 text-sm">Company Name</p>
-                            <p class="font-medium">{{ $customer['contactInfo']['companyName'] }}</p>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <p class="text-gray-500 text-sm">Name</p>
-                            <p class="font-medium">{{ $customer['contactInfo']['name'] }}</p>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <p class="text-gray-500 text-sm">Office Telephone Number</p>
-                            <p class="font-medium">{{ $customer['contactInfo']['workPhone'] }}</p>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <p class="text-gray-500 text-sm">Email</p>
-                            <p class="font-medium">{{ $customer['contactInfo']['email'] ?? '-' }}</p>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <p class="text-gray-500 text-sm">Salesman</p>
-                            <p class="font-medium">{{ $customer['contactInfo']['salesman'] ?? '-' }}</p>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <p class="text-gray-500 text-sm">Address</p>
-                            <p class="font-medium">{{ $salesOrder['toAddress'] ?? '-' }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
             <div class="p-6 border-b">
                 <h3 class="text-lg font-semibold text-gray-800">Detail Items</h3>
                 <div class="mt-4">
@@ -104,15 +73,15 @@
         @endif
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
-                <thead class="bg-blue-50">
+                <thead class="bg-gradient-to-r from-blue-50 to-indigo-50">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600">No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Item Name</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Quantity</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[150px]">Quantity Ready</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 max-sm:min-w-[120px]">Picked By</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Location</th>
-                        <th class="p-4 text-left font-semibold text-gray-600">Action</th>
+                        <th class="p-4 text-left font-semibold text-gray-700">No</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Item Name</th>
+                        <th class="p-4 text-left font-semibold text-gray-700">Quantity</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[150px]">Quantity Ready</th>
+                        <th class="p-4 text-left font-semibold text-gray-700 max-sm:min-w-[120px]">Picked By</th>
+                        <th class="p-4 text-left font-semibold text-gray-700">Location</th>
+                        <th class="p-4 text-left font-semibold text-gray-700">Action</th>
                     </tr>
                 </thead>
                 <tbody id="requestedItemsTable" class="divide-y">
@@ -124,7 +93,8 @@
     {{-- MODAL ITEM REQUEST --}}
     <div id="requestItemModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
         aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div
+            class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div onclick="hideRequestItemModal()" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
                 aria-hidden="true">
             </div>
@@ -188,6 +158,7 @@
             </div>
         </div>
     </div>
+
     {{-- MODAL CONFIRMATION --}}
     <div id="confirmMRModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
         aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -235,39 +206,20 @@
     </div>
 </x-app-layout>
 
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const soSelect = document.getElementById('so_id');
-        soSelect.addEventListener('change', function() {
-            const selectedSoId = this.value;
-
-            if (selectedSoId) {
-                const baseUrl = window.location.pathname;
-                const newQuery = '?so_id=' + selectedSoId;
-                window.location.href = baseUrl + newQuery;
-            } else {
-                // Jika memilih "Pilih Sales Order" (value=""), hilangkan so_id dari URL
-                const baseUrl = window.location.pathname;
-                window.location.href = baseUrl;
-            }
-        });
-    });
-</script>
-
+{{-- SCRIPT FOR LS --}}
 <script>
     const STORAGE_KEY = 'temp_material_requests';
-    // Get data dari LS
     function getStoredItems() {
         const stored = localStorage.getItem(STORAGE_KEY);
         return stored ? JSON.parse(stored) : [];
     }
-    // Set data ke LS
     function setStoredItems(items) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
         checkFormValidity();
     }
+</script>
 
+<script>
     function checkFormValidity() {
         const soId = document.getElementById('so_id').value;
         const requestedBy = document.getElementById('requested_by').value.trim();
@@ -275,26 +227,79 @@
         const createMRBtn = document.getElementById('btnCreateMR');
         const items = getStoredItems();
 
-        // 1. Hitung item yang HANYA terhubung dengan SO yang sedang dipilih
         const hasRequestedItems = items.some(item => item.so_id === soId);
 
-        // 2. Cek semua kondisi
         const isValid = soId.length > 0 &&
             requestedBy.length > 0 &&
             requestDate.length > 0 &&
             hasRequestedItems;
 
-        // 3. Terapkan state dan styling
         if (createMRBtn) {
             createMRBtn.disabled = !isValid;
-
-            // Hapus kelas warna lama dan tambahkan kelas yang sesuai
             createMRBtn.classList.remove('bg-blue-500', 'bg-gray-400', 'hover:bg-blue-600', 'cursor-not-allowed');
 
             if (isValid) {
                 createMRBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
             } else {
                 createMRBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    window.updateQuantity = function(index, newQuantity) {
+        const items = getStoredItems();
+        const soId = document.getElementById('so_id').value;
+        const filteredItems = items.filter(item => item.so_id === soId);
+
+        if (filteredItems[index]) {
+            const actualIndex = items.indexOf(filteredItems[index]);
+            items[actualIndex].quantity = parseInt(newQuantity);
+            setStoredItems(items);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Quantity berhasil diperbarui',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    }
+
+    // Delete item with confirmation
+    window.deleteItem = async function(index) {
+        const result = await Swal.fire({
+            title: 'Konfirmasi Hapus',
+            text: 'Apakah Anda yakin ingin menghapus item ini dari daftar request?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        });
+
+        if (result.isConfirmed) {
+            const items = getStoredItems();
+            const soId = document.getElementById('so_id').value;
+            const filteredItems = items.filter(item => item.so_id === soId);
+
+            if (filteredItems[index]) {
+                const actualIndex = items.indexOf(filteredItems[index]);
+                const deletedItem = items[actualIndex];
+
+                items.splice(actualIndex, 1);
+                setStoredItems(items);
+                renderTable();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Terhapus!',
+                    text: `Item "${deletedItem.item_name}" berhasil dihapus`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             }
         }
     }
@@ -308,11 +313,17 @@
         tbody.innerHTML = '';
         checkFormValidity();
 
-        if (items.length === 0) {
+        if (items.length === 0 || !items.some(item => item.so_id === soId)) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center p-4 text-gray-500">
-                        Belum ada item yang di-request. Silakan tambahkan.
+                    <td colspan="7" class="text-center p-12">
+                        <div class="flex flex-col items-center justify-center text-gray-400">
+                            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <p class="text-lg font-medium">Belum ada item yang di-request</p>
+                            <p class="text-sm mt-1">Silakan klik "Request Item" untuk menambahkan</p>
+                        </div>
                     </td>
                 </tr>`;
             return;
@@ -320,30 +331,35 @@
 
         items.filter(item => item.so_id === soId).forEach((item, index) => {
             const row = tbody.insertRow();
+            row.className = 'hover:bg-gray-50 transition-colors';
             row.innerHTML = `
-                <td class="p-4 text-gray-700 text-gray-600 text-[16px]">${index + 1}</td>
-                <td class="p-4 text-gray-700 text-gray-600 text-[16px]">${item.item_name}</td>
-                <td class="p-4 text-gray-700 text-gray-600 text-[16px]">${item.quantity}</td>
-                <td class="p-4 text-gray-700 text-gray-600 text-[16px]">${item.quantity_ready}</td>
-                <td class="p-4 text-gray-700 text-gray-600 text-[16px]">${item.location}</td>
-                <td class="p-4 text-gray-700 text-gray-600 text-[16px]">${item.picked_by}</td>
-                <td class="p-4 text-gray-700 text-gray-600 text-[16px]">
+                <td class="p-4 text-gray-700 font-medium">${index + 1}</td>
+                <td class="p-4 text-gray-700">${item.item_name}</td>
+                <td class="p-4">
+                    <input type="number" 
+                           min="1" 
+                           value="${item.quantity}" 
+                           onchange="updateQuantity(${index}, this.value)"
+                           class="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </td>
+                <td class="p-4 text-gray-700">${item.quantity_ready}</td>
+                <td class="p-4 text-gray-700">${item.picked_by}</td>
+                <td class="p-4 text-gray-700">${item.location}</td>
+                <td class="p-4">
                     <button type="button" 
                             onclick="deleteItem(${index})" 
-                            class="text-red-600 hover:text-red-800 text-xs font-medium">
+                            class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
                         Hapus
                     </button>
                 </td>
             `;
         });
     }
-    window.deleteItem = function(index) {
-        if (!confirm('Anda yakin ingin menghapus item ini?')) return;
-        let items = getStoredItems();
-        items.splice(index, 1);
-        setStoredItems(items);
-        renderTable();
-    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const soSelect = document.getElementById('so_id');
         const requestedByInput = document.getElementById('requested_by');
@@ -364,21 +380,23 @@
         requestedByInput.addEventListener('input', checkFormValidity);
         requestDateInput.addEventListener('change', checkFormValidity);
 
-        renderTable()
-
+        renderTable();
 
         window.showRequestItemModal = function() {
             const modal = document.getElementById('requestItemModal');
             const soId = document.getElementById('so_id').value;
             const soNumber = document.getElementById('so_id').options[document.getElementById('so_id')
                 .selectedIndex].text.trim();
-            const requestedBy = document.getElementById('requested_by').value;
-            const requestDate = document.getElementById('request_date').value;
 
             if (!soId) {
-                alert('Harap pilih Sales Order terlebih dahulu.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Perhatian',
+                    text: 'Harap pilih Sales Order terlebih dahulu.'
+                });
                 return;
             }
+
             document.getElementById('soNumberDisplay').textContent = soNumber;
             document.getElementById('mr_so_id_hidden').value = soId;
             if (modal) {
@@ -401,8 +419,6 @@
 
                 const form = e.target;
                 const formData = new FormData(form);
-
-
 
                 Swal.fire({
                     title: 'Memproses...',
@@ -433,44 +449,39 @@
                         return;
                     }
 
-
                     const newItem = result.item;
                     const items = getStoredItems();
                     items.push(newItem);
                     setStoredItems(items);
 
                     renderTable();
-                    Swal.fire('Berhasil!',
-                        'Item berhasil ditambahkan ke daftar sementara.', 'success');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Item berhasil ditambahkan ke daftar sementara',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
                     hideRequestItemModal();
+                    form.reset();
 
                 } catch (error) {
                     console.error('Fetch Error:', error);
-                    Swal.fire('Error!', 'Terjadi kesalahan jaringan atau sistem.',
-                        'error');
+                    Swal.fire('Error!', 'Terjadi kesalahan jaringan atau sistem.', 'error');
                 }
             });
         }
     });
-</script>
 
-
-<script>
     window.showConfirmMRModal = function() {
-        // Dipanggil oleh Alpine (pastikan isFormValid = true)
         const modal = document.getElementById('confirmMRModal');
-
-        // Ambil data dari form utama
         const soNumber = document.getElementById('so_id').options[document.getElementById('so_id').selectedIndex]
             .text.trim();
         const requestedBy = document.getElementById('requested_by').value;
         const requestDate = document.getElementById('request_date').value;
-
-        // Hitung item
         const soId = document.getElementById('so_id').value;
         const currentItems = getStoredItems().filter(item => item.so_id === soId);
 
-        // Isi detail di modal
         document.getElementById('confirmSoNumber').textContent = soNumber;
         document.getElementById('confirmRequestedBy').textContent = requestedBy;
         document.getElementById('confirmRequestDate').textContent = requestDate;
@@ -488,10 +499,8 @@
         }
     }
 
-
-    // --- FUNGSI API PROCESS UTAMA ---
     window.processCreateMR = async function() {
-        hideConfirmMRModal(); // Sembunyikan modal konfirmasi
+        hideConfirmMRModal();
 
         const soId = document.getElementById('so_id').value;
         const requestedBy = document.getElementById('requested_by').value;
@@ -503,13 +512,12 @@
             return;
         }
 
-        // 1. Siapkan Payload JSON Lengkap
         const payload = {
             _token: '{{ csrf_token() }}',
             so_id: soId,
             requested_by: requestedBy,
             request_date: requestDate,
-            items: itemsToProcess // Semua item yang sudah ada di tabel (LS)
+            items: itemsToProcess
         };
 
         Swal.fire({
@@ -521,12 +529,11 @@
             }
         });
 
-        // 2. Kirim ke API Endpoint Baru
         try {
             const response = await fetch('/admin/production/material-request', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json', // Kirim sebagai JSON
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
@@ -541,10 +548,8 @@
                 return;
             }
 
-            // 3. Sukses: Hapus data dari Local Storage dan beri notifikasi
             localStorage.removeItem(STORAGE_KEY);
 
-            // Opsional: Reset form utama setelah sukses
             document.getElementById('so_id').value = '';
             document.getElementById('requested_by').value = '';
             document.getElementById('request_date').value = '';
