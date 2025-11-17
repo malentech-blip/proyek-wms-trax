@@ -71,10 +71,10 @@
         </div>
     </div>
 
-
     <div id="completeProductionModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto modal-container"
         aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div
+            class="flex max-md:items-center items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div onclick="hideCompleteProductionModal()"
                 class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
             </div>
@@ -127,7 +127,6 @@
     window.showCompleteProductionModal = function() {
         const modal = document.getElementById('completeProductionModal');
         const form = document.getElementById('completeProductionForm');
-
         if (modal && form) {
             modal.style.display = 'block';
         } else {
@@ -148,7 +147,6 @@
             completeProductionForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const form = event.target;
-
                 Swal.fire({
                     title: 'Memproses...',
                     text: 'Menyelesaikan status produksi.',
@@ -156,8 +154,7 @@
                     didOpen: () => {
                         Swal.showLoading();
                     }
-                });
-
+                })
                 try {
                     const formData = new FormData(form);
                     const mrId = '{{ $mr->id }}';
@@ -170,7 +167,7 @@
                             'Accept': 'application/json',
                             'Content-Type': 'application/json',
                         },
-                        body: formData 
+                        body: formData
                     });
 
                     if (!response.ok) {
@@ -187,7 +184,8 @@
                         icon: "success"
                     }).then(() => {
                         hideCompleteProductionModal();
-                        window.location = '{{ route("admin.production.material-request.index") }}'
+                        window.location =
+                            '{{ route('admin.production.material-request.index') }}'
                     })
 
                 } catch (error) {
