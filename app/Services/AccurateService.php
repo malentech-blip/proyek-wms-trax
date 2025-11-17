@@ -569,4 +569,125 @@ class AccurateService
       return null;
     }
   }
+
+
+
+
+
+  // DELIVERY ORDERS
+  // DELIVERY ORDER ACCURATE API
+  public function getDeliveryOrders(Request $request)
+  {
+    try {
+      $params = [
+        'fields' => 'id,number,transDate,customer,warehouse,status,vehicleNo,driverName',
+        'sort' => 'transDate desc',
+        'sp.page' => $request->get('page', 1),
+        'sp.pageSize' => 20,
+      ];
+
+      // Filter tanggal (opsional)
+      if ($request->filled(['start_date', 'end_date'])) {
+        $params['filter.transDate.op'] = 'BETWEEN';
+        $params['filter.transDate.val[0]'] = $request->start_date;
+        $params['filter.transDate.val[1]'] = $request->end_date;
+      }
+
+      // Filter pencarian (opsional)
+      if ($request->filled('search')) {
+        $params['filter.keywords.op'] = 'CONTAIN';
+        $params['filter.keywords.val'] = $request->search;
+      }
+
+      // Request ke Accurate
+      $response = $this->dataClient()->get('/api/delivery-order/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil daftar Delivery Order dari Accurate', [
+          'response' => $response->json()
+        ]);
+        return collect([]);
+      }
+
+      return collect($response->json()['d'] ?? []);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil daftar Delivery Order', [
+        'message' => $e->getMessage()
+      ]);
+      return collect([]);
+    }
+  }
+
+  public function getDeliveryOrderDetail(int $id)
+  {
+    try {
+      $response = $this->dataClient()->get('/api/delivery-order/detail.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Delivery Order dari Accurate', [
+          'id' => $id,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Delivery Order', [
+        'id' => $id,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
+
+  public function saveDeliveryOrder(array $data)
+  {
+    try {
+      $response = $this->dataClient()->asForm()->post('/api/delivery-order/save.do', $data);
+
+      if ($response->failed()) {
+        Log::error('Gagal menyimpan Delivery Order ke Accurate', [
+          'data' => $data,
+          'response' => $response->json()
+        ]);
+
+        $errorMessage = $response->json()['s']['m'] ?? 'Error tidak diketahui';
+        throw new Exception('Gagal menyimpan Delivery Order: ' . $errorMessage);
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat menyimpan Delivery Order', [
+        'message' => $e->getMessage(),
+        'data' => $data
+      ]);
+      throw $e;
+    }
+  }
+
+
+  public function deleteDeliveryOrder(int $id)
+  {
+    try {
+      $response = $this->dataClient()->post('/api/delivery-order/delete.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal menghapus Delivery Order dari Accurate', [
+          'id' => $id,
+          'response' => $response->json()
+        ]);
+        throw new Exception('Gagal menghapus Delivery Order.');
+      }
+
+      return $response->json()['s'] ?? true;
+    } catch (\Exception $e) {
+      Log::error('Exception saat menghapus Delivery Order', [
+        'id' => $id,
+        'message' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
 }

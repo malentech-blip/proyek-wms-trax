@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin\Outbound;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin\Outbound\DeliveryOrder;
+use App\Models\Admin\Outbound\OutboundPackingItem;
 use App\Models\Admin\Outbound\PackingList;
 use App\Services\AccurateService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,7 +38,6 @@ class DeliveryOrderController extends Controller
     return view('admin.outbound.delivery-orders.index', compact('deliveryOrders'));
   }
 
-
   public function store(Request $request, AccurateService $accurate)
   {
     $validated = $request->validate([
@@ -48,7 +49,7 @@ class DeliveryOrderController extends Controller
     $packingListId = $validated['packing_id'];
     DB::beginTransaction();
     try {
-      $packingList = PackingList::findOrFail($packingListId);
+      $packingList = PackingList::with(['sales_order', 'items'])->findOrFail($packingListId);
 
       if ($packingList->status !== 'Packed') {
         DB::rollBack();
@@ -58,20 +59,36 @@ class DeliveryOrderController extends Controller
         ], 400);
       }
 
+      $customerId = $packingList->sales_order->customer_id;
+      $customer = $accurate->getCustomerDetail($customerId);
+      $customerNo = $customer['customerNo'];
+
+
+      // $payload = [
+      //   "customerNo" => $customerNo,
+      //   "detailItem" => $packingList['items']->map(function ($item) {
+      //     return [
+      //       "itemNo"   => $item->finished_good->item->item_code,
+      //       "unitPrice" => 100,
+      //     ];
+      //   })->values()->toArray(),
+      // ];
+      // $accurate->saveDeliveryOrder($payload);
+
+
       $deliveryOrder = DeliveryOrder::create([
         'packing_id' => $packingListId,
         'driver_name' => $validated['driver_name'],
         'delivery_date' => $validated['delivery_date'],
-        'status' => "In Transit",
+        'status' => "In Delivery",
       ]);
       $packingList->update([
         'status' => 'Shipped',
       ]);
-
       DB::commit();
       return response()->json([
         'message' => 'Delivery Order berhasil dibuat.',
-        'do_number' => $deliveryOrder->do_number,
+        'do_number' => $deliveryOrder->delivered_no,
         'driver_name' => $deliveryOrder->driver_name,
       ], 201);
     } catch (\Exception $e) {
@@ -83,71 +100,46 @@ class DeliveryOrderController extends Controller
     }
   }
 
-  public function getDetails($do_id)
+  public function getDetails($id, AccurateService $accurate)
   {
     try {
-      // Cari Delivery Order dengan relasi yang dibutuhkan
       $deliveryOrder = DeliveryOrder::with([
-        'packingList.sales_order'
-      ])->findOrFail($do_id);
+        'packingList.sales_order',
+      ])->findOrFail($id);
 
-      // Ambil data relasi
-      $packingList = $deliveryOrder->packingList;
-      $salesOrder = $packingList->sales_order ?? null;
-
-      // Format items
-      $items = $packingList->items->map(function ($item) {
+      // Prepare items data
+      $items = $deliveryOrder->packingList->items->map(function ($item) {
         return [
-          'id' => $item->id,
-          'item_code' => $item->finishedGood->item->item_code ?? 'N/A',
-          'item_name' => $item->finishedGood->item->item_name ?? 'N/A',
+          'product_code' => $item->finished_good->item->item_code ?? 'N/A',
+          'product_name' => $item->finished_good->item->item_name ?? 'N/A',
+          'label_code' => $item->finished_good->production_item_label->barcode,
+          'qr_code' => $item->finished_good->production_item_label->barcode,
           'quantity' => $item->quantity,
-          'unit' => $item->finishedGood->item->unit ?? 'pcs',
         ];
       });
 
-      // Prepare response data
-      $response = [
-        'success' => true,
-        'do_number' => $deliveryOrder->delivered_no,
+      $customer = $accurate->getCustomerDetail($deliveryOrder->packingList->sales_order->customer_id);
+
+      $data = [
+        'delivered_no' => $deliveryOrder->delivered_no,
         'status' => $deliveryOrder->status,
-        'so_number' => $salesOrder->so_number ?? 'N/A',
-        'customer_id' => $salesOrder->customer_id ?? 'N/A',
-        'customer_name' => $salesOrder->customer->name ?? 'N/A',
-
-        // Delivery Information
+        'so_number' => $deliveryOrder->packingList->sales_order->so_number ?? 'N/A',
+        'customer_name' => $customer['name'] ?? 'N/A',
+        'customer_id' => $deliveryOrder->packingList->sales_order->customer_id ?? null,
         'driver_name' => $deliveryOrder->driver_name,
-        'vehicle_number' => $deliveryOrder->vehicle_number,
-        'phone_number' => $deliveryOrder->phone_number ?? '-',
-        'delivery_date' => $deliveryOrder->delivery_date ?
-          \Carbon\Carbon::parse($deliveryOrder->delivery_date)->format('d/m/Y H:i') : 'N/A',
-        'notes' => $deliveryOrder->notes,
-
-        // Delivered Information (jika sudah delivered)
-        'received_by' => $deliveryOrder->received_by ?? null,
-        'delivered_at' => $deliveryOrder->delivered_at ?
-          \Carbon\Carbon::parse($deliveryOrder->delivered_at)->format('d/m/Y H:i') : null,
-
-        // Items
+        'delivery_date' => $deliveryOrder->delivery_date
+          ? Carbon::parse($deliveryOrder->delivery_date)->format('d M Y, H:i')
+          : 'N/A',
+        'created_at' => $deliveryOrder->created_at->format('d M Y, H:i'),
         'items' => $items,
-
-        // Timestamps
-        'created_at' => $deliveryOrder->created_at->format('d/m/Y H:i'),
-        'updated_at' => $deliveryOrder->updated_at->format('d/m/Y H:i'),
       ];
 
-      return response()->json($response, 200);
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-      return response()->json([
-        'success' => false,
-        'message' => 'Delivery Order tidak ditemukan.'
-      ], 404);
+      return response()->json($data);
     } catch (\Exception $e) {
       return response()->json([
-        'success' => false,
-        'message' => 'Terjadi kesalahan saat memuat detail delivery order.',
-        'error' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
-      ], 500);
+        'message' => 'Delivery order tidak ditemukan',
+        'error' => $e->getMessage()
+      ], 404);
     }
   }
 
@@ -163,24 +155,79 @@ class DeliveryOrderController extends Controller
     return view("admin.outbound.delivery-orders.detail", compact("deliveryOrder", "customer"));
   }
 
-  public function markDelivered(int $do_id): RedirectResponse
+  public function markDelivered($id)
   {
-    $deliveryOrder = DeliveryOrder::findOrFail($do_id);
+    try {
+      DB::beginTransaction();
+      $deliveryOrder = DeliveryOrder::findOrFail($id);
 
-    $deliveryOrder->update([
-      'status' => 'Delivered',
-    ]);
+      // Check if already delivered
+      if ($deliveryOrder->status === 'Delivered') {
+        return response()->json([
+          'message' => 'Delivery order sudah dalam status Delivered'
+        ], 400);
+      }
 
-    return redirect()->route('admin.outbound.delivery-orders.index')
-      ->with('success', 'Delivery Order berhasil ditandai sebagai Delivered.');
+      // Update status to Delivered
+      $deliveryOrder->update([
+        'status' => 'Delivered',
+      ]);
+
+      // Update packing list status to Shipped
+      $deliveryOrder->packingList()->update([
+        'status' => 'Shipped',
+      ]);
+
+      DB::commit();
+
+      return response()->json([
+        'message' => 'Delivery order berhasil ditandai sebagai Delivered',
+        'data' => [
+          'delivery_no' => $deliveryOrder->delivered_no,
+          'status' => $deliveryOrder->status,
+          'delivered_at' => $deliveryOrder->delivery_at
+        ]
+      ]);
+    } catch (\Exception $e) {
+      DB::rollBack();
+
+      return response()->json([
+        'message' => 'Gagal memperbarui status delivery order',
+        'error' => $e->getMessage()
+      ], 500);
+    }
   }
 
-  public function printPDF(int $do_id)
+  public function printPdf($id, AccurateService $accurate)
   {
-    $deliveryOrder = DeliveryOrder::with(['packingList.salesOrder'])->findOrFail($do_id);
+    try {
+      $deliveryOrder = DeliveryOrder::with([
+        'packingList.sales_order',
+      ])->findOrFail($id);
 
-    $pdf = Pdf::loadView('admin.outbound.delivery-orders.pdf', compact('deliveryOrder'));
+      $items = OutboundPackingItem::with(["finished_good.item", "finished_good.production_item_label"])->where("packing_id", $deliveryOrder->packing_id)->get();
 
-    return $pdf->stream('delivery-order-' . $deliveryOrder->delivered_no . '.pdf');
+      $customer = $accurate->getCustomerDetail($deliveryOrder->packingList->sales_order->customer_id);
+      $data = [
+        'deliveryOrder' => $deliveryOrder,
+        'salesOrder' => $deliveryOrder->packingList->sales_order,
+        'customer' => $customer,
+        'items' => $items,
+        'generatedAt' => now()->format('d M Y H:i:s'),
+      ];
+
+      // Generate PDF
+      $pdf = Pdf::loadView('admin.outbound.delivery-orders.pdf', $data);
+
+      // Set paper size and orientation
+      $pdf->setPaper('a4', 'portrait');
+
+      // Download with filename
+      $filename = 'DO_' . $deliveryOrder->delivery_no . '_' . now()->format('YmdHis') . '.pdf';
+
+      return $pdf->download($filename);
+    } catch (\Exception $e) {
+      return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+    }
   }
 }

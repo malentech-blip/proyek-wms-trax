@@ -35,7 +35,7 @@ class PackingListController extends Controller
         $query->where('so_number', 'like', '%' . $request->get('search') . '%');
       });
     }
-    $packingLists = $plQuery->with(['sales_order'])->get();
+    $packingLists = $plQuery->with(['sales_order'])->orderBy("created_at", "desc")->paginate(20);
     return view('admin.outbound.packing-lists.index', compact('packingLists'));
   }
 
@@ -252,10 +252,13 @@ class PackingListController extends Controller
     ]);
   }
 
-  public function transit(PackingList $packingList)
+  public function transit(int $packing_id)
   {
     try {
-      if (!in_array($packingList->status, ['Packed', 'Ready to Ship'])) {
+      $packingList = PackingList::where([
+        'id' => $packing_id 
+      ])->first();
+      if (!in_array($packingList->status, ['Packed'])) {
         return response()->json([
           'success' => false,
           'message' => 'Packing list dengan status "' . $packingList->status . '" tidak dapat dilanjutkan ke transit'
@@ -267,7 +270,8 @@ class PackingListController extends Controller
         'status' => 'In Transit',
       ]);
       TransitInventory::create([
-        "packing_id" => $packingList->id
+        "packing_id" => $packingList->id,
+        "transit_in_at" => now()
       ]);
 
       DB::commit();

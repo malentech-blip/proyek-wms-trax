@@ -23,7 +23,7 @@ class PackingList extends Model
 
     public function deliveryOrders()
     {
-        return $this->hasMany(DeliveryOrder::class);
+        return $this->hasMany(DeliveryOrder::class, "packing_id");
     }
     protected static function boot()
   {
