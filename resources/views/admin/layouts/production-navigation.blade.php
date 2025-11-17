@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 <div class="flex flex-col h-full text-gray-800 bg-white relative">
     <div class="h-[64px] border-b flex items-center flex-shrink-0" :class="sidebarOpen ? 'px-4' : 'justify-center'">
         <a href="{{ route('admin.production.dashboard') }}" class="flex items-center space-x-3">
