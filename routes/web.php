@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\Inbound\PurchaseOrderController;
 use App\Http\Controllers\Admin\Inbound\QualityCheckController;
 use App\Http\Controllers\Admin\Inbound\PutawayController;
 use App\Http\Controllers\Admin\Inbound\LabelPrintController;
+use App\Http\Controllers\Admin\Inbound\RejectWarehouseController;
 
 
 /*
@@ -124,6 +125,7 @@ Route::middleware('auth')->group(function () {
                 Route::get('/goods-receipt/{goodsReceipt}/qc', [QualityCheckController::class, 'show'])->name('quality-check.show');
                 Route::get('/goods-receipt/{goodsReceipt}/putaway', [PutawayController::class, 'show'])->name('putaway.show');
                 Route::get('/goods-receipt/{goodsReceipt}/print-labels', [LabelPrintController::class, 'print'])->name('putaway.print-labels');
+                Route::get('/reject-warehouse', [RejectWarehouseController::class, 'index'])->name('reject-warehouse.index');
             });
             
             // Rute untuk admin lain (Inventory, Production, Outbound) akan ditambahkan di sini

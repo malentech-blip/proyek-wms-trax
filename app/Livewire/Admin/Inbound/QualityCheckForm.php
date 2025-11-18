@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Inbound;
 
 use App\Models\Admin\Inbound\GoodsReceipt;
 use App\Models\Admin\Inbound\QualityCheck;
+use App\Models\Admin\Inbound\RejectInbound;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -61,32 +62,47 @@ class QualityCheckForm extends Component
         }
     }
 
-    public function save()
-    {
-        $this->validate([
-            'items.*.passed_qty' => 'required|integer|min:0',
-            'items.*.rejected_qty' => 'required|integer|min:0',
-        ]);
+   public function save()
+{
+    $this->validate([
+        'items.*.passed_qty' => 'required|integer|min:0',
+        'items.*.rejected_qty' => 'required|integer|min:0',
+        'items.*.notes' => 'nullable|string|max:255',
+    ]);
 
-        DB::beginTransaction();
-        try {
-            foreach ($this->items as $itemId => $itemData) {
-                // ... (Logika penyimpanan ke tabel quality_checks)
+    DB::beginTransaction();
+    try {
+        foreach ($this->items as $itemId => $itemData) {
+            // HAPUS LOGIKA PENYIMPANAN KE `quality_checks` YANG LAMA (JIKA ADA)
+
+            // LOGIKA BARU: Jika ada barang yang ditolak, catat di tabel rejects_inbound
+            if ($itemData['rejected_qty'] > 0) {
+                RejectInbound::create([
+                    'goods_receipt_item_id' => $itemId,
+                    'qc_by_id' => Auth::id(),
+                    'rejected_qty' => $itemData['rejected_qty'],
+                    'reason' => $itemData['notes'],
+                    'action' => 'pending', // Status awal untuk tindakan selanjutnya
+                ]);
             }
 
-            // Update status header penerimaan
-            $this->goodsReceipt->update(['status' => 'qc_completed']);
-            
-            DB::commit();
-
-            session()->flash('success', 'Quality Check berhasil disimpan. Lanjutkan ke proses Putaway.');
-            return redirect()->route('admin.inbound.putaway.show', $this->goodsReceipt);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            // (Opsional) Update kuantitas item yang diterima jika perlu
+            // GoodsReceiptItem::find($itemId)->update(['passed_qty' => $itemData['passed_qty']]);
         }
+
+        // Update status header penerimaan
+        $this->goodsReceipt->update(['status' => 'qc_completed']);
+
+        DB::commit();
+
+        session()->flash('success', 'Quality Check berhasil disimpan. Lanjutkan ke proses Putaway.');
+        return redirect()->route('admin.inbound.putaway.show', $this->goodsReceipt);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
+}
 
     public function render()
     {
