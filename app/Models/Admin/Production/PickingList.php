@@ -15,7 +15,7 @@ class PickingList extends Model
   protected $guarded = [];
   public function materialRequest()
   {
-    return $this->belongsTo(MaterialRequest::class);
+    return $this->belongsTo(MaterialRequest::class, "mr_id");
   }
 
   public function item()

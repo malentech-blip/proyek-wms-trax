@@ -155,7 +155,7 @@
                                     {{-- INPUT FINISHED GOODS QTY --}}
                                     <div>
                                         <label for="finished_qty"
-                                            class="block text-sm font-medium text-gray-700">Finished Goods Qty</label>
+                                            class="block text-sm font-medium text-gray-700">Finished Goods Qty <span class="text-red-500">*</span></label>
                                         <input type="number" name="finished_qty" id="finished_qty" required
                                             min="0" value="0"
                                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
@@ -163,10 +163,41 @@
                                     {{-- INPUT REJECTS GOODS QTY --}}
                                     <div>
                                         <label for="rejects_qty" class="block text-sm font-medium text-gray-700">Rejects
-                                            Goods Qty</label>
+                                            Goods Qty <span class="text-red-500">*</span></label>
                                         <input type="number" name="rejects_qty" id="rejects_qty" required
                                             min="0" value="0"
                                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-red-500 focus:border-red-500">
+                                    </div>
+                                    
+                                    {{-- DIVIDER --}}
+                                    <div class="border-t pt-4 mt-4">
+                                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Biaya Produksi</h4>
+                                    </div>
+                                    
+                                    {{-- INPUT LABOR COST --}}
+                                    <div>
+                                        <label for="labor_cost" class="block text-sm font-medium text-gray-700">
+                                            Biaya Tenaga Kerja (Labor Cost)
+                                            <span class="text-gray-500 text-xs">(Rp)</span>
+                                        </label>
+                                        <input type="number" name="labor_cost" id="labor_cost"
+                                            min="0" step="0.01" value="0"
+                                            placeholder="0"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+                                        <p class="mt-1 text-xs text-gray-500">Biaya upah pekerja produksi</p>
+                                    </div>
+                                    
+                                    {{-- INPUT OVERHEAD COST --}}
+                                    <div>
+                                        <label for="overhead_cost" class="block text-sm font-medium text-gray-700">
+                                            Biaya Overhead (Overhead Cost)
+                                            <span class="text-gray-500 text-xs">(Rp)</span>
+                                        </label>
+                                        <input type="number" name="overhead_cost" id="overhead_cost"
+                                            min="0" step="0.01" value="0"
+                                            placeholder="0"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+                                        <p class="mt-1 text-xs text-gray-500">Biaya listrik, depresiasi mesin, dll</p>
                                     </div>
                                 </div>
                             </div>
@@ -323,13 +354,30 @@
                 const form = event.target;
                 const finishedQty = document.getElementById('finished_qty').value;
                 const rejectsQty = document.getElementById('rejects_qty').value;
+                const laborCost = document.getElementById('labor_cost').value || 0;
+                const overheadCost = document.getElementById('overhead_cost').value || 0;
+
+                // Format currency untuk display
+                const formatCurrency = (value) => {
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0
+                    }).format(value);
+                };
 
                 // --- 1. SWEETALERT KONFIRMASI DIMULAI DI SINI ---
                 const confirmation = await Swal.fire({
                     title: 'Konfirmasi Penyelesaian?',
-                    html: `Anda akan menyelesaikan WIP ini dengan: <br>
+                    html: `Anda akan menyelesaikan WIP ini dengan: <br><br>
                            <strong class="text-green-600">${finishedQty}</strong> Finished Goods<br>
-                           <strong class="text-red-600">${rejectsQty}</strong> Rejects Goods.`,
+                           <strong class="text-red-600">${rejectsQty}</strong> Rejects Goods<br><br>
+                           <div class="text-left" style="margin: 10px 20px;">
+                               <strong>Biaya Produksi:</strong><br>
+                               • Labor Cost: ${formatCurrency(laborCost)}<br>
+                               • Overhead Cost: ${formatCurrency(overheadCost)}<br>
+                               <strong>Total: ${formatCurrency(parseFloat(laborCost) + parseFloat(overheadCost))}</strong>
+                           </div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',

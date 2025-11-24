@@ -19,24 +19,43 @@ class MaterialRequestController extends Controller
 {
   public function index(Request $request, AccurateService $accurate)
   {
-    $salesOrders = SalesOrder::where("status", 'Pending')->get();
-    $soNumber = $request->query('so_id');
-    $selectedSalesOrderDetail = null;
-    // $workOrders = $accurate->getWorkOrders($request);
+    $workOrders = $accurate->getWorkOrders($request);
+    $materialRequests = MaterialRequest::all();
+    $filteredWorkOrders = $workOrders->filter(function ($wo) use ($materialRequests) {
+      return !$materialRequests->contains('wo_no', $wo['number']);
+    });
+    $items = [];
+    $selectedWorkOrderDetail = null;
 
-    $rawItems = Item::where("item_type", "Raw Material")->get();
-    return view("admin.production.material-request.index", compact("salesOrders", "selectedSalesOrderDetail", "rawItems"));
+    if($request->has('wo_no') && $request->query('wo_no') != null){
+      $selectedWorkOrderDetail = $accurate->getWorkOrderDetailByNumber($request->query('wo_no'));
+      if(isset($selectedWorkOrderDetail['billOfMaterialId'])){
+        $bom = $accurate->getBillOfMaterialDetail($selectedWorkOrderDetail['billOfMaterialId']);
+        $items = $bom['detailMaterial'] ?? [];
+      }
+      dd($items);
+    }
+    return view("admin.production.material-request.index", [
+      "workOrders" => $filteredWorkOrders,
+      "items" => $items,
+      "fgQuantity" => $selectedWorkOrderDetail["quantity"] ?? 1
+    ]);
   }
 
   public function detail(int $mr_id, AccurateService $accurate)
   {
-    $mr = MaterialRequest::with(['salesOrder'])->where("id", $mr_id)->first();
+    $mr = MaterialRequest::with(['pickingList.item'])->where("id", $mr_id)->first();
     if (!$mr) {
       return redirect()->route("admin.production.material-request.index");
     }
-    $so = $accurate->getSalesOrderDetail($mr->so_id);
-    $wip = WipRecord::where("mr_id", $mr_id)->first() ?? null;
-    return view("admin.production.material-request.detail", compact("mr", "so", "wip"));
+
+    $wo = null;
+    if ($mr->wo_no) {
+      $wo = $accurate->getWorkOrderDetailByNumber($mr->wo_no);
+    }
+    
+    $wip = WipRecord::where("mr_id", $mr_id)->first() ?? null;    
+    return view("admin.production.material-request.detail", compact("mr", "wo", "wip"));
   }
 
   public function changeStatus(Request $request)
@@ -61,33 +80,7 @@ class MaterialRequestController extends Controller
     }
   }
 
-  public function addTempItem(Request $request)
-  {
-    $validated = $request->validate([
-      'so_id' => 'required|string',
-      'item_id' => 'required|integer',
-      'quantity' => 'required|integer|min:1',
-      'picked_by' => 'required|string',
-    ]);
 
-    $item = Item::where("id", $validated['item_id'])->first();
-    $inventory = Inventory::where("item_id", $validated['item_id'])->first();
-    $location = Location::where("id", $inventory->location_id)->first();
-
-    $mockItemData = [
-      'so_id' => $validated['so_id'],
-      'item_id' => $validated['item_id'],
-      'quantity' => $validated['quantity'],
-      'picked_by' => $validated['picked_by'],
-      'item_name' => $item->item_name,
-      'quantity_ready' => $inventory->quantity,
-      'location' => $location->name,
-    ];
-    return response()->json([
-      'success' => true,
-      'item' => $mockItemData
-    ]);
-  }
 
   public function listMR(Request $request, AccurateService $accurate)
   {
@@ -109,42 +102,72 @@ class MaterialRequestController extends Controller
     return view("admin.production.material-request.list-material-request", compact("materialRequests"));
   }
 
-  public function storeMR(Request $request)
+  public function storeMR(Request $request, AccurateService $accurate)
   {
-    // Karena kita mengirim JSON, gunakan $request->validate() pada array yang diterima
     $data = $request->validate([
-      "so_id" => ["required"],
+      "wo_no" => ["required"],
       "requested_by" => ["required", "string"],
       "request_date" => ["required", "date"],
-      "items" => ["required", "array", "min:1"],
-      "items.*.item_id" => ["required", "integer"],
-      "items.*.quantity" => ["required", "integer"],
-      "items.*.picked_by" => ["required", "string"],
+      "picked_by" => ["required", "string"],
     ]);
 
-    // Ambil data form utama
-    $soId = $data['so_id'];
+    $woNo = $data['wo_no'];
     $requestedBy = $data['requested_by'];
     $requestDate = $data['request_date'];
-    $items = $data['items'];
+    $pickedBy = $data['picked_by'];
 
     DB::beginTransaction();
 
     try {
-      // 1. Buat Header Material Request (MR)
+      // 1. Ambil detail Work Order dari Accurate berdasarkan number
+      $woDetail = $accurate->getWorkOrderDetailByNumber($woNo);
+      
+      if (!isset($woDetail['billOfMaterialId'])) {
+        return response()->json([
+          "success" => false,
+          "message" => "Work Order tidak memiliki Bill of Material."
+        ], 400);
+      }
+
+      // 2. Ambil BOM detail untuk mendapatkan items
+      $bom = $accurate->getBillOfMaterialDetail($woDetail['billOfMaterialId']);
+      $bomItems = $bom['detailMaterial'] ?? [];
+
+      if (empty($bomItems)) {
+        return response()->json([
+          "success" => false,
+          "message" => "Bill of Material tidak memiliki item."
+        ], 400);
+      }
       $mr = MaterialRequest::create([
-        "so_id" => $soId,
+        "wo_no" => $data["wo_no"], 
         "requested_by" => $requestedBy,
         "request_date" => $requestDate,
         "status" => "Requested"
       ]);
 
-      foreach ($items as $item) {
+      // 4. Buat Picking List untuk setiap item dari BOM
+      foreach ($bomItems as $bomItem) {
+        $itemNo = $bomItem['item']['no'] ?? null;
+        
+        if (!$itemNo) {
+          Log::warning("Item No tidak ditemukan pada BOM item", ['bom_item' => $bomItem]);
+          continue;
+        }
+
+        // 5. Cari item_id berdasarkan item_code (no) di tabel items
+        $item = Item::where('item_code', $itemNo)->first();
+        
+        if (!$item) {
+          Log::warning("Item dengan code {$itemNo} tidak ditemukan di database");
+          continue;
+        }
+
         PickingList::create([
           "mr_id" => $mr->id,
-          "item_id" => $item["item_id"],
-          "quantity" => $item["quantity"],
-          "picked_by" => $item["picked_by"],
+          "item_id" => $item->id,
+          "quantity" => ($bomItem['quantity'] * $woDetail["quantity"]) ?? 0,
+          "picked_by" => $pickedBy,
         ]);
       }
 

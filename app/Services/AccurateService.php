@@ -286,7 +286,7 @@ class AccurateService
   {
     try {
       $params = [
-        'fields' => 'id,number,transDate,warehouse,totalQuantity,status',
+        'fields' => 'id,number,transDate,warehouse,totalQuantity,status,detailItem',
         'sort' => 'transDate desc',
         'sp.page' => $request->get('page', 1),
         'sp.pageSize' => 20,
@@ -321,10 +321,12 @@ class AccurateService
   {
     try {
       $response = $this->dataClient()->get('/api/finished-good-slip/detail.do', ['id' => $id]);
+      
       if ($response->failed()) {
         Log::error('Gagal ambil detail Finished Good Slip', ['id' => $id, 'response' => $response->json()]);
         return null;
       }
+      
       return $response->json()['d'] ?? null;
     } catch (\Exception $e) {
       Log::error('Exception ambil detail Finished Good Slip', ['id' => $id, 'message' => $e->getMessage()]);
@@ -332,93 +334,37 @@ class AccurateService
     }
   }
 
-
   public function saveFinishedGoodSlip(array $data)
   {
     try {
-      $response = $this->dataClient()->asForm()->post('/api/finished-good-slip/save.do', $data);
+      $response = $this->dataClient()->post('/api/finished-good-slip/save.do', $data);
+      $result = $response->json();
 
       if ($response->failed()) {
-        Log::error('Gagal menyimpan Finished Good Slip', [
-          'data' => $data,
-          'response' => $response->json()
-        ]);
-        throw new Exception('Gagal menyimpan Finished Good Slip.');
+        throw new Exception('HTTP Error ' . $response->status());
       }
 
-      return $response->json()['d'] ?? null;
+      // Cek error dari Accurate
+      if (is_array($result) && !isset($result['d']) && !isset($result['s'])) {
+        throw new Exception(is_array($result) ? implode(', ', $result) : json_encode($result));
+      }
+
+      if (isset($result['s']) && $result['s'] === false) {
+        $errorMsg = $result['m'] ?? (isset($result['d']) 
+          ? (is_array($result['d']) ? implode(', ', $result['d']) : $result['d'])
+          : 'Unknown error');
+        throw new Exception($errorMsg);
+      }
+
+      return $result['d'] ?? $result;
     } catch (\Exception $e) {
-      Log::error('Exception saat menyimpan Finished Good Slip', [
-        'message' => $e->getMessage()
-      ]);
-      throw $e;
-    }
-  }
-
-  public function deleteFinishedGoodSlip(int $id)
-  {
-    try {
-      $response = $this->dataClient()->post('/api/finished-good-slip/delete.do', ['id' => $id]);
-
-      if ($response->failed()) {
-        Log::error('Gagal menghapus Finished Good Slip', [
-          'id' => $id,
-          'response' => $response->json()
-        ]);
-        throw new Exception('Gagal menghapus Finished Good Slip.');
-      }
-
-      return $response->json()['d'] ?? true;
-    } catch (\Exception $e) {
-      Log::error('Exception saat hapus Finished Good Slip', [
-        'id' => $id,
-        'message' => $e->getMessage()
-      ]);
-      throw $e;
-    }
-  }
-
-  public function findFinishedGoodSlipByItemNo(string $itemNo)
-  {
-    try {
-      $params = [
-        'fields' => 'id,number,transDate,warehouse,status,detailItem',
-        'filter.detailItem.itemNo.op' => 'EQUAL',
-        'filter.detailItem.itemNo.val' => $itemNo,
-        'sort' => 'transDate desc',
-        'sp.pageSize' => 1 // ambil hanya 1 yang terbaru
-      ];
-
-      $response = $this->dataClient()->get('/api/finished-good-slip/list.do', $params);
-
-      if ($response->failed()) {
-        Log::error('Gagal mencari Finished Good Slip berdasarkan itemNo', [
-          'itemNo' => $itemNo,
-          'response' => $response->json()
-        ]);
-        return null;
-      }
-
-      $data = $response->json()['d'] ?? [];
-      if (empty($data)) {
-        return null;
-      }
-
-      // Ambil yang pertama (hasil paling baru)
-      return $data[0];
-    } catch (\Exception $e) {
-      Log::error('Exception saat mencari Finished Good Slip by itemNo', [
-        'itemNo' => $itemNo,
-        'message' => $e->getMessage()
-      ]);
-      return null;
+      throw new Exception('Accurate Error: ' . $e->getMessage());
     }
   }
 
 
 
-
-  // WORK ORDER ACCURATE API
+// WORK ORDER ACCURATE API
   public function getWorkOrders(Request $request)
   {
     try {
@@ -484,63 +430,58 @@ class AccurateService
     }
   }
 
-  /**
-   * Menyimpan (membuat baru atau update) Work Order (Perintah Kerja).
-   * Data $data harus dalam format form-data yang sesuai dengan Accurate API.
-   *
-   * Contoh $data:
-   * [
-   * 'transDate' => '31/10/2024',
-   * 'itemNo' => 'SKU-BARANG-JADI',
-   * 'quantity' => 10,
-   * 'warehouseId' => 1, // ID Gudang
-   * 'bomId' => 5 // ID Bill of Material
-   * ]
-   */
-  public function saveWorkOrder(array $data)
+  public function getWorkOrderDetailByNumber(string $number)
   {
     try {
-      // Endpoint save menggunakan method POST dan asForm
-      $response = $this->dataClient()->asForm()->post('/api/work-order/save.do', $data);
+      // Cari work order berdasarkan nomor
+      $params = [
+        'fields' => 'id,number,transDate,item,quantity,warehouse,status,bom',
+        'filter.number.op' => 'EQUAL',
+        'filter.number.val' => $number,
+      ];
+
+      $response = $this->dataClient()->get('/api/work-order/list.do', $params);
 
       if ($response->failed()) {
-        Log::error('Gagal menyimpan Work Order ke Accurate', [
-          'data' => $data,
-          'response' => $response->json()
+        Log::error('Gagal mencari Work Order berdasarkan nomor', [
+          'wo_number' => $number,
+          'response' => $response->json(),
         ]);
-        throw new Exception('Gagal menyimpan Work Order: ' . ($response->json()['s']['m'] ?? 'Error tidak diketahui'));
+        return null;
       }
 
-      return $response->json()['d'] ?? null;
-    } catch (\Exception $e) {
-      Log::error('Exception saat menyimpan Work Order', [
+      $list = collect($response->json()['d'] ?? []);
+
+      if ($list->isEmpty()) {
+        Log::warning('Work Order tidak ditemukan', ['wo_number' => $number]);
+        return null;
+      }
+
+      // Ambil yang exact match
+      $exactMatch = $list->firstWhere('number', $number);
+      
+      if (!$exactMatch) {
+        Log::warning('Work Order number tidak exact match', [
+          'requested' => $number,
+          'found' => $list->pluck('number')->toArray()
+        ]);
+        return null;
+      }
+
+      $woId = $exactMatch['id'] ?? null;
+      if (!$woId) {
+        Log::warning('Work Order tidak punya ID', ['wo_number' => $number]);
+        return null;
+      }
+
+      // Ambil detail berdasarkan ID
+      return $this->getWorkOrderDetail((int) $woId);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil Work Order', [
+        'wo_number' => $number,
         'message' => $e->getMessage(),
-        'data' => $data
       ]);
-      throw $e;
-    }
-  }
-
-  public function deleteWorkOrder(int $id)
-  {
-    try {
-      $response = $this->dataClient()->post('/api/work-order/delete.do', ['id' => $id]);
-
-      if ($response->failed()) {
-        Log::error('Gagal menghapus Work Order dari Accurate', [
-          'id' => $id,
-          'response' => $response->json()
-        ]);
-        throw new Exception('Gagal menghapus Work Order.');
-      }
-
-      return $response->json()['s'] ?? true; // 's' biasanya true jika sukses
-    } catch (\Exception $e) {
-      Log::error('Exception saat menghapus Work Order', [
-        'id' => $id,
-        'message' => $e->getMessage()
-      ]);
-      throw $e;
+      return null;
     }
   }
 
@@ -567,6 +508,78 @@ class AccurateService
         'message' => $e->getMessage(),
       ]);
       return null;
+    }
+  }
+
+
+  // MATERIAL SLIP ACCURATE API
+  /**
+   * Mengambil form Material Slip berdasarkan type
+   * 
+   * @param string $type - Type material slip (e.g., 'FINISHED_GOOD')
+   * @return array|null
+   */
+  public function getMaterialSlipForm(string $type)
+  {
+    try {
+      $response = $this->dataClient()->get('/api/material-slip/form.do', ['type' => $type]);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil form Material Slip dari Accurate', [
+          'type' => $type,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      // Log full response untuk debugging
+      Log::info('Material Slip Form Response', [
+        'type' => $type,
+        'full_response' => $response->json()
+      ]);
+
+      return $response->json()['d'] ?? $response->json();
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil form Material Slip', [
+        'type' => $type,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
+  /**
+   * Menyimpan Material Slip ke Accurate
+   * 
+   * @param array $data
+   * @return array
+   * @throws Exception
+   */
+  public function saveMaterialSlip(array $data)
+  {
+    try {
+      $response = $this->dataClient()->post('/api/material-slip/save.do', $data);
+      $result = $response->json();
+
+      if ($response->failed()) {
+        throw new Exception('HTTP Error ' . $response->status());
+      }
+
+      // Cek error dari Accurate
+      if (is_array($result) && !isset($result['d']) && !isset($result['s'])) {
+        throw new Exception(is_array($result) ? implode(', ', $result) : json_encode($result));
+      }
+
+      if (isset($result['s']) && $result['s'] === false) {
+        $errorMsg = $result['m'] ?? (isset($result['d']) 
+          ? (is_array($result['d']) ? implode(', ', $result['d']) : $result['d'])
+          : 'Unknown error');
+        throw new Exception($errorMsg);
+      }
+
+      return $result;
+    } catch (\Exception $e) {
+      throw new Exception('Accurate Error: ' . $e->getMessage());
     }
   }
 
@@ -688,6 +701,160 @@ class AccurateService
         'message' => $e->getMessage()
       ]);
       throw $e;
+    }
+  }
+
+
+  // RAW MATERIAL (ITEM) ACCURATE API
+  /**
+   * Mengambil daftar item/raw material dari Accurate
+   * 
+   * @param Request $request
+   * @return Collection
+   */
+  public function getRawMaterials(Request $request)
+  {
+    try {
+      $params = [
+        'fields' => 'id,no,name,itemType,unitPrice,stock,unit',
+        'sort' => 'name asc',
+        'sp.page' => $request->get('page', 1),
+        'sp.pageSize' => $request->get('pageSize', 1000),
+      ];
+
+      // Filter berdasarkan itemType (INVENTORY untuk raw material/persediaan)
+      if ($request->filled('item_type')) {
+        $params['filter.itemType.op'] = 'EQUAL';
+        $params['filter.itemType.val'] = $request->item_type;
+      } else {
+        // Default filter untuk INVENTORY (persediaan/raw material)
+        $params['filter.itemType.op'] = 'EQUAL';
+        $params['filter.itemType.val'] = 'INVENTORY';
+      }
+
+      // Filter pencarian (opsional)
+      if ($request->filled('search')) {
+        $params['filter.keywords.op'] = 'CONTAIN';
+        $params['filter.keywords.val'] = $request->search;
+      }
+
+      // Request ke Accurate
+      $response = $this->dataClient()->get('/api/item/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil daftar Raw Material dari Accurate', [
+          'response' => $response->json()
+        ]);
+        return collect([]);
+      }
+
+      return collect($response->json()['d'] ?? []);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil daftar Raw Material', [
+        'message' => $e->getMessage()
+      ]);
+      return collect([]);
+    }
+  }
+
+  /**
+   * Mengambil detail item/raw material berdasarkan ID
+   * 
+   * @param int $id
+   * @return array|null
+   */
+  public function getRawMaterialDetail(int $id)
+  {
+    try {
+      $response = $this->dataClient()->get('/api/item/detail.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Raw Material dari Accurate', [
+          'id' => $id,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Raw Material', [
+        'id' => $id,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
+
+  // BILL OF MATERIAL (BOM) ACCURATE API
+  /**
+   * Mengambil daftar Bill of Material dari Accurate
+   * 
+   * @param Request $request
+   * @return Collection
+   */
+  public function getBillOfMaterials(Request $request)
+  {
+    try {
+      $params = [
+        'fields' => 'id,no,name,item,quantity,unit,status',
+        'sort' => 'name asc',
+        'sp.page' => $request->get('page', 1),
+        'sp.pageSize' => $request->get('pageSize', 20),
+      ];
+
+      // Filter pencarian (opsional)
+      if ($request->filled('search')) {
+        $params['filter.keywords.op'] = 'CONTAIN';
+        $params['filter.keywords.val'] = $request->search;
+      }
+
+      // Request ke Accurate
+      $response = $this->dataClient()->get('/api/bom/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil daftar Bill of Material dari Accurate', [
+          'response' => $response->json()
+        ]);
+        return collect([]);
+      }
+
+      return collect($response->json()['d'] ?? []);
+    } catch (\Throwable $e) {
+      Log::error('Exception saat mengambil daftar Bill of Material', [
+        'message' => $e->getMessage()
+      ]);
+      return collect([]);
+    }
+  }
+
+  /**
+   * Mengambil detail Bill of Material berdasarkan ID
+   * 
+   * @param int $id
+   * @return array|null
+   */
+  public function getBillOfMaterialDetail(int $id)
+  {
+    try {
+      $response = $this->dataClient()->get('/api/bill-of-material/detail.do', ['id' => $id]);
+
+      if ($response->failed()) {
+        Log::error('Gagal mengambil detail Bill of Material dari Accurate', [
+          'id' => $id,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      return $response->json()['d'] ?? null;
+    } catch (\Exception $e) {
+      Log::error('Exception saat mengambil detail Bill of Material', [
+        'id' => $id,
+        'message' => $e->getMessage(),
+      ]);
+      return null;
     }
   }
 }
