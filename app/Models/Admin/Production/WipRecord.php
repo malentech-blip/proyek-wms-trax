@@ -23,6 +23,11 @@ class WipRecord extends Model
         return $this->hasMany(FinishedGood::class, 'wip_id');
     }
 
+    public function manufactureCost()
+    {
+        return $this->hasOne(ManufactureCost::class, 'wip_id');
+    }
+
     protected static function boot()
   {
     parent::boot();

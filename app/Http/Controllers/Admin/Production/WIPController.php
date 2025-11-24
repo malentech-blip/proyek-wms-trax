@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Admin\Production;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin\Production\FinishedGood;
 use App\Models\Admin\Production\MaterialRequest;
 use App\Models\Admin\Production\WipRecord;
+use App\Models\Admin\Production\ManufactureCost;
+use App\Models\SuperAdmin\MasterData\Item;
+use App\Services\AccurateService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,11 +125,13 @@ class WIPController extends Controller
     return back()->with('success', 'WIP resumed.');
   }
 
-  public function finish(Request $request, $id)
+  public function finish(Request $request, $id, AccurateService $accurate)
   {
     $request->validate([
       'finished_qty' => 'required|integer|min:0',
       'rejects_qty' => 'required|integer|min:0',
+      'labor_cost' => 'nullable|numeric|min:0',
+      'overhead_cost' => 'nullable|numeric|min:0',
     ]);
 
     try {
@@ -138,22 +144,79 @@ class WIPController extends Controller
           'message' => 'Record WIP sudah diselesaikan sebelumnya.'
         ], 400);
       }
+      $materialRequest = $wip->material_request;
+      $wo_no = $materialRequest->wo_no;
+      $selectedWorkOrderDetail = $accurate->getWorkOrderDetailByNumber($wo_no);
+      $bom = $accurate->getBillOfMaterialDetail($selectedWorkOrderDetail['billOfMaterialId']);
+      $items = $bom['detailMaterial'] ?? [];
+      $fgQuantity = $selectedWorkOrderDetail["quantity"];
+      $finishedQty = $request->input('finished_qty');
+
+
+      $totalMaterialCost = 0;
+      foreach ($items as $material) {
+        $materialCost = ($material['totalStandardCost'] ?? 0) * $fgQuantity;
+        $totalMaterialCost += $materialCost;
+      }
+      $laborCost = $request->input('labor_cost', 0);
+      $overheadCost = $request->input('overhead_cost', 0);
+      $totalCost = $totalMaterialCost + $laborCost + $overheadCost;
+      $hppStandard = $fgQuantity > 0 ? $totalCost / $fgQuantity : 0;
+      
+      $hppActual = $finishedQty > 0 ? $totalCost / $finishedQty : 0;
+
+      $varianceNominal = $hppActual - $hppStandard;
+      $variancePercentage = $hppStandard > 0 ? (($varianceNominal / $hppStandard) * 100) : 0;
+      
+      $varianceStatus = 'On Budget';
+      if ($variancePercentage > 5) {
+        $varianceStatus = 'Over Budget';
+      } elseif ($variancePercentage < -5) {
+        $varianceStatus = 'Under Budget';
+      }
 
       $elapsed = $wip->elapsed_seconds;
       if ($wip->status === 'Running' && $wip->started_at) {
         $elapsed += Carbon::parse($wip->started_at)->diffInSeconds(now());
       }
 
+      // Buat Finished Good jika qty > 0
+      if($finishedQty > 0) {
+        $itemNo = $selectedWorkOrderDetail['item']['no'] ?? null;
+        $item = Item::where('item_code', $itemNo)->first();
+        FinishedGood::create([
+          'item_id' => $item ? $item->id : null,
+          'wip_id' => $wip->id,
+          'quantity' => $finishedQty,
+          'qc_status' => 'OK',
+          'status' => 'Not Stored'
+        ]);
+      }
+
+      // Update WIP status
       $wip->update([
         'status' => 'Completed',
         'finished_at' => now(),
         'elapsed_seconds' => $elapsed,
-        'produced_qty' => $request->input('finished_qty'),
+        'produced_qty' => $finishedQty,
         'rejected_qty' => $request->input('rejects_qty'),
       ]);
+
+      // Simpan Manufacture Cost
+      ManufactureCost::create([
+        'wip_id' => $wip->id,
+        'raw_material_cost' => $totalMaterialCost,
+        'labor_cost' => $laborCost,
+        'overhead_cost' => $overheadCost,
+        'total_cost' => $totalCost,
+        'hpp_actual_per_unit' => $hppActual,
+        'variance_nominal' => (string) $varianceNominal,
+        'variance_percentage' => $variancePercentage,
+        'variance_status' => $varianceStatus,
+      ]);
+
       DB::commit();
 
-      // 4. Berikan Response JSON Sukses
       return response()->json([
         'status' => 'success',
         'message' => 'Produksi WIP berhasil diselesaikan.',
@@ -170,6 +233,7 @@ class WIPController extends Controller
       return response()->json([
         'status' => 'error',
         'message' => 'Terjadi kesalahan server saat menyelesaikan WIP.',
+        'error_details' => $e->getMessage()
       ], 500);
     }
   }

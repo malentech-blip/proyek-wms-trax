@@ -7,7 +7,9 @@ use App\Models\Admin\Inbound\ItemLabel;
 use App\Models\Admin\Production\MaterialRequest;
 use App\Models\Admin\Production\PickingList;
 use App\Models\Admin\Production\WipRecord;
+use App\Services\AccurateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PickingListsController extends Controller
 {
@@ -54,7 +56,7 @@ class PickingListsController extends Controller
   public function detail(int $mr_id)
   {
     $mr = MaterialRequest::where("id", $mr_id)->first();
-    if(!$mr) {
+    if (!$mr) {
       return redirect()->route("admin.production.material-request.index");
     }
     $query = PickingList::query()
@@ -125,11 +127,15 @@ class PickingListsController extends Controller
     }
   }
 
-  public function confirmPick(Request $request)
-  {
-    try {
-      $picking = PickingList::find($request->picking_id);
 
+
+
+
+  public function confirmPick(Request $request, AccurateService $accurate)
+  {
+    DB::beginTransaction();
+    try {
+      $picking = PickingList::with(['materialRequest', 'item'])->find($request->picking_id);
       if (!$picking) {
         return response()->json([
           'success' => false,
@@ -137,15 +143,56 @@ class PickingListsController extends Controller
         ], 404);
       }
 
-      $picking->update([
-        'date_picked' => now(),
-      ]);
 
-      return response()->json([
-        'success' => true,
-        'message' => 'Item berhasil dikonfirmasi sebagai picked.',
-      ]);
+      try {
+        $woDetail = $accurate->getWorkOrderDetailByNumber($picking->materialRequest->wo_no);
+        if (!$woDetail) {
+          throw new \Exception("Work Order {$picking->materialRequest->wo_no} tidak ditemukan di Accurate");
+        }
+        $branchId = $woDetail['branch']['id'];
+        $materialSlipData = [
+          "workOrderNumber" => $picking->materialRequest->wo_no,
+          "transDate" => now()->format('d/m/Y'),
+          "memo" => "Pemakaian bahan",
+          "materialSlipType" => "ITEM_PICK",
+          "branchId" => $branchId,
+          "detailItem" => [
+            [
+              "itemNo" => $picking->item->item_code,
+              "quantity" => (float) $picking->quantity,
+              "unit" => $picking->item->uom ?? "PCS",
+              "detailSerialNumber" => [
+                "transDate" => now()->format('d/m/Y'),
+                "workOrderNumber" => $picking->materialRequest->wo_no,
+              ]
+            ]
+          ]
+        ];
+
+
+        $result = $accurate->saveMaterialSlip($materialSlipData);
+        $picking->update([
+          'date_picked' => now(),
+        ]);
+        DB::commit();
+
+        return response()->json([
+          'success' => true,
+          'message' => 'Item berhasil dikonfirmasi dan Material Slip dikirim ke Accurate.',
+          'accurate_result' => $result
+        ]);
+      } catch (\Exception $accurateError) {
+        // Jika Accurate gagal, tetap commit perubahan lokal tapi beri warning
+        DB::commit();
+
+        return response()->json([
+          'success' => true,
+          'message' => 'Item berhasil dikonfirmasi, tetapi gagal mengirim ke Accurate: ' . $accurateError->getMessage(),
+          'warning' => true,
+        ]);
+      }
     } catch (\Throwable $e) {
+      DB::rollBack();
       return response()->json([
         'success' => false,
         'message' => 'Terjadi kesalahan: ' . $e->getMessage(),

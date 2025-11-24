@@ -13,8 +13,16 @@
             <h3 class="text-lg font-semibold text-gray-800">Detail Material Request</h3>
             <div class="flex flex-col gap-3 mt-2">
                 <div class="flex items-center gap-2">
-                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Sales Order:</p>
-                    <p class="font-medium">{{ $mr->salesOrder->so_number }}</p>
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Work Order:</p>
+                    <p class="font-medium">{{ $wo['number'] ?? '-' }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Goal Item:</p>
+                    <p class="font-medium">{{ $wo['item']['name'] ?? '-' }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Quantity:</p>
+                    <p class="font-medium">{{ $wo['quantity'] ?? 0 }} {{ $wo['item']['unit']['name'] ?? '' }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <p class="max-sm:w-[100px] w-[200px] text-sm text-gray-600">Requested By:</p>
@@ -41,31 +49,23 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-blue-50">
                     <tr>
-                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[140px]">MR. No</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[200px]">Item Request</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[150px]">Requested By</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[150px]">Request Date</th>
-                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[200px]">Status</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[50px]">No</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[150px]">Item Code</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[200px]">Item Name</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[100px]">Quantity</th>
+                        <th class="p-4 text-left font-semibold text-gray-600 min-w-[150px]">Picked By</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
-                    <tr>
-                        <td class="p-4 text-gray-700 font-medium">{{ $mr->mr_no }}</td>
-                        <td class="p-4 text-gray-500">
-                            @foreach ($mr->pickingList as $item)
-                                <p class="text-gray-700 text-sm mb-1">{{ $item->item->item_name }},
-                                    {{ $item->quantity }} qty</p>
-                            @endforeach
-                        </td>
-                        <td class="p-4 text-gray-500">{{ $mr->requested_by }}</td>
-                        <td class="p-4 text-gray-500">
-                            {{ \Carbon\Carbon::createFromFormat('Y-m-d', $mr['request_date'])->format('d/m/Y') }}
-                        </td>
-                        <td class="p-4 text-gray-500">
-                            <span
-                                class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full uppercase">{{ $mr->status }}</span>
-                        </td>
+                    @foreach ($mr->pickingList as $index => $pickingItem)
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-4 text-gray-700 font-medium">{{ $index + 1 }}</td>
+                        <td class="p-4 text-gray-700">{{ $pickingItem->item->item_code ?? '-' }}</td>
+                        <td class="p-4 text-gray-700">{{ $pickingItem->item->item_name ?? '-' }}</td>
+                        <td class="p-4 text-gray-700">{{ $pickingItem->quantity }} {{ $pickingItem->item->uom ?? '' }}</td>
+                        <td class="p-4 text-gray-700">{{ $pickingItem->picked_by ?? '-' }}</td>
                     </tr>
+                    @endforeach
                 </tbody>
             </table>
         </div>

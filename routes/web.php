@@ -305,10 +305,6 @@ Route::middleware('auth')->group(function () {
               MaterialRequestController::class,
               'detail',
             ])->name('material-request.detail');
-            Route::post('/material-request/add-temp-item', [
-              MaterialRequestController::class,
-              'addTempItem',
-            ])->name('material-request.add-tempt-item');
             Route::post('/material-request', [
               MaterialRequestController::class,
               'storeMR',
@@ -386,10 +382,6 @@ Route::middleware('auth')->group(function () {
               FinishedGoodsController::class,
               'detail',
             ])->name('finished-goods.detail');
-            Route::post('/finished-goods', [
-              FinishedGoodsController::class,
-              'storeFG',
-            ])->name('finished-goods.store');
             Route::post('/finished-goods/{id}/store-to-inventory', [
               FinishedGoodsController::class,
               'storingInv',
