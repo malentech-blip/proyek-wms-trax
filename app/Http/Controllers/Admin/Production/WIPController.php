@@ -7,6 +7,7 @@ use App\Models\Admin\Production\FinishedGood;
 use App\Models\Admin\Production\MaterialRequest;
 use App\Models\Admin\Production\WipRecord;
 use App\Models\Admin\Production\ManufactureCost;
+use App\Models\Admin\Production\RejectProduction;
 use App\Models\SuperAdmin\MasterData\Item;
 use App\Services\AccurateService;
 use Carbon\Carbon;
@@ -190,6 +191,15 @@ class WIPController extends Controller
           'quantity' => $finishedQty,
           'qc_status' => 'OK',
           'status' => 'Not Stored'
+        ]);
+      }
+
+      // Buat Reject Production jika ada rejects_qty
+      $rejectsQty = $request->input('rejects_qty');
+      if($rejectsQty > 0) {
+        RejectProduction::create([
+          'wip_id' => $wip->id,
+          'date' => now(),
         ]);
       }
 

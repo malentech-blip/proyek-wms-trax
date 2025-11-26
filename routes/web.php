@@ -402,6 +402,10 @@ Route::middleware('auth')->group(function () {
               RejectsProductionController::class,
               'store',
             ])->name('rejects-production.store');
+            Route::put('/rejects-production/{id}', [
+              RejectsProductionController::class,
+              'update',
+            ])->name('rejects-production.update');
           });
 
 

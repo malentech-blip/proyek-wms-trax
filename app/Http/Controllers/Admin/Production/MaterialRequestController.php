@@ -33,7 +33,6 @@ class MaterialRequestController extends Controller
         $bom = $accurate->getBillOfMaterialDetail($selectedWorkOrderDetail['billOfMaterialId']);
         $items = $bom['detailMaterial'] ?? [];
       }
-      dd($items);
     }
     return view("admin.production.material-request.index", [
       "workOrders" => $filteredWorkOrders,
