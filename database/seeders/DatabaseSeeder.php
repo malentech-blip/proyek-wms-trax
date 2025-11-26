@@ -17,13 +17,13 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
 
             // Second: Master Data (locations, items, suppliers, customers)
-            // LocationSeeder::class,
-            // RackSeeder::class,
-            // PalletSeeder::class,
-            // ItemsSeeder::class, // Initial hardcoded items
+            LocationSeeder::class,
+            RackSeeder::class,
+            PalletSeeder::class,
+            ItemsSeeder::class, // Initial hardcoded items
             // ItemSeeder::class,
-            // SupplierSeeder::class,
-            // CustomerSeeder::class,
+            SupplierSeeder::class,
+            CustomerSeeder::class,
 
             // Third: Custom Items and related data
             // CustomItemSeeder::class,
@@ -36,14 +36,14 @@ class DatabaseSeeder extends Seeder
             // QuotationItemSeeder::class,
 
             // Sixth: Goods Receipts and Items
-            // GoodsReceiptSeeder::class,
-            // GoodsReceiptItemSeeder::class,
+            GoodsReceiptSeeder::class,
+            GoodsReceiptItemSeeder::class,
 
             // Seventh: Item Labels (requires goods receipt items)
-            // ItemLabelsSeeder::class,
+            ItemLabelsSeeder::class,
 
             // Eighth: Inventory (requires items and locations)
-            // InventoriesSeeder::class,
+            InventoriesSeeder::class,
 
             // Ninth: Material Requests
             // MaterialRequestSeeder::class,

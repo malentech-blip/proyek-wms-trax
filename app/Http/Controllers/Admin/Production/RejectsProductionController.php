@@ -83,4 +83,48 @@ class RejectsProductionController extends Controller
       ], 500);
     }
   }
+
+  public function update(Request $request, int $id)
+  {
+    $validated_data = $request->validate([
+      "reason" => ["nullable", "string"],
+      "action" => ["nullable", "string", "in:rework,scrap"],
+      "handled_by" => ["nullable", "string", "max:100"],
+      "date" => ["nullable", "date"],
+    ]);
+
+    try {
+      DB::beginTransaction();
+      
+      $rejectProduction = RejectProduction::findOrFail($id);
+      
+      $rejectProduction->update([
+        'reason' => $validated_data['reason'] ?? $rejectProduction->reason,
+        'action' => $validated_data['action'] ?? $rejectProduction->action,
+        'handled_by' => $validated_data['handled_by'] ?? $rejectProduction->handled_by,
+        'date' => $validated_data['date'] ?? $rejectProduction->date,
+      ]);
+      
+      DB::commit();
+      
+      return response()->json([
+        'status' => 'success',
+        'message' => 'Data reject production berhasil diupdate.',
+        'data' => $rejectProduction,
+      ], 200);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+      DB::rollBack();
+      return response()->json([
+        'status' => 'error',
+        'message' => 'Data reject production tidak ditemukan.',
+      ], 404);
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return response()->json([
+        'status' => 'error',
+        'message' => 'Gagal mengupdate data reject production.',
+        'error' => $e->getMessage(),
+      ], 500);
+    }
+  }
 }
