@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DeliveryOrderController extends Controller
 {
@@ -49,9 +50,20 @@ class DeliveryOrderController extends Controller
     $packingListId = $validated['packing_id'];
     DB::beginTransaction();
     try {
+      Log::info('=== START: Membuat Delivery Order ===', [
+        'timestamp' => now()->toDateTimeString(),
+        'packing_id' => $packingListId,
+        'driver_name' => $validated['driver_name'],
+        'delivery_date' => $validated['delivery_date']
+      ]);
+
       $packingList = PackingList::with(['sales_order', 'items'])->findOrFail($packingListId);
 
       if ($packingList->status !== 'Packed') {
+        Log::warning('❌ Status Packing List tidak valid', [
+          'expected' => 'Packed',
+          'actual' => $packingList->status
+        ]);
         DB::rollBack();
         return response()->json([
           'message' => 'Gagal membuat Delivery Order. Status Packing List harus "Packed".',
@@ -60,20 +72,56 @@ class DeliveryOrderController extends Controller
       }
 
       $customerId = $packingList->sales_order->customer_id;
+      Log::info('Mengambil data customer dari Accurate', ['customer_id' => $customerId]);
+      
       $customer = $accurate->getCustomerDetail($customerId);
       $customerNo = $customer['customerNo'];
 
+      Log::info('Customer berhasil diambil', [
+        'customer_no' => $customerNo,
+        'customer_name' => $customer['name'] ?? 'N/A'
+      ]);
 
-      // $payload = [
-      //   "customerNo" => $customerNo,
-      //   "detailItem" => $packingList['items']->map(function ($item) {
-      //     return [
-      //       "itemNo"   => $item->finished_good->item->item_code,
-      //       "unitPrice" => 100,
-      //     ];
-      //   })->values()->toArray(),
-      // ];
-      // $accurate->saveDeliveryOrder($payload);
+      $soNumber = $packingList->sales_order->so_number;
+      Log::info('Mengambil data Sales Order dari Accurate', ['so_number' => $soNumber]);
+      
+      $salesOrder = $soNumber ? $accurate->getSalesOrderByNumber($soNumber) : null;
+      $branchId = $salesOrder['branchId'] ?? null;
+      $items = $salesOrder['detailItem'] ?? [];
+
+      Log::info('Sales Order berhasil diambil', [
+        'so_number' => $soNumber,
+        'branch_id' => $branchId,
+        'total_items' => count($items),
+        'items_data' => collect($items)->map(function ($item) {
+          return [
+            'item_no' => $item['item']['no'] ?? 'N/A',
+            'quantity' => $item['quantity'] ?? 0,
+            'unit_price' => $item['unitPrice'] ?? 0,
+          ];
+        })->toArray()
+      ]);
+
+
+      $payload = [
+        "customerNo" => $customerNo,
+        "salesOrderNo" => $packingList->sales_order->so_number,
+        "transDate" => Carbon::parse($request->delivery_date)->format('d/m/Y'),
+        "branchId" => $branchId,
+        "detailItem" => collect($items)->map(function ($item) {
+          return [
+            "itemNo"   => $item["item"]["no"],
+            "quantity" => $item["quantity"] ?? 0,
+            "unitPrice" => $item["item"]["unitPrice"] ?? 0,
+          ];
+        })->values()->toArray(),
+      ];
+
+      $accurateResult = $accurate->saveDeliveryOrder($payload);
+
+      Log::info('Delivery Order berhasil disimpan ke Accurate', [
+        'accurate_result' => $accurateResult
+      ]);
 
 
       $deliveryOrder = DeliveryOrder::create([
@@ -82,10 +130,20 @@ class DeliveryOrderController extends Controller
         'delivery_date' => $validated['delivery_date'],
         'status' => "In Delivery",
       ]);
+
+      Log::info('✅ BERHASIL: Delivery Order tersimpan ke database lokal', [
+        'do_id' => $deliveryOrder->id,
+        'do_number' => $deliveryOrder->delivered_no,
+        'status' => $deliveryOrder->status
+      ]);
+
       $packingList->update([
         'status' => 'Shipped',
       ]);
       DB::commit();
+
+      Log::info('=== END: Delivery Order berhasil dibuat ===');
+
       return response()->json([
         'message' => 'Delivery Order berhasil dibuat.',
         'do_number' => $deliveryOrder->delivered_no,
@@ -93,6 +151,16 @@ class DeliveryOrderController extends Controller
       ], 201);
     } catch (\Exception $e) {
       DB::rollBack();
+      
+      Log::error('❌ EXCEPTION: Gagal membuat Delivery Order', [
+        'timestamp' => now()->toDateTimeString(),
+        'error_message' => $e->getMessage(),
+        'error_file' => $e->getFile(),
+        'error_line' => $e->getLine(),
+        'error_trace' => $e->getTraceAsString(),
+        'packing_id' => $packingListId
+      ]);
+
       return response()->json([
         'message' => 'Terjadi kesalahan saat memproses Delivery Order. Transaksi dibatalkan.',
         'error_detail' => $e->getMessage()

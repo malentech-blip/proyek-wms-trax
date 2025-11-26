@@ -634,21 +634,34 @@ class AccurateService
   public function getDeliveryOrderDetail(int $id)
   {
     try {
+      Log::info('Mengambil detail Delivery Order dari Accurate', [
+        'do_id' => $id
+      ]);
+
       $response = $this->dataClient()->get('/api/delivery-order/detail.do', ['id' => $id]);
 
       if ($response->failed()) {
-        Log::error('Gagal mengambil detail Delivery Order dari Accurate', [
-          'id' => $id,
+        Log::error('❌ GAGAL: Mengambil detail Delivery Order dari Accurate', [
+          'timestamp' => now()->toDateTimeString(),
+          'do_id' => $id,
+          'status_code' => $response->status(),
           'response' => $response->json(),
         ]);
         return null;
       }
 
+      Log::info('✅ BERHASIL: Detail Delivery Order ditemukan', [
+        'do_id' => $id,
+        'do_number' => $response->json()['d']['number'] ?? 'N/A'
+      ]);
+
       return $response->json()['d'] ?? null;
     } catch (\Exception $e) {
-      Log::error('Exception saat mengambil detail Delivery Order', [
-        'id' => $id,
-        'message' => $e->getMessage(),
+      Log::error('❌ EXCEPTION: Error saat mengambil detail Delivery Order', [
+        'timestamp' => now()->toDateTimeString(),
+        'do_id' => $id,
+        'error_message' => $e->getMessage(),
+        'error_trace' => $e->getTraceAsString()
       ]);
       return null;
     }
@@ -658,24 +671,63 @@ class AccurateService
   public function saveDeliveryOrder(array $data)
   {
     try {
-      $response = $this->dataClient()->asForm()->post('/api/delivery-order/save.do', $data);
+      // Log request yang akan dikirim
+      Log::info('=== START: Menyimpan Delivery Order ke Accurate ===', [
+        'timestamp' => now()->toDateTimeString(),
+        'request_data' => $data
+      ]);
+
+      $response = $this->dataClient()->post('/api/delivery-order/save.do', $data);
+
+      // Log response dari Accurate
+      Log::info('Response dari Accurate API', [
+        'status_code' => $response->status(),
+        'response_body' => $response->json(),
+        'is_successful' => $response->successful()
+      ]);
 
       if ($response->failed()) {
-        Log::error('Gagal menyimpan Delivery Order ke Accurate', [
-          'data' => $data,
-          'response' => $response->json()
+        $responseData = $response->json();
+        
+        Log::error('❌ GAGAL: Menyimpan Delivery Order ke Accurate', [
+          'timestamp' => now()->toDateTimeString(),
+          'status_code' => $response->status(),
+          'error_message' => $responseData['s']['m'] ?? $responseData['m'] ?? 'Error tidak diketahui',
+          'full_response' => $responseData,
+          'request_data' => $data
         ]);
 
-        $errorMessage = $response->json()['s']['m'] ?? 'Error tidak diketahui';
+        $errorMessage = $responseData['s']['m'] ?? $responseData['m'] ?? 'Error tidak diketahui';
         throw new Exception('Gagal menyimpan Delivery Order: ' . $errorMessage);
       }
 
-      return $response->json()['d'] ?? null;
-    } catch (\Exception $e) {
-      Log::error('Exception saat menyimpan Delivery Order', [
-        'message' => $e->getMessage(),
-        'data' => $data
+      $result = $response->json()['d'] ?? null;
+
+      // Log sukses dengan detail hasil
+      Log::info('✅ BERHASIL: Delivery Order tersimpan ke Accurate', [
+        'timestamp' => now()->toDateTimeString(),
+        'do_number' => $result['number'] ?? 'N/A',
+        'do_id' => $result['id'] ?? 'N/A',
+        'customer' => $data['customer']['name'] ?? 'N/A',
+        'driver_name' => $data['driverName'] ?? 'N/A',
+        'delivery_date' => $data['transDate'] ?? 'N/A',
+        'total_items' => count($data['detailItem'] ?? []),
+        'result_data' => $result
       ]);
+
+      Log::info('=== END: Proses Delivery Order Selesai ===');
+
+      return $result;
+    } catch (\Exception $e) {
+      Log::error('❌ EXCEPTION: Error saat menyimpan Delivery Order', [
+        'timestamp' => now()->toDateTimeString(),
+        'error_message' => $e->getMessage(),
+        'error_trace' => $e->getTraceAsString(),
+        'request_data' => $data,
+        'line' => $e->getLine(),
+        'file' => $e->getFile()
+      ]);
+      
       throw $e;
     }
   }
@@ -684,21 +736,43 @@ class AccurateService
   public function deleteDeliveryOrder(int $id)
   {
     try {
+      Log::info('=== START: Menghapus Delivery Order dari Accurate ===', [
+        'timestamp' => now()->toDateTimeString(),
+        'do_id' => $id
+      ]);
+
       $response = $this->dataClient()->post('/api/delivery-order/delete.do', ['id' => $id]);
 
+      Log::info('Response Delete Delivery Order dari Accurate', [
+        'status_code' => $response->status(),
+        'response_body' => $response->json(),
+        'is_successful' => $response->successful()
+      ]);
+
       if ($response->failed()) {
-        Log::error('Gagal menghapus Delivery Order dari Accurate', [
-          'id' => $id,
+        Log::error('❌ GAGAL: Menghapus Delivery Order dari Accurate', [
+          'timestamp' => now()->toDateTimeString(),
+          'do_id' => $id,
+          'status_code' => $response->status(),
           'response' => $response->json()
         ]);
         throw new Exception('Gagal menghapus Delivery Order.');
       }
 
+      Log::info('✅ BERHASIL: Delivery Order terhapus dari Accurate', [
+        'timestamp' => now()->toDateTimeString(),
+        'do_id' => $id
+      ]);
+
+      Log::info('=== END: Proses Delete Delivery Order Selesai ===');
+
       return $response->json()['s'] ?? true;
     } catch (\Exception $e) {
-      Log::error('Exception saat menghapus Delivery Order', [
-        'id' => $id,
-        'message' => $e->getMessage()
+      Log::error('❌ EXCEPTION: Error saat menghapus Delivery Order', [
+        'timestamp' => now()->toDateTimeString(),
+        'do_id' => $id,
+        'error_message' => $e->getMessage(),
+        'error_trace' => $e->getTraceAsString()
       ]);
       throw $e;
     }
@@ -781,6 +855,92 @@ class AccurateService
       Log::error('Exception saat mengambil detail Raw Material', [
         'id' => $id,
         'message' => $e->getMessage(),
+      ]);
+      return null;
+    }
+  }
+
+  /**
+   * Mengambil detail item berdasarkan itemNo
+   * 
+   * @param string $itemNo
+   * @return array|null
+   */
+  public function getItemDetailByNo(string $itemNo)
+  {
+    try {
+      Log::info('Mencari item berdasarkan itemNo', ['item_no' => $itemNo]);
+
+      // Cari item berdasarkan nomor
+      $params = [
+        'fields' => 'id,no,name,itemType,unitPrice,enableSerialNumber,enableBatchNumber,stock,unit',
+        'filter.no.op' => 'EQUAL',
+        'filter.no.val' => $itemNo,
+      ];
+
+      $response = $this->dataClient()->get('/api/item/list.do', $params);
+
+      if ($response->failed()) {
+        Log::error('Gagal mencari item berdasarkan itemNo', [
+          'item_no' => $itemNo,
+          'response' => $response->json(),
+        ]);
+        return null;
+      }
+
+      $list = collect($response->json()['d'] ?? []);
+
+      if ($list->isEmpty()) {
+        Log::warning('Item tidak ditemukan berdasarkan itemNo', ['item_no' => $itemNo]);
+        return null;
+      }
+
+      // Ambil yang exact match
+      $exactMatch = $list->firstWhere('no', $itemNo);
+      
+      if (!$exactMatch) {
+        Log::warning('Item number tidak exact match', [
+          'requested' => $itemNo,
+          'found' => $list->pluck('no')->toArray()
+        ]);
+        return null;
+      }
+
+      $itemId = $exactMatch['id'] ?? null;
+      if (!$itemId) {
+        Log::warning('Item tidak punya ID', ['item_no' => $itemNo]);
+        return null;
+      }
+
+      // Ambil detail lengkap berdasarkan ID
+      $detailResponse = $this->dataClient()->get('/api/item/detail.do', ['id' => $itemId]);
+
+      if ($detailResponse->failed()) {
+        Log::error('Gagal mengambil detail item dari Accurate', [
+          'item_id' => $itemId,
+          'item_no' => $itemNo,
+          'response' => $detailResponse->json(),
+        ]);
+        return null;
+      }
+
+      $itemDetail = $detailResponse->json()['d'] ?? null;
+
+      Log::info('✅ Detail item berhasil diambil', [
+        'item_no' => $itemNo,
+        'item_id' => $itemId,
+        'item_name' => $itemDetail['name'] ?? 'N/A',
+        'item_type' => $itemDetail['itemType'] ?? 'N/A',
+        'is_serial' => $itemDetail['enableSerialNumber'] ?? false,
+        'is_batch' => $itemDetail['enableBatchNumber'] ?? false,
+      ]);
+
+      return $itemDetail;
+    } catch (\Exception $e) {
+      Log::error('❌ Exception saat mengambil detail item berdasarkan itemNo', [
+        'item_no' => $itemNo,
+        'message' => $e->getMessage(),
+        'trace' => $e->getTraceAsString(),
       ]);
       return null;
     }
