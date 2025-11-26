@@ -55,6 +55,7 @@ class PackingListController extends Controller
   {
     $soId = (int) $request->get('so_id');
     $salesOrder = $soId ? $accurate->getSalesOrderDetail($soId) : null;
+    // dd($salesOrder);
     $finishedGoods = FinishedGood::with(['item', 'production_item_label'])->where("status", "Stored")->get();
     if (!$request->filled('so_id')) {
       return redirect()->route('admin.outbound.sales-orders.index'); 

@@ -6,6 +6,11 @@
         backdrop-filter: blur(2px);
     }
 
+    /* SweetAlert Above Modal */
+    .swal-above-modal {
+        z-index: 20000 !important;
+    }
+
     /* Modal positioning */
     #detail-modal,
     #delivery-order-modal {
@@ -525,7 +530,10 @@
                 icon: 'error',
                 title: 'Gagal Memuat Data',
                 text: 'Tidak dapat memuat detail packing list.',
-                confirmButtonColor: '#dc2626'
+                confirmButtonColor: '#dc2626',
+                customClass: {
+                    container: 'swal-above-modal'
+                }
             });
 
             closeDeliveryOrderModal();
@@ -555,7 +563,10 @@
             Swal.fire({
                 icon: 'warning',
                 title: 'Data Tidak Lengkap',
-                text: 'Tanggal pengiriman harus diisi.'
+                text: 'Tanggal pengiriman harus diisi.',
+                customClass: {
+                    container: 'swal-above-modal'
+                }
             });
             return;
         }
@@ -564,7 +575,10 @@
             Swal.fire({
                 icon: 'warning',
                 title: 'Data Tidak Lengkap',
-                text: 'Nama driver harus diisi.'
+                text: 'Nama driver harus diisi.',
+                customClass: {
+                    container: 'swal-above-modal'
+                }
             });
             document.getElementById('driver_name').focus();
             return;
@@ -588,7 +602,10 @@
             cancelButtonColor: '#6b7280',
             confirmButtonText: 'Ya, Buat DO',
             cancelButtonText: 'Batal',
-            width: '500px'
+            width: '500px',
+            customClass: {
+                container: 'swal-above-modal'
+            }
         });
 
         if (!confirmResult.isConfirmed) {
@@ -604,6 +621,9 @@
             allowEscapeKey: false,
             didOpen: () => {
                 Swal.showLoading();
+            },
+            customClass: {
+                container: 'swal-above-modal'
             }
         });
 
@@ -634,7 +654,10 @@
                     </div>
                 `,
                 confirmButtonText: 'OK',
-                confirmButtonColor: '#16a34a'
+                confirmButtonColor: '#16a34a',
+                customClass: {
+                    container: 'swal-above-modal'
+                }
             });
 
             window.location.reload();
@@ -646,15 +669,21 @@
                 icon: 'error',
                 title: 'Gagal Membuat DO',
                 text: error.message || 'Terjadi kesalahan saat membuat delivery order.',
-                confirmButtonColor: '#dc2626'
+                confirmButtonColor: '#dc2626',
+                customClass: {
+                    container: 'swal-above-modal'
+                }
             });
         }
     }
     document.addEventListener('DOMContentLoaded', function() {
         const deliveryOrderModal = document.getElementById('delivery-order-modal');
         if (deliveryOrderModal) {
-          deliveryOrderModal.addEventListener('click', function(e) {
-              closeDeliveryOrderModal();
+            deliveryOrderModal.addEventListener('click', function(e) {
+                // Hanya close jika klik di overlay, bukan di modal content
+                if (e.target === deliveryOrderModal) {
+                    closeDeliveryOrderModal();
+                }
             });
         }
         document.addEventListener('keydown', function(e) {
@@ -759,10 +788,15 @@
         window.location.href = `/admin/outbound/packing-lists/detail/${currentPackingListId}`;
     }
     document.addEventListener('DOMContentLoaded', function() {
-        const detailModal = document.getElementById("detail-modal")
-        detailModal.addEventListener('click', function(e) {
-            if (modalId === 'detail-modal') closeDetailModal();
-        });
+        const detailModal = document.getElementById("detail-modal");
+        if (detailModal) {
+            detailModal.addEventListener('click', function(e) {
+                // Hanya close jika klik di overlay, bukan di modal content
+                if (e.target === detailModal) {
+                    closeDetailModal();
+                }
+            });
+        }
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 const detailModal = document.getElementById('detail-modal');
