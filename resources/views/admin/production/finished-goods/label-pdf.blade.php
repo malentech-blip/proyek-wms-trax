@@ -3,82 +3,231 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Item Labels</title>
+    <title>Production Label - {{ $itemLabels->first()->item_name ?? 'Item' }}</title>
     <style>
         @page {
-            /* Hapus semua margin dari halaman/stiker */
             margin: 0;
+            size: 100mm 70mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Helvetica', sans-serif;
-            font-size: 8px;
-            /* Ukuran font diperkecil agar muat */
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 9px;
+            line-height: 1.3;
         }
 
         .label {
-            /* Buat div label mengisi seluruh area stiker */
-            width: 100%;
-            height: 100%;
-            padding: 5px;
+            width: 100mm;
+            height: 70mm;
+            padding: 8px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            /* Beri sedikit padding di dalam stiker */
-            box-sizing: border-box;
+            justify-content: space-between;
             page-break-after: always;
-            /* Setiap label akan berada di halaman baru */
+            border: 1px solid #000;
         }
 
         .label:last-child {
             page-break-after: auto;
-            /* Hentikan page break setelah label terakhir */
+        }
+
+        /* Header Section */
+        .header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+
+        .company-name {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .label-type {
+            font-size: 8px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .content {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+        }
+
+        .info-section {
+            flex: 1;
         }
 
         .item-name {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
-            margin: 0 0 3px 0;
-            white-space: nowrap;
+            margin-bottom: 6px;
+            line-height: 1.2;
+            max-height: 26px;
             overflow: hidden;
         }
 
-        .item-details {
+        .info-grid {
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-row {
+            display: table-row;
+        }
+
+        .info-label {
+            display: table-cell;
+            font-size: 8px;
+            color: #666;
+            padding: 2px 0;
+            width: 35%;
+            vertical-align: top;
+        }
+
+        .info-value {
+            display: table-cell;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 0;
+            vertical-align: top;
+        }
+
+        .qr-section {
+            width: 35mm;
+            text-align: center;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            margin-bottom: 10px;
+            align-items: center;
+            justify-content: center;
         }
 
-        .qr-code {
-            float: right;
-            width: 35%;
-            text-align: right;
+        /* Barcode Section */
+        .barcode-section {
+            text-align: center;
+            padding-top: 4px;
+            border-top: 1px solid #ddd;
         }
 
-        .info {
-            margin: 0;
-            line-height: 1.2;
+        .barcode-wrapper {
+            margin: 4px 0;
+        }
+
+        .barcode-text {
+            font-size: 7px;
+            color: #666;
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 7px;
+            color: #666;
+            padding-top: 4px;
+            border-top: 1px solid #ddd;
+        }
+
+        .batch-info {
+            font-weight: bold;
+            color: #000;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 3px;
+            font-size: 7px;
+            font-weight: bold;
+        }
+
+        /* QR Code styling */
+        .qr-code-img {
+            max-width: 100%;
+            height: auto;
         }
     </style>
 </head>
 
 <body>
-    <div class="label-box">
-        @foreach ($itemLabels as $label)
-            <div class="label">
-                <div class="item-details">
-                    <h3 class="item-name">{{ Str::limit($label->item_name, 30) }}</h3>
-                    <p class="info">Kode: <strong>{{ $label->item_code }}</strong></p>
-                    <p class="info">Qty: <strong>{{ $label->quantity }}</strong></p>
-                    <p class="info">Lokasi: <strong>{{ $label->rack->code }}</strong></p>
+    @foreach ($itemLabels as $label)
+        <div class="label">
+            <!-- Header -->
+            <div class="header">
+                <div class="company-name">WMS PRODUCTION</div>
+                <div class="label-type">FINISHED GOODS LABEL</div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="content">
+                <div class="info-section">
+                    <div class="item-name">{{ Str::limit($label->item->item_name, 40) }}</div>
+                    
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <div class="info-label">Item Code:</div>
+                            <div class="info-value">{{ $label->item->item_code }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Batch No:</div>
+                            <div class="info-value">{{ $label->batch_no ?? '-' }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Location:</div>
+                            <div class="info-value">{{ $label->location->name ?? '-' }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Rack:</div>
+                            <div class="info-value">{{ $label->rack->code ?? '-' }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Pallet:</div>
+                            <div class="info-value">{{ $label->pallet->code ?? '-' }}</div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    {!! DNS1D::getBarcodeHTML($label->barcode, 'C128', 2, 50) !!}
+
+                <div class="qr-section">
+                    <div style="font-size: 7px; color: #666; margin-bottom: 3px;">SCAN ME</div>
+                    <div class="qr-code-img">
+                        {!! QrCode::size(80)->generate($label->barcode) !!}
+                    </div>
                 </div>
             </div>
-        @endforeach
-    </div>
+
+            <!-- Barcode Section -->
+            <div class="barcode-section">
+                <div class="barcode-wrapper">
+                    {!! DNS1D::getBarcodeHTML($label->barcode, 'C128', 1.5, 35) !!}
+                </div>
+                <div class="barcode-text">{{ $label->barcode }}</div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <div>
+                    <span style="color: #999;">Printed:</span> {{ now()->format('d/m/Y H:i') }}
+                </div>
+            </div>
+        </div>
+    @endforeach
 </body>
 
 </html>
