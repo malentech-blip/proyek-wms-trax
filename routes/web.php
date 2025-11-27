@@ -527,7 +527,7 @@ Route::get('/accurate/auth', function (Request $request) {
     'client_id' => $clientId,
     'response_type' => 'code',
     'redirect_uri' => route('accurate.callback'),
-    'scope' => 'item_view item_save customer_save customer_view sales_order_save job_order_save sales_order_view job_order_view roll_over_save purchase_order_view delivery_order_save',
+    'scope' => 'item_view item_save customer_save customer_view sales_order_save job_order_save sales_order_view job_order_view roll_over_save purchase_order_view delivery_order_save shipment_save',
     'state' => $state,
   ]);
 

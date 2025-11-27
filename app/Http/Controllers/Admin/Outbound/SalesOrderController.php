@@ -13,70 +13,62 @@ class SalesOrderController extends Controller
 {
   public function index(Request $request, AccurateService $accurate): View
   {
+    // ==== 1. Ambil data Sales Order dari Accurate ====
     $accurateSalesOrders = $accurate->getSalesOrders($request);
-    $numbers = $accurateSalesOrders->pluck('number')->filter()->values()->all();
+    $numbers = $accurateSalesOrders
+      ->pluck('number')
+      ->filter()
+      ->values()
+      ->all();
 
+    // ==== 2. Ambil data lokal berdasarkan so_number ====
     $localByNumber = LocalSalesOrder::query()
       ->with(['packingLists.deliveryOrders'])
       ->whereIn('so_number', $numbers)
       ->get()
       ->keyBy('so_number');
 
-
+    // ==== 3. Sinkronisasi dasar (tanpa overwrite status) ====
     foreach ($accurateSalesOrders as $so) {
       $number = $so['number'] ?? null;
       if (!$number) continue;
 
       $local = $localByNumber->get($number);
+
       $data = [
         'so_number'   => $number,
         'customer_id' => $so['customer']['id'] ?? null,
-        'sync_status' => $so['status'] ?? 'Open', 
+        'sync_status' => $so['status'] ?? 'Open', // hanya simpan sync ke Accurate
       ];
 
       if ($local) {
         $local->update($data);
       } else {
-        $local = LocalSalesOrder::create($data);
-        $localByNumber->put($number, $local);
+        $localByNumber->put(
+          $number,
+          LocalSalesOrder::create($data)
+        );
       }
     }
 
-
+    // ==== 4. Tambahkan status lokal ke list tampilan ====
     $withStatuses = $accurateSalesOrders->map(function (array $so) use ($localByNumber) {
+
       $local = $localByNumber->get($so['number'] ?? '');
 
-      $localStatus = 'Pending';
-      $syncStatus = $so['status'] ?? 'Open'; 
+      // Default (tanpa override)
+      $localStatus = $local->status ?? 'Pending';
+      $syncStatus  = $local->sync_status ?? 'Open';
 
-      if ($local) {
-        $hasPacking = $local->packingLists->isNotEmpty();
-
-        if ($hasPacking) {
-          $isShipped = $local->packingLists
-            ->flatMap
-            ->deliveryOrders
-            ->contains(fn($do) => ($do->status ?? '') === 'Delivered');
-          $localStatus = $isShipped ? 'Shipped' : 'Packed';
-        }
-
-        // Update status lokal bila berubah
-        if ($local->status !== $localStatus) {
-          $local->update(['status' => $localStatus]);
-        }
-
-        // Sync status Accurate kalau berubah
-        if ($local->sync_status !== $syncStatus) {
-          $local->update(['sync_status' => $syncStatus]);
-        }
-      }
-      $so['localStatus'] = $localStatus;  
-      $so['syncStatus'] = $syncStatus;   
-      $so['hasLocal'] = (bool) $local;
-
-      return $so;
+      return [
+        ...$so,
+        'localStatus' => $localStatus,
+        'syncStatus'  => $syncStatus,
+        'hasLocal'    => (bool) $local
+      ];
     });
 
+    // ==== 5. Render ====
     return view('admin.outbound.sales-orders.index', [
       'salesOrders' => $withStatuses,
       'filters' => [
@@ -86,7 +78,6 @@ class SalesOrderController extends Controller
       ],
     ]);
   }
-
 
 
 
