@@ -13,8 +13,11 @@ class ItemLabel extends Model
 {
     use HasFactory;
 
-<<<<<<< HEAD
-    // --- BAGIAN INI YANG KURANG ---
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'goods_receipt_item_id',
         'item_name',
@@ -26,43 +29,36 @@ class ItemLabel extends Model
         'pallet_id',
         'status',
     ];
-    // ------------------------------
 
-    // Relasi (Pastikan ini juga ada agar Cetak Label tidak error nantinya)
-    public function goodsReceiptItem()
+    /**
+     * Get the GoodsReceiptItem that owns the ItemLabel.
+     */
+    public function goodsReceiptItem(): BelongsTo
     {
         return $this->belongsTo(GoodsReceiptItem::class);
     }
 
-    public function location()
+    /**
+     * Get the Location that owns the ItemLabel.
+     */
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
-    public function rack()
+    /**
+     * Get the Rack that owns the ItemLabel.
+     */
+    public function rack(): BelongsTo
     {
         return $this->belongsTo(Rack::class);
     }
 
-    public function pallet()
+    /**
+     * Get the Pallet that owns the ItemLabel.
+     */
+    public function pallet(): BelongsTo
     {
         return $this->belongsTo(Pallet::class);
     }
 }
-=======
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\SuperAdmin\MasterData\Location::class);
-    }
-
-    public function rack(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\SuperAdmin\MasterData\Rack::class);
-    }
-
-    public function pallet(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\SuperAdmin\MasterData\Pallet::class);
-    }
-}
->>>>>>> f29551d0f0ba841ddfaf1592c962d87598634beb
