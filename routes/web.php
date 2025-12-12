@@ -525,6 +525,8 @@ Route::middleware('auth')->group(function () {
                     Route::get('delivery-orders/{do_id}/get-details', [DeliveryOrderController::class, 'getDetails'])->name('delivery-orders.getDetails');
                     Route::get('delivery-orders/{do_id}/print-pdf', [DeliveryOrderController::class, 'printPDF'])->name('delivery-orders.print-pdf');
                 });
+            });
+        });
 });
 
 Route::get('/accurate/auth', function (Request $request) {
