@@ -4,8 +4,10 @@ namespace App\Livewire\Admin\Inbound;
 
 use App\Models\Admin\Inbound\GoodsReceipt;
 use App\Models\Admin\Inbound\QualityCheck;
+use App\Models\Admin\Inbound\RejectInbound;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Admin\Inbound\GoodsReceiptItem;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -61,33 +63,62 @@ class QualityCheckForm extends Component
         }
     }
 
-    public function save()
-    {
-        $this->validate([
-            'items.*.passed_qty' => 'required|integer|min:0',
-            'items.*.rejected_qty' => 'required|integer|min:0',
-        ]);
+  public function save()
+{
+    // 1. Validasi Input
+    $this->validate([
+        'items.*.passed_qty' => 'required|integer|min:0',
+        'items.*.rejected_qty' => 'required|integer|min:0',
+        'items.*.notes' => 'nullable|string|max:255',
+    ]);
 
-        DB::beginTransaction();
-        try {
-            foreach ($this->items as $itemId => $itemData) {
-                // ... (Logika penyimpanan ke tabel quality_checks)
+    DB::beginTransaction();
+    try {
+        foreach ($this->items as $itemId => $itemData) {
+            
+            // Ambil data item asli untuk verifikasi
+            $grItem = GoodsReceiptItem::findOrFail($itemId);
+            
+            // Validasi: Jumlah pass + reject tidak boleh melebihi jumlah diterima
+            if (($itemData['passed_qty'] + $itemData['rejected_qty']) > $grItem->received_qty) {
+                throw new \Exception("Jumlah total (Lolos + Reject) untuk item {$grItem->item_name} melebihi jumlah yang diterima.");
             }
 
-            // Update status header penerimaan
-            $this->goodsReceipt->update(['status' => 'qc_completed']);
-            
-            DB::commit();
+            // 2. Simpan Item yang Ditolak (Jika Ada)
+            if ($itemData['rejected_qty'] > 0) {
+                RejectInbound::create([
+                    'goods_receipt_item_id' => $itemId,
+                    'qc_by_id' => Auth::id(),
+                    'rejected_qty' => $itemData['rejected_qty'],
+                    'reason' => $itemData['notes'],
+                    'action' => 'pending', // Status awal: Menunggu keputusan (Retur/Dispose)
+                ]);
+            }
 
-            session()->flash('success', 'Quality Check berhasil disimpan. Lanjutkan ke proses Putaway.');
-            return redirect()->route('admin.inbound.putaway.show', $this->goodsReceipt);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            // 3. Update Barang yang Lolos di tabel goods_receipt_items
+            // Kita simpan passed_qty agar nanti di proses Putaway kita tahu berapa yang harus disimpan
+            // (Asumsi: Anda perlu menambahkan kolom 'passed_qty' di tabel goods_receipt_items via migrasi, 
+            // atau gunakan logic sisa di controller Putaway)
+            $grItem->update([
+                'passed_qty' => $itemData['passed_qty'], // Pastikan kolom ini ada atau logic disesuaikan
+                // Jika kolom passed_qty belum ada di database, langkah ini bisa dilewati 
+                // dan nanti dihitung manual: received - rejected
+            ]);
         }
-    }
 
+        // 4. Update Status Header
+        $this->goodsReceipt->update(['status' => 'qc_completed']);
+        
+        DB::commit();
+
+        session()->flash('success', 'Quality Check selesai. Barang reject telah dicatat.');
+        return redirect()->route('admin.inbound.putaway.show', $this->goodsReceipt);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+    }
+}
     public function render()
     {
         return view('livewire.admin.inbound.quality-check-form');

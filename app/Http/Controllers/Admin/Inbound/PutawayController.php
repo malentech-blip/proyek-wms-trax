@@ -8,6 +8,16 @@ use Illuminate\Http\Request;
 
 class PutawayController extends Controller
 {
+    public function index()
+{
+    // Ambil barang yang sudah selesai QC tapi belum di-Putaway ('qc_completed')
+    $pendingPutaway = GoodsReceipt::with('items')
+        ->where('status', 'qc_completed')
+        ->latest()
+        ->paginate(10);
+
+    return view('admin.inbound.putaway.index', compact('pendingPutaway'));
+}
     public function show(GoodsReceipt $goodsReceipt)
     {
         // Pastikan kita hanya memproses barang yang sudah lolos QC

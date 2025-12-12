@@ -125,6 +125,7 @@
     @stack('scripts')
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </body>
 
 </html>

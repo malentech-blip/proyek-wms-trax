@@ -21,19 +21,19 @@ class PurchaseOrderController extends Controller
         return view('admin.inbound.purchase-orders.index', compact('purchaseOrders'));
     }
 
-    public function showReceiveForm(Request $request, AccurateService $accurate, $poId)
-{
-    // Panggil method baru di service untuk mengambil detail PO
-    $purchaseOrder = $accurate->getPurchaseOrderDetail($poId);
+  public function showReceiveForm(Request $request, AccurateService $accurate, $poId)
+    {
+        // Panggil method baru di service untuk mengambil detail PO
+        $purchaseOrder = $accurate->getPurchaseOrderDetail($poId);
 
-    if (!$purchaseOrder) {
-        // Jika PO tidak ditemukan, kembali ke halaman daftar dengan pesan error
-        return redirect()->route('admin.inbound.purchase-orders.index')->with('error', 'Purchase Order tidak ditemukan.');
+        if (!$purchaseOrder) {
+            // Jika PO tidak ditemukan, kembali ke halaman daftar dengan pesan error
+            return redirect()->route('admin.inbound.purchase-orders.index')->with('error', 'Purchase Order tidak ditemukan.');
+        }
+
+        // PERBAIKAN: Tambahkan 'poId' ke dalam compact
+        return view('admin.inbound.goods-receive.index', compact('purchaseOrder', 'poId'));
     }
-
-    // Tampilkan view form penerimaan barang dengan data detail PO
-    return view('admin.inbound.goods-receive.index', compact('purchaseOrder'));
-}
 
 public function storeReceiveForm(Request $request, AccurateService $accurate, $poId)
 {
@@ -84,4 +84,6 @@ public function storeReceiveForm(Request $request, AccurateService $accurate, $p
         return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
     }
 }
+
+
 }

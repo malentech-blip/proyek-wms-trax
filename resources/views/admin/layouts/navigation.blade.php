@@ -26,12 +26,23 @@
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Purchase Order</span>
         </a>
 
-        <a href="#" class="{{ $linkClasses }} {{ $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+        <a href="{{ route('admin.inbound.quality-check.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.inbound.quality-check.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+        <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Quality Check</span>
+    </a>
+
+    {{-- 4. Putaway (BARU) --}}
+    <a href="{{ route('admin.inbound.putaway.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.inbound.putaway.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+        <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+        <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Putaway</span>
+    </a>
+
+        <a href="{{ route('admin.inbound.reject-warehouse.index') }}" class="{{ $linkClasses }} {{ $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
             <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Reject Warehouse</span>
         </a>
 
-        <a href="#" class="{{ $linkClasses }} {{ $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+        <a href="{{ route('admin.inbound.history.index') }}" class="{{ $linkClasses }} {{ $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
             <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>History</span>
         </a>

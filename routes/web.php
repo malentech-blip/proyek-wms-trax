@@ -436,24 +436,36 @@ Route::middleware('auth')->group(function () {
                     ])->name('rejects-production.update');
                 });
 
+            // Rute Inbound
+            Route::prefix('inbound')
+                ->name('inbound.')
+                ->middleware('can:manage_inbound')
+                ->group(function () {
+                    Route::get('/dashboard', [InboundDashboardController::class, 'index'])->name('dashboard');
+                    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+                    Route::get('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->name('purchase-orders.receive');
+                    Route::post('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'storeReceiveForm'])->name('purchase-orders.receive.store');
+                    Route::get('/quality-check', [QualityCheckController::class, 'index'])->name('quality-check.index');
+                    Route::get('/goods-receipt/{goodsReceipt}/qc', [QualityCheckController::class, 'show'])->name('quality-check.show');
+                    Route::get('/putaway', [PutawayController::class, 'index'])->name('putaway.index');
+                    Route::get('/goods-receipt/{goodsReceipt}/putaway', [PutawayController::class, 'show'])->name('putaway.show');
+                    Route::get('/goods-receipt/{goodsReceipt}/print-labels', [LabelPrintController::class, 'print'])->name('putaway.print-labels');
+                    Route::get('/reject-warehouse', [RejectWarehouseController::class, 'index'])->name('reject-warehouse.index');
+                    // Inbound History
+                    Route::get('/history', [App\Http\Controllers\Admin\Inbound\InboundHistoryController::class, 'index'])->name('history.index');
+                    Route::get('/history/{goodsReceipt}', [App\Http\Controllers\Admin\Inbound\InboundHistoryController::class, 'show'])->name('history.show');
+                });
+
             // OUTBOUND
             Route::prefix('outbound')
                 ->name('outbound.')
+                ->middleware('can:manage_outbound')
                 ->group(function () {
-                    Route::get('/dashboard', [
-                        OutboundDashboardController::class,
-                        'index',
-                    ])->name('dashboard');
+                    Route::get('/dashboard', [OutboundDashboardController::class, 'index'])->name('dashboard');
 
-                // --- SALES ORDERS ---
-                Route::get('sales-orders', [
-                    SalesOrderController::class,
-                    'index',
-                ])->name('sales-orders.index');
-                Route::get('sales-orders/{so_id}/create-packing-list', [
-                    SalesOrderController::class,
-                    'createPackingList',
-                ])->name('sales-orders.create-packing-list');
+                    // --- SALES ORDERS ---
+                    Route::get('sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');
+                    Route::get('sales-orders/{so_id}/create-packing-list', [SalesOrderController::class, 'createPackingList'])->name('sales-orders.create-packing-list');
 
                 // --- PACKING LIST ---
                 // index (GET)
@@ -497,54 +509,22 @@ Route::middleware('auth')->group(function () {
                     'transit',
                 ])->name('packing-lists.transit');
 
-                // --- TRANSIT INVENTORY ---
-                Route::get('transit-inventory', [
-                    TransitInventoryController::class,
-                    'index',
-                ])->name('transit-inventory.index');
-                Route::get('transit-inventory/detail/{packing_id}', [
-                    TransitInventoryController::class,
-                    'detail',
-                ])->name('transit-inventory.detail');
-                Route::post('transit-inventory/validate-barcode/{packing_id}', [
-                    TransitInventoryController::class,
-                    'validateBarcode',
-                ])->name('transit-inventory.validate-barcode');
-                Route::post('transit-inventory/validate-barcodes', [
-                    TransitInventoryController::class,
-                    'validateBarcodes',
-                ])->name('transit-inventory.validate-barcodes');
-                Route::post('transit-inventory/update-status/{transit_id}', [
-                    TransitInventoryController::class,
-                    'updateStatus',
-                ])->name('transit-inventory.update-status');
-                Route::post('transit-inventory/create-do/{packing_id}', [
-                    TransitInventoryController::class,
-                    'createDeliveryOrderFromTransit',
-                ])->name('transit-inventory.create-do');
+                    // --- TRANSIT INVENTORY ---
+                    Route::get('transit-inventory', [TransitInventoryController::class, 'index'])->name('transit-inventory.index');
+                    Route::get('transit-inventory/detail/{packing_id}', [TransitInventoryController::class, 'detail'])->name('transit-inventory.detail');
+                    Route::post('transit-inventory/validate-barcode/{packing_id}', [TransitInventoryController::class, 'validateBarcode'])->name('transit-inventory.validate-barcode');
+                    Route::post('transit-inventory/validate-barcodes', [TransitInventoryController::class, 'validateBarcodes'])->name('transit-inventory.validate-barcodes');
+                    Route::post('transit-inventory/update-status/{transit_id}', [TransitInventoryController::class, 'updateStatus'])->name('transit-inventory.update-status');
+                    Route::post('transit-inventory/create-do/{packing_id}', [TransitInventoryController::class, 'createDeliveryOrderFromTransit'])->name('transit-inventory.create-do');
 
-                        // --- DELIVERY ORDERS ---
-                        Route::get('delivery-orders', [DeliveryOrderController::class, 'index'])->name('delivery-orders.index');
-                        Route::get('delivery-orders/detail/{packing_id}', [DeliveryOrderController::class, 'detail'])->name('delivery-orders.detail');
-                        Route::post('delivery-orders/{do_id}/mark-delivered', [
-                            DeliveryOrderController::class,
-                            'markDelivered',
-                        ])->name('delivery-orders.mark-delivered');
-                        Route::post('delivery-orders/store', [
-                            DeliveryOrderController::class,
-                            'store',
-                        ])->name('delivery-orders.store');
-                        Route::get('delivery-orders/{do_id}/get-details', [
-                            DeliveryOrderController::class,
-                            'getDetails',
-                        ])->name('delivery-orders.getDetails');
-                        Route::get('delivery-orders/{do_id}/print-pdf', [
-                            DeliveryOrderController::class,
-                            'printPDF',
-                        ])->name('delivery-orders.print-pdf');
-                    });
-            });
-    });
+                    // --- DELIVERY ORDERS ---
+                    Route::get('delivery-orders', [DeliveryOrderController::class, 'index'])->name('delivery-orders.index');
+                    Route::get('delivery-orders/detail/{packing_id}', [DeliveryOrderController::class, 'detail'])->name('delivery-orders.detail');
+                    Route::post('delivery-orders/{do_id}/mark-delivered', [DeliveryOrderController::class, 'markDelivered'])->name('delivery-orders.mark-delivered');
+                    Route::post('delivery-orders/store', [DeliveryOrderController::class, 'store'])->name('delivery-orders.store');
+                    Route::get('delivery-orders/{do_id}/get-details', [DeliveryOrderController::class, 'getDetails'])->name('delivery-orders.getDetails');
+                    Route::get('delivery-orders/{do_id}/print-pdf', [DeliveryOrderController::class, 'printPDF'])->name('delivery-orders.print-pdf');
+                });
 });
 
 Route::get('/accurate/auth', function (Request $request) {
