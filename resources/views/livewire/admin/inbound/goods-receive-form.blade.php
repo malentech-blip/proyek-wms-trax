@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <dt class="font-medium text-gray-500">Tanggal Transaksi</dt>
-                    <dd class="mt-1 font-semibold text-gray-800">{{ \Carbon\Carbon::parse($purchaseOrder['transDate'])->format('d F Y') }}</dd>
+                    <dd class="mt-1 font-semibold text-gray-800">{{ \Carbon\Carbon::createFromFormat('d/m/Y', $purchaseOrder['transDate'])->format('d F Y') }}</dd>
                 </div>
             </dl>
         </div>

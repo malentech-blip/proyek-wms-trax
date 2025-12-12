@@ -6,7 +6,7 @@
     <div class="bg-white rounded-xl shadow-sm">
         <div class="p-6 border-b">
             <h3 class="text-lg font-semibold text-gray-800">Filter Purchase Order</h3>
-            
+
             {{-- PERBAIKAN ADA DI BARIS DI BAWAH INI --}}
             <form method="GET" action="{{ route('admin.inbound.purchase-orders.index') }}">
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -45,7 +45,7 @@
                     @forelse ($purchaseOrders as $po)
                     <tr>
                         <td class="p-4 text-gray-700 font-medium">{{ $po['number'] }}</td>
-                        <td class="p-4 text-gray-500">{{ \Carbon\Carbon::parse($po['transDate'])->format('d/m/Y') }}</td>
+                        <td class="p-4 text-gray-500">{{ \Carbon\Carbon::createFromFormat('d/m/Y', $po['transDate'])->format('d/m/Y') }}</td>
                         <td class="p-4 text-gray-500">{{ $po['vendor']['name'] ?? 'N/A' }}</td>
                         <td class="p-4 text-gray-500">
                             <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Synced</span>
