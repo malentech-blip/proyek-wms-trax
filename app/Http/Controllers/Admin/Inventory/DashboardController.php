@@ -8,14 +8,23 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\Inbound\ItemLabel;
 use App\Models\Admin\Inventory\Inventory;
 use App\Models\Admin\Production\ProductionItemLabel;
+use App\Services\InventorySyncService;
 use App\Traits\LogsActivity;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
     use LogsActivity;
+
+    protected InventorySyncService $inventorySyncService;
+
+    public function __construct(InventorySyncService $inventorySyncService)
+    {
+        $this->inventorySyncService = $inventorySyncService;
+    }
 
     public function index(): View
     {
@@ -131,5 +140,72 @@ class DashboardController extends Controller
             'success' => false,
             'message' => 'QR code tidak ditemukan dalam sistem.',
         ], 404);
+    }
+
+    /**
+     * Sync inventory with Accurate master data
+     */
+    public function syncWithAccurate(Request $request): JsonResponse
+    {
+        $this->logActivity('Sync Inventory with Accurate', 'Inventory');
+
+        try {
+            // Validate session has Accurate connection
+            if (! $this->inventorySyncService->validateAccurateConnection()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Koneksi Accurate belum diatur. Silakan hubungkan Accurate terlebih dahulu.',
+                ], 400);
+            }
+
+            // Determine if this is a dry run
+            $isDryRun = $request->has('dry_run') && $request->boolean('dry_run');
+
+            // Perform the sync using the service
+            $results = $this->inventorySyncService->syncWithAccurate($isDryRun);
+
+            if ($results['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Sinkronisasi inventory dengan Accurate berhasil.',
+                    'results' => $results,
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sinkronisasi inventory gagal.',
+                    'results' => $results,
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Inventory sync error', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat sinkronisasi: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get inventory sync status
+     */
+    public function syncStatus(Request $request): JsonResponse
+    {
+        try {
+            $syncStats = $this->inventorySyncService->getSyncStatistics();
+
+            return response()->json([
+                'success' => true,
+                'data' => $syncStats,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Sync status error', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan status sinkronisasi: '.$e->getMessage(),
+            ], 500);
+        }
     }
 }
