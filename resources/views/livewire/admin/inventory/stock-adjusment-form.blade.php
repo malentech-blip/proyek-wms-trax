@@ -1,4 +1,5 @@
 <div class="bg-white rounded-lg shadow-sm p-6" x-data="{ locationEnabled: @entangle('itemId').live }">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <h3 class="text-lg font-semibold text-gray-900 mb-6">Form Penyesuaian Stok</h3>
 
     @if (session()->has('success'))
@@ -144,4 +145,18 @@
             </button>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('livewire:init', function () {
+            Livewire.on('stock-adjustment-notification', function (data) {
+                Swal.fire({
+                    title: 'Laporan Berhasil Dibuat!',
+                    text: data.message,
+                    icon: data.type,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#624bff'
+                });
+            });
+        });
+    </script>
 </div>

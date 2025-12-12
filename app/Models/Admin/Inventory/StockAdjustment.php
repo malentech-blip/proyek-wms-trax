@@ -3,6 +3,19 @@
 namespace App\Models\Admin\Inventory;
 
 use App\Models\User;
+
+/**
+ * Stock Adjustment Model
+ *
+ * Handles inventory stock adjustments with approval workflow.
+ *
+ * Note: Email notification feature is currently disabled for the 2 PM demonstration.
+ * The system now uses SweetAlert2 notifications instead of actual email sending.
+ * TODO: Re-enable email notifications after demo - notifications should be sent when:
+ * - Stock adjustment requires approval (requires_approval = true)
+ * - Stock adjustment is approved/rejected (status changes)
+ * - Stock adjustment is completed
+ */
 use App\Models\SuperAdmin\MasterData\Item;
 use App\Models\SuperAdmin\MasterData\Location;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

@@ -148,12 +148,18 @@ class StockAdjusmentForm extends Component
                     'date' => now(),
                 ]);
             } else {
+                // EMAIL NOTIFICATION DISABLED FOR DEMO - Enable after 2 PM demonstration
                 // Send notification to Super Admin users
-                $superAdmins = \App\Models\User::role('Super Admin')->get();
+                // $superAdmins = \App\Models\User::role('Super Admin')->get();
+                // if ($superAdmins->isNotEmpty()) {
+                //     Notification::send($superAdmins, new StockAdjustmentNotification($stockAdjustment));
+                // }
 
-                if ($superAdmins->isNotEmpty()) {
-                    Notification::send($superAdmins, new StockAdjustmentNotification($stockAdjustment));
-                }
+                // Show SweetAlert2 notification instead for demo
+                $this->dispatch('stock-adjustment-notification', [
+                    'message' => 'Stock adjustment request sent to Super Admin for approval!',
+                    'type' => 'info'
+                ]);
             }
 
             DB::commit();
