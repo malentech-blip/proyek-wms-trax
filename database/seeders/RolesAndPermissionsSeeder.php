@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -21,7 +21,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_dashboard',
 
             // Super Admin
-            'manage_master_data', 'view_item_master', 'create_item_master', 'edit_item_master',
+            'manage_master_data',
+            'view_item_master',
+            'create_item_master',
+            'edit_item_master',
             'manage_users',
             'manage_integration',
             'manage_templates',
@@ -29,16 +32,26 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_system_logs',
 
             // Inbound
-            'manage_inbound', 'receive_goods', 'perform_quality_check', 'putaway_items',
+            'manage_inbound',
+            'receive_goods',
+            'perform_quality_check',
+            'putaway_items',
 
             // Inventory
-            'manage_inventory', 'move_stock', 'adjust_stock',
+            'manage_inventory',
+            'move_stock',
+            'adjust_stock',
 
             // Production
-            'manage_production', 'request_material', 'view_picking_list', 'manage_wip',
+            'manage_production',
+            'request_material',
+            'view_picking_list',
+            'manage_wip',
 
             // Outbound
-            'manage_outbound', 'create_packing_list', 'manage_delivery_order',
+            'manage_outbound',
+            'create_packing_list',
+            'manage_delivery_order',
         ];
 
         foreach ($permissions as $permission) {
@@ -62,8 +75,31 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'Super Admin', 'password' => Hash::make('password'), 'role' => 'Super Admin']
         );
         $adminUser->assignRole($superAdminRole);
+
+        // --- BUAT USER SETIAP ADMIN ---
+        $productionUser = User::firstOrCreate(
+            ['email' => 'production@example.com'],
+            ['name' => 'Admin Production', 'password' => Hash::make('password'), 'role' => 'Admin Production']
+        );
+        $productionUser->assignRole('Admin Production');
+        $inventoryUser = User::firstOrCreate(
+            ['email' => 'inventory@example.com'],
+            ['name' => 'Admin Inventory', 'password' => Hash::make('password'), 'role' => 'Admin Inventory']
+        );
+        $inventoryUser->assignRole('Admin Inventory');
+        $inboundUser = User::firstOrCreate(
+            ['email' => 'inbound@example.com'],
+            ['name' => 'Admin Inbound', 'password' => Hash::make('password'), 'role' => 'Admin Inbound']
+        );
+        $inboundUser->assignRole('Admin Inbound');
+        $outboundUser = User::firstOrCreate(
+            ['email' => 'outbound@example.com'],
+            ['name' => 'Admin Outbound', 'password' => Hash::make('password'), 'role' => 'Admin Outbound']
+        );
+        $outboundUser->assignRole('Admin Outbound');
+
         $this->command->info('Super Admin user created/found and role assigned.');
-        
+
         // Hapus user 'sales' jika sudah tidak diperlukan lagi atau sesuaikan
         // User::where('email', 'sales@example.com')->delete();
     }

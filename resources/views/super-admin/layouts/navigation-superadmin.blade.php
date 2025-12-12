@@ -1,5 +1,5 @@
 <div class="flex flex-col h-full text-gray-800 bg-white">
-    
+
     <div class="h-[64px] border-b flex items-center flex-shrink-0" :class="sidebarOpen ? 'px-4' : 'justify-center'">
         <a href="{{ route('super-admin.dashboard') }}" class="flex items-center space-x-3">
             <div class="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-md text-white font-bold text-lg">W</div>
@@ -8,7 +8,7 @@
             </div>
         </a>
     </div>
-    
+
     <nav class="flex-1 px-3 py-4 space-y-2">
         @php
             $linkClasses = 'flex items-center p-3 rounded-lg text-sm font-medium transition-colors duration-200 group';
@@ -60,11 +60,11 @@
         {{-- ============================================= --}}
         {{-- ||         BLOK MENU SUPER ADMIN           || --}}
         {{-- ============================================= --}}
-        
+
         @can('manage_master_data')
         <div x-data="{ open: {{ request()->routeIs('super-admin.master-data.*') ? 'true' : 'false' }} }">
-            <button @click="open = !open" 
-                    class="w-full {{ $linkClasses }} {{ request()->routeIs('super-admin.master-data.*') ? 'bg-gray-100 text-gray-900' : $inactiveClasses }}" 
+<button @click="open = !open"
+                class="w-full {{ $linkClasses }} {{ request()->routeIs('super-admin.master-data.*') ? 'bg-gray-100 text-gray-900' : $inactiveClasses }}"
                     :class="!sidebarOpen && 'justify-center'">
                 <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10m16-5H4m16 5v-2a3 3 0 00-3-3H7a3 3 0 00-3 3v2m16 0H4m16 0a3 3 0 003-3V7a3 3 0 00-3-3H7a3 3 0 00-3 3v7a3 3 0 003 3z"></path></svg>
                 <div class="ml-3 flex-1 text-left whitespace-nowrap" x-show="sidebarOpen" x-transition><span>Master Data</span></div>
@@ -104,23 +104,41 @@
                 <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Accurate Integration</span>
             </a>
         @endcan
-        
+
         @can('manage_templates')
+<<<<<<< HEAD
             <a href="{{ route('super-admin.label-templates.index') }}" class="{{ $linkClasses }} ... {{ request()->routeIs('label-templates.index') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+=======
+<a href="{{ route('super-admin.label-templates.index') }}"
+    class="{{ $linkClasses }} {{ request()->routeIs('super-admin.label-templates.index') ? $activeClasses : $inactiveClasses }}"
+    :class="!sidebarOpen && 'justify-center'">
+>>>>>>> f29551d0f0ba841ddfaf1592c962d87598634beb
                 <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"></path></svg>
                 <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Label Template</span>
             </a>
         @endcan
-        
+
         @can('view_reports')
+<<<<<<< HEAD
             <a href="{{ route('super-admin.reports-center.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('reports-center.index') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+=======
+<a href="{{ route('super-admin.reports-center.index') }}"
+                class="{{ $linkClasses }} {{ request()->routeIs('super-admin.reports-center.index') ? $activeClasses : $inactiveClasses }}"
+                :class="!sidebarOpen && 'justify-center'">
+>>>>>>> f29551d0f0ba841ddfaf1592c962d87598634beb
                 <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Reports Center</span>
             </a>
         @endcan
-        
+
         @can('view_system_logs')
+<<<<<<< HEAD
             <a href="{{ route('super-admin.system-logs.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('system-logs.index') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
+=======
+<a href="{{ route('super-admin.system-logs.index') }}"
+                class="{{ $linkClasses }} {{ request()->routeIs('super-admin.system-logs.index') ? $activeClasses : $inactiveClasses }}"
+                :class="!sidebarOpen && 'justify-center'">
+>>>>>>> f29551d0f0ba841ddfaf1592c962d87598634beb
                 <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>System Logs</span>
             </a>
