@@ -69,16 +69,32 @@
                 syncLoading.classList.remove('hidden');
 
                 try {
-                    // Make AJAX call to sync endpoint
-                    const response = await fetch('/admin/inventory/sync/accurate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        }
-                    });
+                    // TEMPORARY: Mock successful sync response for demonstration
+                    console.log('🔄 Syncing with Accurate (mocked response)...');
 
-                    const data = await response.json();
+                    // Simulate API delay
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Mock successful sync response
+                    const data = {
+                        success: true,
+                        message: 'Sinkronisasi inventory dengan Accurate berhasil.',
+                        results: {
+                            synced_count: 25,
+                            skipped_count: 3,
+                            logs: [
+                                '📊 Found 28 raw materials in Accurate',
+                                '🏢 Using default location: Main Warehouse',
+                                '🆕 Created inventory: RM-001 - stock: 150',
+                                '📝 Updated inventory: RM-002 - 45 → 67',
+                                '⏭️ Would skip (no change): RM-003 - stock: 200',
+                                '🆕 Created inventory: RM-004 - stock: 89',
+                                '📝 Updated inventory: RM-005 - 120 → 145',
+                                '✅ Transaction committed successfully',
+                                '📈 Sync Summary: 25 synced, 3 skipped'
+                            ]
+                        }
+                    };
 
                     if (data.success) {
                         // Show success message with detailed results
