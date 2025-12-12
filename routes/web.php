@@ -122,10 +122,18 @@ Route::middleware('auth')->group(function () {
                 Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
                 Route::get('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->name('purchase-orders.receive');
                 Route::post('/purchase-orders/{poId}/receive', [PurchaseOrderController::class, 'storeReceiveForm'])->name('purchase-orders.receive.store');
+                Route::get('/quality-check', [QualityCheckController::class, 'index'])->name('quality-check.index');
                 Route::get('/goods-receipt/{goodsReceipt}/qc', [QualityCheckController::class, 'show'])->name('quality-check.show');
+                Route::get('/putaway', [PutawayController::class, 'index'])->name('putaway.index');
                 Route::get('/goods-receipt/{goodsReceipt}/putaway', [PutawayController::class, 'show'])->name('putaway.show');
                 Route::get('/goods-receipt/{goodsReceipt}/print-labels', [LabelPrintController::class, 'print'])->name('putaway.print-labels');
                 Route::get('/reject-warehouse', [RejectWarehouseController::class, 'index'])->name('reject-warehouse.index');
+                // Inbound History
+Route::get('/history', [App\Http\Controllers\Admin\Inbound\InboundHistoryController::class, 'index'])
+    ->name('history.index');
+
+Route::get('/history/{goodsReceipt}', [App\Http\Controllers\Admin\Inbound\InboundHistoryController::class, 'show'])
+    ->name('history.show');
             });
             
             // Rute untuk admin lain (Inventory, Production, Outbound) akan ditambahkan di sini

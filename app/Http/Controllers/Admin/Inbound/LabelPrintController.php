@@ -9,24 +9,34 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class LabelPrintController extends Controller
 {
-    public function print(GoodsReceipt $goodsReceipt)
-    {
-        // Ambil semua item label yang baru saja dibuat untuk Goods Receipt ini
-        $itemLabels = ItemLabel::whereHas('goodsReceiptItem', function ($query) use ($goodsReceipt) {
-            $query->where('goods_receipt_id', $goodsReceipt->id);
-        })->get();
+ // app/Http/Controllers/Admin/Inbound/LabelPrintController.php
+public function print(GoodsReceipt $goodsReceipt)
+{
+   // --- TAMBAHKAN BARIS INI UNTUK DEBUGGING ---
+    // dd('Controller Terpanggil', $goodsReceipt->id); 
+    // -------------------------------------------
 
-        if ($itemLabels->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada label untuk dicetak.');
-        }
+    $itemLabels = ItemLabel::whereHas('goodsReceiptItem', function ($query) use ($goodsReceipt) {
+        $query->where('goods_receipt_id', $goodsReceipt->id);
+    })->with(['rack', 'pallet', 'location'])->get();
 
-        // Muat view PDF dengan data label
-        $pdf = Pdf::loadView('admin.inbound.putaway.label-pdf', compact('itemLabels'));
-
-            $widthInPoints = 52 * 2.83465;  // Konversi mm ke points
-            $heightInPoints = 32 * 2.83465; // Konversi mm ke points
-            $pdf->setPaper([0, 0, $widthInPoints, $heightInPoints]);
-
-        return $pdf->stream('labels-' . $goodsReceipt->receipt_number . '.pdf');
+    // --- TAMBAHKAN INI JUGA ---
+    if ($itemLabels->isEmpty()) {
+        dd('Data Item Labels Kosong! Cek tabel item_labels di database.');
     }
+
+    if ($itemLabels->isEmpty()) {
+        return redirect()->back()->with('error', 'Tidak ada label untuk dicetak.');
+    }
+
+    // Load view PDF
+    $pdf = Pdf::loadView('admin.inbound.putaway.label-pdf', compact('itemLabels'));
+
+    // Set ukuran kertas (contoh: 52mm x 32mm)
+    $widthInPoints = 52 * 2.83465;
+    $heightInPoints = 32 * 2.83465;
+    $pdf->setPaper([0, 0, $widthInPoints, $heightInPoints]);
+
+    return $pdf->stream('labels-' . $goodsReceipt->receipt_number . '.pdf');
+}
 }
