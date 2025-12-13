@@ -27,31 +27,91 @@
         {{-- ============================================= --}}
 
         @can('manage_inbound')
-        <a href="{{ route('admin.inbound.purchase-orders.index') }}" class="{{ $linkClasses }} {{ request()->routeIs('admin.inbound.*') ? $activeClasses : $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
-            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Inbound</span>
-        </a>
+        <div x-data="{ open: {{ request()->routeIs('admin.inbound.*') ? 'true' : 'false' }} }">
+            <button @click="open = !open"
+                    class="w-full {{ $linkClasses }} {{ request()->routeIs('admin.inbound.*') ? 'bg-gray-100 text-gray-900' : $inactiveClasses }}"
+                    :class="!sidebarOpen && 'justify-center'">
+                <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <div class="ml-3 flex-1 text-left whitespace-nowrap" x-show="sidebarOpen" x-transition><span>Inbound</span></div>
+                <svg x-show="sidebarOpen" class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div x-show="open && sidebarOpen" x-collapse>
+                <div class="py-2 pl-12 pr-3 space-y-1">
+                    <a href="{{ route('admin.inbound.dashboard') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inbound.dashboard') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Dashboard</a>
+                    <a href="{{ route('admin.inbound.purchase-orders.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inbound.purchase-orders.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Purchase Orders</a>
+                    <a href="{{ route('admin.inbound.quality-check.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inbound.quality-check.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Quality Check</a>
+                    <a href="{{ route('admin.inbound.putaway.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inbound.putaway.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Putaway</a>
+                    <a href="{{ route('admin.inbound.reject-warehouse.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inbound.reject-warehouse.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Reject Warehouse</a>
+                    <a href="{{ route('admin.inbound.history.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inbound.history.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">History</a>
+                </div>
+            </div>
+        </div>
         @endcan
 
         @can('manage_inventory')
-        <a href="#" class="{{ $linkClasses }} {{ $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
-            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Inventory</span>
-        </a>
+        <div x-data="{ open: {{ request()->routeIs('admin.inventory.*') ? 'true' : 'false' }} }">
+            <button @click="open = !open"
+                    class="w-full {{ $linkClasses }} {{ request()->routeIs('admin.inventory.*') ? 'bg-gray-100 text-gray-900' : $inactiveClasses }}"
+                    :class="!sidebarOpen && 'justify-center'">
+                <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                <div class="ml-3 flex-1 text-left whitespace-nowrap" x-show="sidebarOpen" x-transition><span>Inventory</span></div>
+                <svg x-show="sidebarOpen" class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div x-show="open && sidebarOpen" x-collapse>
+                <div class="py-2 pl-12 pr-3 space-y-1">
+                    <a href="{{ route('admin.inventory.dashboard') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inventory.dashboard') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Dashboard</a>
+                    <a href="{{ route('admin.inventory.raw-materials') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inventory.raw-materials') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Raw Materials</a>
+                    <a href="{{ route('admin.inventory.move-stock') }}"
+                        class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inventory.move-stock') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Move
+                        Stock</a>
+                    <a href="{{ route('admin.inventory.reject-warehouses') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inventory.reject-warehouses') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Reject Warehouses</a>
+                    <a href="{{ route('admin.inventory.stock-reports') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inventory.stock-reports') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Stock Reports</a>
+                    <a href="{{ route('admin.inventory.stock-adjustment') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.inventory.stock-adjustment') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Stock Adjustment</a>
+
+                </div>
+            </div>
+        </div>
         @endcan
 
         @can('manage_production')
-        <a href="#" class="{{ $linkClasses }} {{ $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
-            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21"></path></svg>
-            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Production</span>
-        </a>
+        <div x-data="{ open: {{ request()->routeIs('admin.production.*') ? 'true' : 'false' }} }">
+            <button @click="open = !open"
+                    class="w-full {{ $linkClasses }} {{ request()->routeIs('admin.production.*') ? 'bg-gray-100 text-gray-900' : $inactiveClasses }}"
+                    :class="!sidebarOpen && 'justify-center'">
+                <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H21"></path></svg>
+                <div class="ml-3 flex-1 text-left whitespace-nowrap" x-show="sidebarOpen" x-transition><span>Production</span></div>
+                <svg x-show="sidebarOpen" class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div x-show="open && sidebarOpen" x-collapse>
+                <div class="py-2 pl-12 pr-3 space-y-1">
+                    <a href="{{ route('admin.production.dashboard') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.production.dashboard') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Dashboard</a>
+                    <a href="{{ route('admin.production.material-request.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.production.material-request.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Material Request</a>
+                    <a href="{{ route('admin.production.picking-list.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.production.picking-list.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Picking List</a>
+                    <a href="{{ route('admin.production.wip.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.production.wip.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Work in Progress</a>
+                    <a href="{{ route('admin.production.finished-goods.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.production.finished-goods.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Finished Goods</a>
+                    <a href="{{ route('admin.production.rejects-production.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.production.rejects-production.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Rejects Production</a>
+                </div>
+            </div>
+        </div>
         @endcan
 
         @can('manage_outbound')
-        <a href="#" class="{{ $linkClasses }} {{ $inactiveClasses }}" :class="!sidebarOpen && 'justify-center'">
-            <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <span class="ml-3 whitespace-nowrap" x-show="sidebarOpen" x-transition>Outbound</span>
-        </a>
+        <div x-data="{ open: {{ request()->routeIs('admin.outbound.*') ? 'true' : 'false' }} }">
+            <button @click="open = !open"
+                    class="w-full {{ $linkClasses }} {{ request()->routeIs('admin.outbound.*') ? 'bg-gray-100 text-gray-900' : $inactiveClasses }}"
+                    :class="!sidebarOpen && 'justify-center'">
+                <svg class="{{ $iconClasses }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <div class="ml-3 flex-1 text-left whitespace-nowrap" x-show="sidebarOpen" x-transition><span>Outbound</span></div>
+                <svg x-show="sidebarOpen" class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div x-show="open && sidebarOpen" x-collapse>
+                <div class="py-2 pl-12 pr-3 space-y-1">
+                    <a href="{{ route('admin.outbound.dashboard') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.dashboard') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Dashboard</a>
+                    <a href="{{ route('admin.outbound.sales-orders.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.sales-orders.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Sales Orders</a>
+                    <a href="{{ route('admin.outbound.packing-lists.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.packing-lists.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Packing Lists</a>
+                </div>
+            </div>
+        </div>
         @endcan
 
         {{-- Pemisah --}}
