@@ -109,6 +109,8 @@
                     <a href="{{ route('admin.outbound.dashboard') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.dashboard') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Dashboard</a>
                     <a href="{{ route('admin.outbound.sales-orders.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.sales-orders.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Sales Orders</a>
                     <a href="{{ route('admin.outbound.packing-lists.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.packing-lists.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Packing Lists</a>
+                    <a href="{{ route('admin.outbound.transit-inventory.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.transit-inventory.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Transit Inventory</a>
+                    <a href="{{ route('admin.outbound.delivery-orders.index') }}" class="block p-2 rounded-md text-sm {{ request()->routeIs('admin.outbound.delivery-orders.*') ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100' }}">Delivery Orders</a>
                 </div>
             </div>
         </div>
